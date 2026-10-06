@@ -12,6 +12,7 @@ export {
   useSaveDocument,
   useSaveExpense,
   useSaveItineraryItem,
+  useSaveTripBudget,
   useTripData,
   useTrips,
 } from './hooks';
