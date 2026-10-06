@@ -9,7 +9,11 @@ env:
   READY_ID: itinerary-list
 ---
 - launchApp
-- openLink: trip://scenario/${SCENARIO}
+- runFlow:
+    file: open-link.yaml
+    env:
+      APP_ID: ${APP_ID}
+      LINK: trip://scenario/${SCENARIO}
 - extendedWaitUntil:
     visible:
       id: ${READY_ID}

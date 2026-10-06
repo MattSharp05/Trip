@@ -1,0 +1,16 @@
+# Opens LINK and accepts iOS's "Open in …?" confirmation when it shows (custom-scheme links on the
+# simulator; Expo Go links too). Used by the other flows through runFlow; not run on its own.
+appId: ${APP_ID}
+env:
+  APP_ID: com.mattsharp05.trip
+---
+- openLink: ${LINK}
+- extendedWaitUntil:
+    visible: 'Open in .*'
+    timeout: 5000
+    optional: true
+- runFlow:
+    when:
+      visible: 'Open in .*'
+    commands:
+      - tapOn: 'Open'

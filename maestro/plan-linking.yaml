@@ -12,7 +12,11 @@ tags:
   - checkpoint
 ---
 - launchApp
-- openLink: ${LINK}
+- runFlow:
+    file: open-link.yaml
+    env:
+      APP_ID: ${APP_ID}
+      LINK: ${LINK}
 - extendedWaitUntil:
     visible:
       id: itinerary-list
