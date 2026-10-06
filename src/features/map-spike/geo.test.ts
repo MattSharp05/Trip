@@ -43,6 +43,10 @@ describe('along', () => {
     expect(along(path, 1).at.lat).toBeCloseTo(LAS.lat, 6);
   });
 
+  it('copes with a single point', () => {
+    expect(along([TPA], 0.5)).toEqual({ at: TPA, heading: 0 });
+  });
+
   it('clamps out-of-range fractions', () => {
     expect(along(path, -1).at).toEqual(path[0]);
     expect(along(path, 2).at.lng).toBeCloseTo(LAS.lng, 6);

@@ -77,7 +77,11 @@ export function darkStyle({ globe = false }: { globe?: boolean } = {}) {
       type: 'line',
       source: 'omt',
       'source-layer': 'boundary',
-      filter: ['all', ['<=', ['get', 'admin_level'], 4], ['!=', ['get', 'maritime'], 1]],
+      filter: [
+        'all',
+        ['<=', ['coalesce', ['get', 'admin_level'], 99], 4],
+        ['!=', ['coalesce', ['get', 'maritime'], 0], 1],
+      ],
       paint: { 'line-color': mapColors.boundary, 'line-width': 0.6, 'line-dasharray': [3, 2] },
     },
     road('road-minor', ['minor', 'service', 'track'], mapColors.roadMinor, 0.6),

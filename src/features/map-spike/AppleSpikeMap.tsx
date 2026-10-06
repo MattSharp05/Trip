@@ -5,11 +5,11 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import { mapColors, spacing } from '@/theme';
 
 import type { SpikeMapProps } from './SpikeMap.types';
-import type { LngLat, SpikePin } from './types';
+import { latLng } from './geo';
+import type { SpikePin } from './types';
 import { vegasCenter, vegasRoute } from './vegasDay';
 
 const PIN = 40;
-const latLng = ({ lat, lng }: LngLat) => ({ latitude: lat, longitude: lng });
 const TILT = 60;
 
 /** Option A: Apple Maps through react-native-maps, dark, POIs hidden, photo pins, dashed route. */

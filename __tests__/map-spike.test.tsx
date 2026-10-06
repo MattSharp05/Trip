@@ -94,6 +94,8 @@ describe('map spike', () => {
     expect(screen.getByText('Loading map')).toBeOnTheScreen();
 
     message('maplibre-map', { type: 'ready', ms: 900 });
+    // The page replays the current pins and selection once it has loaded.
+    expect(mockInjected.slice(-2).join()).toMatch(/"pins","count":4.*"select","id":null/);
     message('maplibre-map', { type: 'fps', fps: 58 });
     expect(screen.getByText(/^Ready in .* · 58 fps last move$/)).toBeOnTheScreen();
 

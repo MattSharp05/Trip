@@ -11,7 +11,6 @@ export const mapColors = {
   park: '#121A15',
   water: '#0A1620',
   building: '#1C1E22',
-  buildingTop: '#24272C',
   roadMinor: '#24262B',
   roadMajor: '#34373D',
   roadHighway: '#44474E',

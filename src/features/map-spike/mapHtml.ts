@@ -3,6 +3,7 @@ import { colors, mapColors } from '@/theme';
 import { darkStyle } from './darkStyle';
 import { along } from './geo';
 import type { LngLat, SpikePin } from './types';
+import { planeTiming } from './vegasDay';
 
 /**
  * Pinned MapLibre GL JS build, loaded from a CDN inside the WebView. v5 is the last UMD build with
@@ -72,7 +73,10 @@ ${body}
       reported = true;
       post({ type: 'ready', ms: Math.round(performance.now() - window.__t0) });
     });
-    map.on('error', function (e) { post({ type: 'error', message: String(e && e.error && e.error.message || e) }); });
+    // Only errors before the first frame count: a single failed tile later is routine on a phone.
+    map.on('error', function (e) {
+      if (!reported) post({ type: 'error', message: String(e && e.error && e.error.message || e) });
+    });
   }
   // Frames per second while the map moves (pinch, pan, rotate, fly-to), reported when it stops.
   function trackFps(map) {
@@ -187,7 +191,6 @@ export function globeHtml(
     attributionControl: { compact: true },
   });
   onReady(map);
-  trackFps(map);
   map.on('load', function () {
     map.addSource('arc', { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: {
       type: 'LineString', coordinates: ${JSON.stringify(arc.map((p) => [+p.lng.toFixed(4), +p.lat.toFixed(4)]))} } } });
@@ -213,10 +216,10 @@ export function globeHtml(
   el.innerHTML = ${JSON.stringify(PLANE_SVG)};
   var plane = new maplibregl.Marker({ element: el, rotationAlignment: 'map', pitchAlignment: 'map' })
     .setLngLat([FRAMES[0][0], FRAMES[0][1]]).addTo(map);
-  // The plane: 7 s per flight, then a short pause at the gate.
+  // The plane flies the arc, waits at the gate, repeats. Also the page's frame rate, drags included.
   var start = performance.now(), frames = 0, last = start;
   function fly(now) {
-    var t = (Math.max(0, now - start) % 8000) / 7000;
+    var t = (Math.max(0, now - start) % ${planeTiming.loopMs}) / ${planeTiming.flightMs};
     var f = FRAMES[Math.min(FRAMES.length - 1, Math.floor(Math.min(t, 1) * (FRAMES.length - 1)))];
     plane.setLngLat([f[0], f[1]]).setRotation(f[2]);
     frames++;

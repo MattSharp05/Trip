@@ -1,5 +1,8 @@
 import type { LngLat } from './types';
 
+/** react-native-maps coordinates. */
+export const latLng = ({ lat, lng }: LngLat) => ({ latitude: lat, longitude: lng });
+
 const rad = (deg: number) => (deg * Math.PI) / 180;
 const deg = (r: number) => (r * 180) / Math.PI;
 
@@ -40,6 +43,7 @@ export function bearing(a: LngLat, b: LngLat): number {
 
 /** Position and heading at fraction `t` (0–1) along a polyline, for the moving plane. */
 export function along(path: LngLat[], t: number): { at: LngLat; heading: number } {
+  if (path.length < 2) return { at: path[0], heading: 0 };
   const last = path.length - 1;
   const pos = Math.min(Math.max(t, 0), 1) * last;
   const i = Math.min(Math.floor(pos), last - 1);

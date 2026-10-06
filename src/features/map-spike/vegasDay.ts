@@ -69,6 +69,9 @@ export const vegasRoute: LngLat[] = vegasDay.map(({ lat, lng }) => ({ lat, lng }
 /** Camera that frames the Strip, shared by both city maps so they open on the same view. */
 export const vegasCenter: LngLat = { lat: 36.1135, lng: -115.1705 };
 
+/** The plane flies the arc in `flightMs`, then waits at the gate until `loopMs`. Both globes. */
+export const planeTiming = { flightMs: 7000, loopMs: 8000 } as const;
+
 /** The flight view: Tampa to Las Vegas (TPA → LAS). */
 export const flight = {
   from: { lat: 27.9755, lng: -82.5332, code: 'TPA', city: 'Tampa' },

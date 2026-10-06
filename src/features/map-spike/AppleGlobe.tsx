@@ -5,8 +5,9 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import { mapColors } from '@/theme';
 import { Icon } from '@/ui';
 
-import { along, greatCircle } from './geo';
-import { flight } from './vegasDay';
+import { along, greatCircle, latLng } from './geo';
+import type { LngLat } from './types';
+import { flight, planeTiming } from './vegasDay';
 
 /**
  * Apple Maps' own globe (satellite flyover zoomed out) with the same arc and a plane moved from JS,
@@ -14,16 +15,7 @@ import { flight } from './vegasDay';
  */
 export function AppleGlobe({ onReady }: { onReady: () => void }) {
   const arc = useMemo(() => greatCircle(flight.from, flight.to), []);
-  const coords = useMemo(() => arc.map((p) => ({ latitude: p.lat, longitude: p.lng })), [arc]);
-  const [t, setT] = useState(0);
-
-  useEffect(() => {
-    const start = Date.now();
-    const id = setInterval(() => setT(((Date.now() - start) % 8000) / 7000), 33);
-    return () => clearInterval(id);
-  }, []);
-
-  const { at, heading } = along(arc, Math.min(t, 1));
+  const coords = useMemo(() => arc.map(latLng), [arc]);
   const mid = arc[Math.floor(arc.length / 2)];
 
   return (
@@ -46,20 +38,39 @@ export function AppleGlobe({ onReady }: { onReady: () => void }) {
       {[flight.from, flight.to].map((end) => (
         <Marker
           key={end.code}
-          coordinate={{ latitude: end.lat, longitude: end.lng }}
+          coordinate={latLng(end)}
           anchor={{ x: 0.5, y: 0.5 }}
           title={end.city}
         >
           <View style={styles.dot} />
         </Marker>
       ))}
-      <Marker coordinate={{ latitude: at.lat, longitude: at.lng }} anchor={{ x: 0.5, y: 0.5 }} flat>
-        <View style={{ transform: [{ rotate: `${heading - 90}deg` }] }}>
-          {/* SF Symbols draw the airplane pointing east, so turn it by heading − 90°. */}
-          <Icon name="airplane" size="lg" />
-        </View>
-      </Marker>
+      <Plane arc={arc} />
     </MapView>
+  );
+}
+
+/** The plane, moved from JS about 30 times a second. Its own component so only it re-renders. */
+function Plane({ arc }: { arc: LngLat[] }) {
+  const [t, setT] = useState(0);
+
+  useEffect(() => {
+    const start = Date.now();
+    const id = setInterval(
+      () => setT(((Date.now() - start) % planeTiming.loopMs) / planeTiming.flightMs),
+      33,
+    );
+    return () => clearInterval(id);
+  }, []);
+
+  const { at, heading } = along(arc, t);
+  return (
+    <Marker coordinate={latLng(at)} anchor={{ x: 0.5, y: 0.5 }} flat>
+      {/* SF Symbols draw the airplane pointing east, so turn it by heading − 90°. */}
+      <View style={{ transform: [{ rotate: `${heading - 90}deg` }] }}>
+        <Icon name="airplane" size="lg" />
+      </View>
+    </Marker>
   );
 }
 

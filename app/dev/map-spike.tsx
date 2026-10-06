@@ -80,7 +80,7 @@ function MapSpike() {
 
   const stats = [
     readyMs === null ? 'Loading map' : `Ready in ${(readyMs / 1000).toFixed(2)} s`,
-    fps === null ? null : `${fps} fps last move`,
+    fps === null ? null : `${fps} fps${tab === 'globe' ? '' : ' last move'}`,
   ]
     .filter(Boolean)
     .join(' · ');

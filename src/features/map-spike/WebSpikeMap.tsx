@@ -35,6 +35,7 @@ export function WebSpikeMap({
     tilt: (on) => send({ type: 'tilt', on }),
   }));
 
+  // Commands sent before the page has loaded are dropped, so the ready message replays the state.
   useEffect(() => {
     send({ type: 'pins', count: pins.length });
   }, [pins.length]);
@@ -44,7 +45,11 @@ export function WebSpikeMap({
 
   const onMessage = (event: WebViewMessageEvent) => {
     const msg = parseMessage(event.nativeEvent.data);
-    if (msg.type === 'ready') onReady();
+    if (msg.type === 'ready') {
+      send({ type: 'pins', count: pins.length });
+      send({ type: 'select', id: selectedId });
+      onReady();
+    }
     if (msg.type === 'select') onSelect(msg.id);
     if (msg.type === 'fps') onFps?.(msg.fps);
     if (msg.type === 'error') onError?.(msg.message);
