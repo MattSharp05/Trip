@@ -32,7 +32,7 @@ describe('tab layout', () => {
       { initialUrl: '/' },
     );
 
-    expect(await screen.findByRole('header', { name: 'Trips' })).toBeOnTheScreen();
+    expect(await screen.findByRole('header', { name: 'My Trips' })).toBeOnTheScreen();
     expect(router.getPathname()).toBe('/trips');
   });
 });

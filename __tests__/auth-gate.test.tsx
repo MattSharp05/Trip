@@ -48,7 +48,7 @@ describe('auth gate', () => {
   it('opens straight to Trips when a session is stored', async () => {
     resetFakeAuth(testSession);
     const router = renderRouter(routes, { initialUrl: '/' });
-    expect(await screen.findByRole('header', { name: 'Trips' })).toBeOnTheScreen();
+    expect(await screen.findByRole('header', { name: 'My Trips' })).toBeOnTheScreen();
     expect(router.getPathname()).toBe('/trips');
   });
 
@@ -71,7 +71,7 @@ describe('auth gate', () => {
   it('lets a scenario link into the tabs while signed out, and back to Welcome on exit', async () => {
     resetFakeAuth(null);
     const router = renderRouter(routes, { initialUrl: '/scenario/empty-account' });
-    expect(await screen.findByRole('header', { name: 'Trips' })).toBeOnTheScreen();
+    expect(await screen.findByRole('header', { name: 'My Trips' })).toBeOnTheScreen();
     expect(router.getPathname()).toBe('/trips');
 
     act(() => exitScenario());
@@ -104,7 +104,7 @@ describe('auth gate', () => {
       email: 'new@example.com',
       password: 'long enough',
     });
-    expect(await screen.findByRole('header', { name: 'Trips' })).toBeOnTheScreen();
+    expect(await screen.findByRole('header', { name: 'My Trips' })).toBeOnTheScreen();
     expect(router.getPathname()).toBe('/trips');
   });
 
@@ -199,7 +199,7 @@ describe('auth gate', () => {
   it('returns to Welcome on sign-out', async () => {
     resetFakeAuth(testSession);
     const router = renderRouter(routes, { initialUrl: '/' });
-    expect(await screen.findByRole('header', { name: 'Trips' })).toBeOnTheScreen();
+    expect(await screen.findByRole('header', { name: 'My Trips' })).toBeOnTheScreen();
 
     act(() => emitAuthChange('SIGNED_OUT', null));
     expect(await screen.findByRole('button', { name: 'Continue with email' })).toBeOnTheScreen();

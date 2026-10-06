@@ -51,4 +51,28 @@ describe('demo source', () => {
     (await source.listTrips())[0].city = 'Changed';
     expect((await source.listTrips())[0].city).toBe('New York');
   });
+
+  it('creates trips in memory with a new id', async () => {
+    const source = createDemoSource(vegasSnapshot);
+    const trip = await source.createTrip({
+      city: 'Lisbon',
+      country: 'Portugal',
+      lat: 38.7,
+      lng: -9.1,
+      timezone: 'Europe/Lisbon',
+      startDate: '2027-04-03',
+      endDate: '2027-04-08',
+      coverPhotoUrl: null,
+      coverPhotoCredit: null,
+    });
+    expect(trip.id).toMatch(/^trip-/);
+    expect((await source.listTrips()).map((t) => t.city)).toEqual([
+      'New York',
+      'Las Vegas',
+      'Cape Town',
+      'Tokyo',
+      'Lisbon',
+    ]);
+    expect(vegasSnapshot.trips).toHaveLength(4);
+  });
 });
