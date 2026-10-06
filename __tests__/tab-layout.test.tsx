@@ -2,12 +2,19 @@ import { renderRouter, screen } from 'expo-router/testing-library';
 
 import TabLayout from '../app/(tabs)/_layout';
 import RootLayout from '../app/_layout';
+import { resetFakeAuth, testSession } from '@/features/auth/testing';
 import Index from '../app/index';
 import GalleryScreen from '../app/dev/gallery';
 import DiscoverScreen from '../app/(tabs)/discover/index';
 import OrganizeScreen from '../app/(tabs)/organize/index';
 import PlanScreen from '../app/(tabs)/plan/index';
 import TripsScreen from '../app/(tabs)/trips/index';
+
+jest.mock('@/services/supabase', () => ({
+  supabase: { auth: require('@/features/auth/testing').fakeAuth },
+}));
+
+beforeEach(() => resetFakeAuth(testSession));
 
 describe('tab layout', () => {
   it('opens on the Trips tab', async () => {

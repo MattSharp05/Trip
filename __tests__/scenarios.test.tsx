@@ -11,10 +11,18 @@ import GalleryScreen from '../app/dev/gallery';
 import ScenarioRoute from '../app/scenario/[name]';
 import RootLayout from '../app/_layout';
 import Index from '../app/index';
+import { resetFakeAuth } from '@/features/auth/testing';
 import { exitScenario } from '@/scenarios';
 import { useTrips } from '@/services/data';
 import { useScenarioStore } from '@/stores/scenario';
 import { useTripStore } from '@/stores/trip';
+
+jest.mock('@/services/supabase', () => ({
+  supabase: { auth: require('@/features/auth/testing').fakeAuth },
+}));
+
+// Signed out, like a QA tester on a fresh Expo Go: scenario links must still reach the tabs.
+beforeEach(() => resetFakeAuth(null));
 
 const routes = {
   _layout: RootLayout,
