@@ -6,7 +6,7 @@ import {
   parse,
   parseISO,
 } from 'date-fns';
-import { formatInTimeZone } from 'date-fns-tz';
+import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 
 /**
  * Calendar-day helpers. Days are `YYYY-MM-DD` wall-clock dates in the trip's timezone (see
@@ -25,6 +25,11 @@ export function tripDays(startDate: string, endDate: string): string[] {
 /** The calendar date it is at `instant` in `timezone`. */
 export function dayIn(timezone: string, instant: Date): string {
   return formatInTimeZone(instant, timezone, 'yyyy-MM-dd');
+}
+
+/** The instant (ISO, UTC) it is at wall-clock `day` `time` (`HH:MM`) in `timezone`. */
+export function instantIn(timezone: string, day: string, time: string): string {
+  return fromZonedTime(`${day}T${time}:00`, timezone).toISOString();
 }
 
 /** `day` moved by `n` days (negative goes back). */

@@ -18,4 +18,8 @@ export const mapColors = {
   /** Round map buttons (3D, fit the day). */
   control: colors.raised,
   controlBorder: colors.hairline,
+  /** Behind the Trips globe while it loads, and the space around it. */
+  globeSpace: colors.background,
+  /** Trips globe: city labels sit on a dark pill so they read over satellite imagery. */
+  globeLabelFill: colors.backdrop,
 } as const;

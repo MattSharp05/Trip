@@ -5,10 +5,9 @@
  * an ISO currency code.
  */
 
-export interface Money {
-  amountMinor: number;
-  currency: string;
-}
+import type { Money } from '@/core/money';
+
+export type { Money };
 
 /** Credit for a cover photo (Unsplash guidelines: "Photo by <name> on Unsplash", with links). */
 export interface PhotoCredit {
@@ -31,7 +30,7 @@ export interface Trip {
   coverPhotoUrl: string | null;
   /** Who took the cover photo; null (or absent in fixtures) when it needs no credit line. */
   coverPhotoCredit?: PhotoCredit | null;
-  /** Not in the database yet: demo data only. */
+  /** The trip's total budget, in the currency it was set in; null when none is set. */
   budget?: Money | null;
 }
 
@@ -195,7 +194,7 @@ export interface Expense {
   bookingId: string | null;
   /** ISO instant. */
   paidAt: string | null;
-  /** Not in the database yet: demo data only. */
+  /** What it was for ("Sphere tickets"); optional. */
   description?: string;
 }
 

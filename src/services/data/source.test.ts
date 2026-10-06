@@ -46,6 +46,23 @@ describe('demo source', () => {
     expect(a.id).not.toBe(b.id);
   });
 
+  it('sets and clears a trip budget in memory', async () => {
+    const source = createDemoSource(vegasSnapshot);
+    const saved = await source.saveTripBudget('trip-vegas', {
+      amountMinor: 300000,
+      currency: 'EUR',
+    });
+    expect(saved.budget).toEqual({ amountMinor: 300000, currency: 'EUR' });
+    expect((await source.getTripData('trip-vegas'))?.trip.budget).toEqual({
+      amountMinor: 300000,
+      currency: 'EUR',
+    });
+    await source.saveTripBudget('trip-vegas', null);
+    expect((await source.getTripData('trip-vegas'))?.trip.budget).toBeNull();
+    expect(vegasSnapshot.trips[1].budget).toEqual({ amountMinor: 250000, currency: 'USD' });
+    await expect(source.saveTripBudget('nope', null)).rejects.toThrow();
+  });
+
   it('saves a booking in memory and refuses an unknown one', async () => {
     const source = createDemoSource(vegasSnapshot);
     const flight = (await source.getTripData('trip-vegas'))!.bookings.find(

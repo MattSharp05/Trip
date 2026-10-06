@@ -5,6 +5,7 @@ import type {
   DocumentInput,
   Expense,
   ItineraryItem,
+  Money,
   NewTrip,
   TravelDocument,
   Trip,
@@ -30,6 +31,8 @@ export interface DataSource {
   saveBucketItem(item: BucketItem): Promise<BucketItem>;
   deleteBucketItem(id: string): Promise<void>;
   saveExpense(expense: Expense): Promise<Expense>;
+  /** Set (or clear, with null) a trip's total budget. */
+  saveTripBudget(tripId: string, budget: Money | null): Promise<Trip>;
   /** Updates an existing booking's JSON data and original file (e.g. a boarding pass crop). */
   saveBooking(booking: Booking): Promise<Booking>;
 }
@@ -114,6 +117,13 @@ export function createDemoSource(snapshot: DataSnapshot, name = 'demo'): DataSou
     async saveExpense(expense) {
       db = { ...db, expenses: upsert(db.expenses, copy(expense)) };
       return copy(expense);
+    },
+    async saveTripBudget(tripId, budget) {
+      const trip = db.trips.find((t) => t.id === tripId);
+      if (!trip) throw new Error(`No trip ${tripId}`);
+      const next: Trip = { ...trip, budget: budget ? copy(budget) : null };
+      db = { ...db, trips: upsert(db.trips, next) };
+      return copy(next);
     },
     async saveBooking(booking) {
       if (!db.bookings.some((b) => b.id === booking.id)) throw new Error('Booking not found');
