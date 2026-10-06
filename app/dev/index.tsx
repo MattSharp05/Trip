@@ -10,11 +10,7 @@ import { useTripStore } from '@/stores/trip';
 import { colors, screenPadding, spacing } from '@/theme';
 import { ListRow, Surface, Text } from '@/ui';
 
-const TOOLS: { title: string; href: Href }[] = [
-  { title: 'Design gallery', href: '/dev/gallery' },
-  // TR-5 spike; TR-13 removes it.
-  { title: 'Map spike', href: '/dev/map-spike' },
-];
+const TOOLS: { title: string; href: Href }[] = [{ title: 'Design gallery', href: '/dev/gallery' }];
 
 /** Developer index: every scenario (tap to load it) and the developer screens. */
 export default function DevIndexScreen() {

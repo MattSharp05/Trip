@@ -3,6 +3,7 @@ import type { DataSnapshot } from '@/services/data/types';
 import type { ScenarioView } from '@/stores/scenario';
 
 import { VEGAS_TRIP_ID, vegasSnapshot } from './fixtures/vegas';
+import { vegasCrowdedSnapshot } from './fixtures/vegasCrowded';
 
 /** "Today" for every scenario unless it sets its own: Fri, Nov 13 2026, 9:00 AM in Las Vegas. */
 export const DEFAULT_TODAY = '2026-11-13T09:00:00-08:00';
@@ -29,7 +30,9 @@ const EMPTY: DataSnapshot = {
   documents: [],
 };
 
-const vegas = (s: Omit<Scenario, 'data' | 'tripId' | 'today'> & { today?: string }): Scenario => ({
+const vegas = (
+  s: Omit<Scenario, 'data' | 'tripId' | 'today'> & { today?: string; data?: DataSnapshot },
+): Scenario => ({
   data: vegasSnapshot,
   tripId: VEGAS_TRIP_ID,
   today: DEFAULT_TODAY,
@@ -41,6 +44,13 @@ export const SCENARIOS: readonly Scenario[] = [
   vegas({
     name: 'vegas-plan-day-2',
     description: 'Plan tab, Las Vegas, Fri Nov 13: brunch, fountains, Sphere, Carbone.',
+    tab: 'plan',
+    view: { day: '2026-11-13', planMode: 'itinerary' },
+  }),
+  vegas({
+    name: 'vegas-map-40-pins',
+    data: vegasCrowdedSnapshot,
+    description: 'Plan tab, Fri Nov 13 with 40 stops: the map performance check.',
     tab: 'plan',
     view: { day: '2026-11-13', planMode: 'itinerary' },
   }),

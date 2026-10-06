@@ -72,10 +72,6 @@ function RootStack() {
         name="dev/gallery"
         options={{ headerShown: true, title: 'Gallery', headerBackTitle: 'Trips' }}
       />
-      <Stack.Screen
-        name="dev/map-spike"
-        options={{ headerShown: true, title: 'Map spike', headerBackTitle: 'Trips' }}
-      />
     </Stack>
   );
 }
