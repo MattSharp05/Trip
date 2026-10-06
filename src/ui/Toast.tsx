@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
@@ -29,11 +29,18 @@ export function Toast({
   duration = 4000,
   testID,
 }: ToastProps) {
+  // Latest callback without restarting the timer on every parent render.
+  const onDismissRef = useRef(onDismiss);
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  });
+
+  // A new message gets the full duration.
   useEffect(() => {
     if (!visible) return;
-    const timer = setTimeout(onDismiss, duration);
+    const timer = setTimeout(() => onDismissRef.current(), duration);
     return () => clearTimeout(timer);
-  }, [visible, duration, onDismiss]);
+  }, [visible, message, duration]);
 
   if (!visible) return null;
 

@@ -37,4 +37,18 @@ describe('Toast', () => {
     act(() => jest.advanceTimersByTime(1));
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
+
+  it('gives a new message the full duration, and ignores new callbacks', () => {
+    const onDismiss = jest.fn();
+    const { rerender } = render(
+      <Toast visible message="Added A" onDismiss={() => onDismiss()} duration={3000} />,
+    );
+    act(() => jest.advanceTimersByTime(2500));
+    rerender(<Toast visible message="Added B" onDismiss={() => onDismiss()} duration={3000} />);
+    act(() => jest.advanceTimersByTime(2500));
+    expect(onDismiss).not.toHaveBeenCalled();
+    rerender(<Toast visible message="Added B" onDismiss={() => onDismiss()} duration={3000} />);
+    act(() => jest.advanceTimersByTime(500));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
 });

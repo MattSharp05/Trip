@@ -27,3 +27,14 @@ export const photoScrim =
   'linear-gradient(180deg, rgba(0, 0, 0, 0) 35%, rgba(0, 0, 0, 0.35) 65%, rgba(0, 0, 0, 0.75) 100%)';
 
 export type ColorToken = keyof typeof colors;
+
+/** Foreground tones shared by Text and Icon. */
+export const tones = {
+  primary: colors.textPrimary,
+  secondary: colors.textSecondary,
+  accent: colors.accent,
+  ok: colors.ok,
+  onAccent: colors.onAccent,
+} as const;
+
+export type Tone = keyof typeof tones;

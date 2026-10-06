@@ -16,11 +16,16 @@ async function restricted(code: string, file: string): Promise<string[]> {
 }
 
 describe('source rules (ESLint)', () => {
-  it('rejects raw hex colours outside src/theme', async () => {
+  it('rejects raw colours outside src/theme', async () => {
     expect(await restricted(`export const c = '#FF6B22';`, 'src/ui/Probe.ts')).toEqual([
-      expect.stringContaining('Raw hex colour'),
+      expect.stringContaining('Raw colour'),
     ]);
-    expect(await restricted('export const c = `color: #fff`;', 'app/probe.tsx')).toHaveLength(1);
+    expect(
+      await restricted('export const c = `linear-gradient(#fff, ${x})`;', 'app/probe.tsx'),
+    ).toHaveLength(1);
+    expect(
+      await restricted(`export const c = 'rgba(0, 0, 0, 0.5)';`, 'src/ui/Probe.ts'),
+    ).toHaveLength(1);
   });
 
   it('allows hex colours in src/theme', async () => {
@@ -28,7 +33,9 @@ describe('source rules (ESLint)', () => {
   });
 
   it('does not mistake other # strings for colours', async () => {
-    expect(await restricted(`export const c = 'Gate #12, Day #3';`, 'src/ui/Probe.ts')).toEqual([]);
+    for (const copy of ['Gate #123', 'Room #4521', 'Confirmation #ABC123', '#cafe in Paris']) {
+      expect(await restricted(`export const c = '${copy}';`, 'src/ui/Probe.ts')).toEqual([]);
+    }
   });
 
   it('rejects emoji in strings and JSX text, theme included', async () => {
@@ -41,9 +48,12 @@ describe('source rules (ESLint)', () => {
     expect(await restricted(`export const w = '\u{1F30D}';`, 'src/theme/probe.ts')).toHaveLength(1);
   });
 
-  it('passes on arrows and en dashes used in copy', async () => {
+  it('passes on text symbols used in copy', async () => {
     expect(
-      await restricted(`export const r = 'JFK → LHR · Nov 12 – 16';`, 'src/ui/Probe.ts'),
+      await restricted(
+        `export const r = 'JFK → LHR ↔ CDG · Nov 12 – 16 · Bonvoy® · Honors™ · © 2026';`,
+        'src/ui/Probe.ts',
+      ),
     ).toEqual([]);
   });
 });

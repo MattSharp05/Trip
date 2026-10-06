@@ -25,15 +25,9 @@ export function PhotoCard({
   onPress,
   testID,
 }: PhotoCardProps) {
-  return (
-    <Pressable
-      accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityLabel={subtitle ? `${title}, ${subtitle}` : title}
-      disabled={!onPress}
-      onPress={onPress}
-      testID={testID}
-      style={({ pressed }) => [styles.card, { height }, pressed && styles.pressed]}
-    >
+  const label = subtitle ? `${title}, ${subtitle}` : title;
+  const content = (
+    <>
       <Image source={source} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
       <View style={styles.scrim} testID={testID ? `${testID}-scrim` : undefined} />
       <View style={styles.footer}>
@@ -53,6 +47,25 @@ export function PhotoCard({
           </View>
         ) : null}
       </View>
+    </>
+  );
+
+  if (!onPress) {
+    return (
+      <View accessible accessibilityLabel={label} testID={testID} style={[styles.card, { height }]}>
+        {content}
+      </View>
+    );
+  }
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      testID={testID}
+      style={({ pressed }) => [styles.card, { height }, pressed && styles.pressed]}
+    >
+      {content}
     </Pressable>
   );
 }

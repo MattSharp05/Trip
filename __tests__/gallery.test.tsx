@@ -66,4 +66,16 @@ describe('design gallery', () => {
     await act(async () => {});
     expect(screen.queryByText('Added to Day 3 at 2:00 PM')).toBeNull();
   });
+
+  it('is hidden when dev tools are off', async () => {
+    process.env.EXPO_PUBLIC_SCENARIOS = 'off';
+    try {
+      const router = renderRouter(routes, { initialUrl: '/dev/gallery' });
+      expect(await screen.findByRole('header', { name: 'Trips' })).toBeOnTheScreen();
+      expect(router.getPathname()).toBe('/trips');
+      expect(screen.queryByRole('button', { name: 'Design gallery' })).toBeNull();
+    } finally {
+      delete process.env.EXPO_PUBLIC_SCENARIOS;
+    }
+  });
 });

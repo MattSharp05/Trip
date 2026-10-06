@@ -30,9 +30,11 @@ describe('ListRow', () => {
   });
 
   it('has no chevron or button role when not tappable', () => {
-    const { UNSAFE_queryAllByType } = render(<ListRow title="Terminal 8" />);
+    const { UNSAFE_queryAllByType } = render(<ListRow title="Terminal 8" testID="row" />);
     expect(UNSAFE_queryAllByType(SymbolView)).toHaveLength(0);
     expect(screen.queryByRole('button')).toBeNull();
+    // Read-only, not "dimmed" to VoiceOver.
+    expect(screen.getByTestId('row')).not.toBeDisabled();
   });
 
   it('draws a hairline separator on request and colours the value', () => {

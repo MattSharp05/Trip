@@ -1,7 +1,9 @@
-import { useCallback, useState } from 'react';
+import { Redirect } from 'expo-router';
+import { useCallback, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { devToolsEnabled } from '@/core/devTools';
 import { colors, screenPadding, spacing } from '@/theme';
 import {
   Button,
@@ -25,7 +27,7 @@ const SEGMENTS = [
   { value: 'all', label: 'All' },
 ] as const;
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <View style={styles.section}>
       <Text variant="subhead" tone="secondary" style={styles.sectionTitle}>
@@ -38,6 +40,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 /** Every design-system component in its states, to check against the reference mockup. */
 export default function GalleryScreen() {
+  return devToolsEnabled() ? <Gallery /> : <Redirect href="/trips" />;
+}
+
+function Gallery() {
   const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('All');
   const [segment, setSegment] = useState<(typeof SEGMENTS)[number]['value']>('upcoming');

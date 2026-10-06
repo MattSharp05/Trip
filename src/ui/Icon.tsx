@@ -1,20 +1,12 @@
 import { SymbolView, type SFSymbol, type SymbolWeight } from 'expo-symbols';
 import type { StyleProp, ViewStyle } from 'react-native';
 
-import { colors } from '@/theme';
+import { colors, tones, type Tone } from '@/theme';
 
 const sizes = { sm: 15, md: 20, lg: 24, xl: 28 } as const;
 
 export type IconSize = keyof typeof sizes;
-export type IconTone = 'primary' | 'secondary' | 'accent' | 'ok' | 'onAccent';
-
-const toneColor: Record<IconTone, string> = {
-  primary: colors.textPrimary,
-  secondary: colors.textSecondary,
-  accent: colors.accent,
-  ok: colors.ok,
-  onAccent: colors.onAccent,
-};
+export type IconTone = Tone;
 
 export interface IconProps {
   name: SFSymbol;
@@ -45,7 +37,7 @@ export function Icon({
       name={name}
       size={sizes[size]}
       weight={weight}
-      tintColor={selected ? colors.accent : toneColor[tone]}
+      tintColor={selected ? colors.accent : tones[tone]}
       accessible={!!label}
       accessibilityLabel={label}
       accessibilityElementsHidden={!label}

@@ -14,7 +14,7 @@ import { Text } from './Text';
 
 export interface SheetProps {
   open: boolean;
-  /** Called when the user drags the sheet down or taps the backdrop. */
+  /** Called when the user drags the sheet down or taps the backdrop; set `open` to false. */
   onClose: () => void;
   title?: string;
   children: ReactNode;
@@ -29,10 +29,18 @@ export function Sheet({ open, onClose, title, children, testID }: SheetProps) {
   const ref = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
 
+  const openRef = useRef(open);
+
   useEffect(() => {
+    openRef.current = open;
     if (open) ref.current?.present();
     else ref.current?.dismiss();
   }, [open]);
+
+  // Only report dismissals the parent didn't ask for (drag down, backdrop tap).
+  const handleDismiss = useCallback(() => {
+    if (openRef.current) onClose();
+  }, [onClose]);
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
@@ -44,7 +52,7 @@ export function Sheet({ open, onClose, title, children, testID }: SheetProps) {
   return (
     <BottomSheetModal
       ref={ref}
-      onDismiss={onClose}
+      onDismiss={handleDismiss}
       backdropComponent={renderBackdrop}
       backgroundStyle={styles.background}
       handleIndicatorStyle={styles.handle}

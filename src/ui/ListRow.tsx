@@ -32,18 +32,8 @@ export function ListRow({
   separator = false,
   testID,
 }: ListRowProps) {
-  return (
-    <Pressable
-      accessibilityRole={onPress ? 'button' : undefined}
-      disabled={!onPress}
-      onPress={onPress}
-      testID={testID}
-      style={({ pressed }) => [
-        styles.row,
-        separator && styles.separator,
-        pressed && styles.pressed,
-      ]}
-    >
+  const content = (
+    <>
       {icon ? (
         <View style={styles.tile}>
           <Icon name={icon} size="md" />
@@ -65,6 +55,28 @@ export function ListRow({
         </Text>
       ) : null}
       {onPress ? <Icon name="chevron.right" size="sm" tone="secondary" /> : null}
+    </>
+  );
+
+  if (!onPress) {
+    return (
+      <View testID={testID} style={[styles.row, separator && styles.separator]}>
+        {content}
+      </View>
+    );
+  }
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      testID={testID}
+      style={({ pressed }) => [
+        styles.row,
+        separator && styles.separator,
+        pressed && styles.pressed,
+      ]}
+    >
+      {content}
     </Pressable>
   );
 }
