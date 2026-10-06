@@ -1,4 +1,4 @@
-# 0012 — Boarding pass and flight actions: Expo Go modules
+# 0013 — Boarding pass and flight actions: Expo Go modules
 
 **Context.** TR-18 adds the flight detail and boarding pass screens: full brightness while the pass
 is open, adding the flight to the calendar, picking a photo of the boarding pass and opening the
@@ -9,8 +9,9 @@ booking's original file.
 - `expo-calendar`, through `expo-calendar/legacy`: its newer API is a stub in Expo Go. We open
   iOS's own "New Event" sheet (`createEventInCalendarAsync`), so the app never asks for calendar
   access.
-- `expo-image-picker`: the system photo picker (no permission prompt on iOS 14+). The plugin
-  config carries plain photo-library copy for Phase B builds; camera and microphone are off.
+- `expo-image-picker` (already added by TR-20, ADR 0012): the system photo picker (no permission
+  prompt on iOS 14+). Its plugin config now carries plain photo-library and camera copy for Phase
+  B builds, covering both features; the microphone is off.
 - `expo-sharing` and `expo-asset`: a bundled sample original goes to the share sheet (Quick Look,
   Save to Files). An imported original opens from the private `originals` bucket through a
   10-minute signed link.

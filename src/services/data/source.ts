@@ -2,6 +2,7 @@ import type {
   Booking,
   BucketItem,
   DataSnapshot,
+  DocumentInput,
   Expense,
   ItineraryItem,
   NewTrip,
@@ -22,6 +23,8 @@ export interface DataSource {
   createTrip(trip: NewTrip): Promise<Trip>;
   getTripData(tripId: string): Promise<TripData | null>;
   listDocuments(): Promise<TravelDocument[]>;
+  saveDocument(document: DocumentInput): Promise<TravelDocument>;
+  deleteDocument(id: string): Promise<void>;
   saveItineraryItem(item: ItineraryItem): Promise<ItineraryItem>;
   deleteItineraryItem(id: string): Promise<void>;
   saveBucketItem(item: BucketItem): Promise<BucketItem>;
@@ -82,6 +85,17 @@ export function createDemoSource(snapshot: DataSnapshot, name = 'demo'): DataSou
     },
     async listDocuments() {
       return copy(db.documents);
+    },
+    async saveDocument(input) {
+      const document: TravelDocument = {
+        ...copy(input),
+        id: input.id ?? `document-${Date.now().toString(36)}-${db.documents.length}`,
+      };
+      db = { ...db, documents: upsert(db.documents, document) };
+      return copy(document);
+    },
+    async deleteDocument(id) {
+      db = { ...db, documents: db.documents.filter((d) => d.id !== id) };
     },
     async saveItineraryItem(item) {
       db = { ...db, items: upsert(db.items, copy(item)) };

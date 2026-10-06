@@ -36,6 +36,14 @@ const vegasFreeSaturday: DataSnapshot = {
   items: vegasSnapshot.items.filter((item) => item.day !== '2026-11-14'),
 };
 
+/** The sample passport expiring Aug 15, 2027: fine for Las Vegas and Cape Town, not for Tokyo. */
+const vegasPassportExpiring: DataSnapshot = {
+  ...vegasSnapshot,
+  documents: vegasSnapshot.documents.map((d) =>
+    d.type === 'passport' ? { ...d, number: '567 890 123', expiresOn: '2027-08-15' } : d,
+  ),
+};
+
 /**
  * The Vegas trip with a boarding pass added to AA 2410: a synthetic sample image (it encodes
  * nothing) with the code area marked, also standing in as the booking's original file.
@@ -111,6 +119,13 @@ export const SCENARIOS: readonly Scenario[] = [
   vegas({
     name: 'vegas-wallet',
     description: 'Organize tab, Wallet: flights, hotel, car, UFC ticket, passport.',
+    tab: 'organize',
+    view: { organizeView: 'wallet' },
+  }),
+  vegas({
+    name: 'vegas-passport-expiring',
+    data: vegasPassportExpiring,
+    description: 'Organize tab, Wallet: the passport expires Aug 2027, too soon for Tokyo.',
     tab: 'organize',
     view: { organizeView: 'wallet' },
   }),

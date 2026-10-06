@@ -515,8 +515,9 @@ export const documents: TravelDocument[] = [
     id: 'document-passport',
     type: 'passport',
     country: 'United States',
+    number: null,
     expiresOn: '2034-06-30',
-    imagePath: null,
+    imagePaths: [],
   },
 ];
 

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { screenPadding, spacing } from '@/theme';
-import { Chip, Skeleton, Text } from '@/ui';
+import { Button, Chip, Skeleton, Text } from '@/ui';
 
 import { walletDetailHref, WalletEntryCard } from './cards/registry';
 import { useWallet } from './useWallet';
@@ -59,6 +59,15 @@ export function WalletList() {
             />
           ))
         )}
+        {filter === 'document' && !isLoading ? (
+          <Button
+            label="Add passport or visa"
+            variant="secondary"
+            icon="plus"
+            onPress={() => router.push('/organize/document/new')}
+            testID="wallet-add-document"
+          />
+        ) : null}
       </ScrollView>
     </View>
   );

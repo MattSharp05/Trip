@@ -29,8 +29,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Trip opens your photos when you add a boarding pass, so it can show the pass's code.",
-          "cameraPermission": false,
+          "photosPermission": "Trip opens your photos when you add a boarding pass or a passport or visa photo.",
+          "cameraPermission": "Trip uses the camera when you take a photo of your passport or visa.",
           "microphonePermission": false
         }
       ]
