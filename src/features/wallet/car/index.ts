@@ -1,0 +1,1 @@
+export { CarDetail } from './CarDetail';

@@ -2,6 +2,7 @@ import { act, fireEvent, renderRouter, screen, waitFor, within } from 'expo-rout
 
 import OrganizeLayout from '../app/(tabs)/organize/_layout';
 import OrganizeRoute from '../app/(tabs)/organize/index';
+import HotelRoute from '../app/(tabs)/organize/hotel/[id]';
 import WalletItemRoute from '../app/(tabs)/organize/item/[id]';
 import { exitScenario, loadScenario } from '@/scenarios';
 import { useTripStore } from '@/stores/trip';
@@ -10,10 +11,14 @@ jest.mock('@/services/supabase', () => ({
   supabase: { auth: require('@/features/auth/testing').fakeAuth },
 }));
 
+// The hotel screen looks for a photo; no Unsplash key yet, so the function finds none.
+jest.mock('@/services/photos', () => ({ findCoverPhoto: async () => null }));
+
 const routes = {
   '(tabs)/organize/_layout': OrganizeLayout,
   '(tabs)/organize/index': OrganizeRoute,
   '(tabs)/organize/item/[id]': WalletItemRoute,
+  '(tabs)/organize/hotel/[id]': HotelRoute,
 };
 
 const VEGAS_ORDER = [
@@ -93,13 +98,12 @@ describe('Organize → Wallet', () => {
     expect(screen.queryByLabelText(/add/i)).toBeNull();
   });
 
-  it('opens the generic detail for a card', async () => {
+  it("opens a card's own detail screen", async () => {
     const router = await openWallet();
     fireEvent.press(screen.getByTestId('wallet-card-booking-hotel'));
     await act(async () => {});
-    expect(router.getPathname()).toBe('/organize/item/booking-hotel');
-    expect(await screen.findByText('Confirmation')).toBeOnTheScreen();
-    expect(screen.getByText('837282')).toBeOnTheScreen();
+    expect(router.getPathname()).toBe('/organize/hotel/booking-hotel');
+    expect(await screen.findByText('837282')).toBeOnTheScreen();
   });
 
   it('opens on Budget when the scenario asks for it', async () => {
