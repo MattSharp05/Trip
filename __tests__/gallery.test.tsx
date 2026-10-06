@@ -7,7 +7,14 @@ import PlanScreen from '../app/(tabs)/plan/index';
 import TripsScreen from '../app/(tabs)/trips/index';
 import GalleryScreen from '../app/dev/gallery';
 import RootLayout from '../app/_layout';
+import { resetFakeAuth, testSession } from '@/features/auth/testing';
 import Index from '../app/index';
+
+jest.mock('@/services/supabase', () => ({
+  supabase: { auth: require('@/features/auth/testing').fakeAuth },
+}));
+
+beforeEach(() => resetFakeAuth(testSession));
 
 const routes = {
   _layout: RootLayout,

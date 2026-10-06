@@ -5,6 +5,13 @@ import TripsScreen from '../app/(tabs)/trips/index';
 import GalleryScreen from '../app/dev/gallery';
 import MapSpikeScreen from '../app/dev/map-spike';
 import RootLayout from '../app/_layout';
+import { resetFakeAuth, testSession } from '@/features/auth/testing';
+
+jest.mock('@/services/supabase', () => ({
+  supabase: { auth: require('@/features/auth/testing').fakeAuth },
+}));
+
+beforeEach(() => resetFakeAuth(testSession));
 
 // Native maps don't render in Jest: stand-ins that record camera calls and expose marker presses.
 const mockCamera: unknown[] = [];
