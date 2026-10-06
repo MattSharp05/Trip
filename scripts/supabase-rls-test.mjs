@@ -72,7 +72,11 @@ try {
       kind: 'place',
       place_id: place.id,
     }),
-    documents: await insertOne(a.client, 'documents', { type: 'passport' }),
+    documents: await insertOne(a.client, 'documents', {
+      type: 'passport',
+      number: 'X1234567',
+      image_paths: [`${a.id}/documents/rls-test.jpg`],
+    }),
     bucket_items: await insertOne(a.client, 'bucket_items', { trip_id: trip.id }),
     expenses: await insertOne(a.client, 'expenses', {
       trip_id: trip.id,
@@ -121,6 +125,13 @@ try {
     check(`${table}: anonymous can't insert`, Boolean(anonInsert.error));
   }
 
+  // TR-20: a passport's number and photo paths stay with their owner.
+  const passport = await b.client
+    .from('documents')
+    .select('number, image_paths')
+    .eq('id', rows.documents.id);
+  check("documents: other user can't read number or photos", !passport.data?.length);
+
   const still = await a.client.from('trips').select('id').eq('id', trip.id);
   check('trips: row survives the other user', still.data?.length === 1);
 
@@ -140,29 +151,45 @@ try {
   });
   check("other user can't attach rows to the owner's trip", Boolean(attach.error));
 
-  for (const bucket of ['originals', 'photos']) {
-    const path = `${a.id}/rls-test.txt`;
+  for (const [bucket, path] of [
+    ['originals', `${a.id}/rls-test.txt`],
+    ['originals', `${a.id}/documents/rls-test.txt`],
+    ['photos', `${a.id}/rls-test.txt`],
+  ]) {
     const up = await a.client.storage
       .from(bucket)
       .upload(path, 'secret', { contentType: 'text/plain' });
-    check(`${bucket}: owner uploads under <uid>/`, !up.error, up.error?.message);
+    check(
+      `${bucket} ${path.slice(a.id.length)}: owner uploads under <uid>/`,
+      !up.error,
+      up.error?.message,
+    );
     if (!up.error) files.push({ bucket, path, client: a.client });
 
     const down = await b.client.storage.from(bucket).download(path);
-    check(`${bucket}: other user can't download`, Boolean(down.error));
+    check(`${bucket} ${path.slice(a.id.length)}: other user can't download`, Boolean(down.error));
 
     const anonDown = await anonymous.storage.from(bucket).download(path);
-    check(`${bucket}: anonymous can't download`, Boolean(anonDown.error));
+    check(
+      `${bucket} ${path.slice(a.id.length)}: anonymous can't download`,
+      Boolean(anonDown.error),
+    );
 
     const intrude = await b.client.storage
       .from(bucket)
       .upload(`${a.id}/intruder.txt`, 'x', { contentType: 'text/plain' });
-    check(`${bucket}: other user can't upload into owner's folder`, Boolean(intrude.error));
+    check(
+      `${bucket} ${path.slice(a.id.length)}: other user can't upload into owner's folder`,
+      Boolean(intrude.error),
+    );
     if (!intrude.error) files.push({ bucket, path: `${a.id}/intruder.txt`, client: admin });
 
     const remove = await b.client.storage.from(bucket).remove([path]);
     const kept = await a.client.storage.from(bucket).download(path);
-    check(`${bucket}: other user can't delete`, !remove.data?.length && !kept.error);
+    check(
+      `${bucket} ${path.slice(a.id.length)}: other user can't delete`,
+      !remove.data?.length && !kept.error,
+    );
   }
 } catch (error) {
   check('setup', false, error instanceof Error ? error.message : String(error));

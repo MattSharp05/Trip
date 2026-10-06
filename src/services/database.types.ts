@@ -117,6 +117,8 @@ export type Database = {
           expires_on: string | null;
           id: string;
           image_path: string | null;
+          image_paths: string[];
+          number: string | null;
           type: string;
           updated_at: string;
           user_id: string;
@@ -127,6 +129,8 @@ export type Database = {
           expires_on?: string | null;
           id?: string;
           image_path?: string | null;
+          image_paths?: string[];
+          number?: string | null;
           type: string;
           updated_at?: string;
           user_id?: string;
@@ -137,6 +141,8 @@ export type Database = {
           expires_on?: string | null;
           id?: string;
           image_path?: string | null;
+          image_paths?: string[];
+          number?: string | null;
           type?: string;
           updated_at?: string;
           user_id?: string;
