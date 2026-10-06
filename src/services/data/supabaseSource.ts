@@ -295,4 +295,19 @@ export const supabaseSource: DataSource = {
     );
     return toTrip(row);
   },
+  async saveBooking(booking) {
+    const supabase = client();
+    const row = checkRow(
+      await supabase
+        .from('bookings')
+        .update({
+          data: JSON.parse(JSON.stringify(booking.data)),
+          original_path: booking.originalPath,
+        })
+        .eq('id', booking.id)
+        .select()
+        .single(),
+    );
+    return toBooking(row);
+  },
 };

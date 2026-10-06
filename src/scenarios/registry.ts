@@ -44,6 +44,28 @@ const vegasPassportExpiring: DataSnapshot = {
   ),
 };
 
+/**
+ * The Vegas trip with a boarding pass added to AA 2410: a synthetic sample image (it encodes
+ * nothing) with the code area marked, also standing in as the booking's original file.
+ */
+const PASS = 'fixture:boarding-pass-aa2410';
+const vegasBoardingPass: DataSnapshot = {
+  ...vegasSnapshot,
+  bookings: vegasSnapshot.bookings.map((b) =>
+    b.id === 'booking-flight-out' && b.type === 'flight'
+      ? {
+          ...b,
+          originalPath: PASS,
+          data: {
+            ...b.data,
+            passImage: { uri: PASS, width: 750, height: 1334 },
+            passCrop: { x: 0.193, y: 0.547, width: 0.614, height: 0.345 },
+          },
+        }
+      : b,
+  ),
+};
+
 const vegas = (
   s: Omit<Scenario, 'data' | 'tripId' | 'today'> & { today?: string; data?: DataSnapshot },
 ): Scenario => ({
@@ -104,6 +126,13 @@ export const SCENARIOS: readonly Scenario[] = [
     name: 'vegas-passport-expiring',
     data: vegasPassportExpiring,
     description: 'Organize tab, Wallet: the passport expires Aug 2027, too soon for Tokyo.',
+    tab: 'organize',
+    view: { organizeView: 'wallet' },
+  }),
+  vegas({
+    name: 'vegas-boarding-pass',
+    data: vegasBoardingPass,
+    description: 'Organize tab, Wallet: AA 2410 has a boarding pass image and its original.',
     tab: 'organize',
     view: { organizeView: 'wallet' },
   }),

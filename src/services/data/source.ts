@@ -1,4 +1,5 @@
 import type {
+  Booking,
   BucketItem,
   DataSnapshot,
   DocumentInput,
@@ -32,6 +33,8 @@ export interface DataSource {
   saveExpense(expense: Expense): Promise<Expense>;
   /** Set (or clear, with null) a trip's total budget. */
   saveTripBudget(tripId: string, budget: Money | null): Promise<Trip>;
+  /** Updates an existing booking's JSON data and original file (e.g. a boarding pass crop). */
+  saveBooking(booking: Booking): Promise<Booking>;
 }
 
 const byStart = (a: Trip, b: Trip) => a.startDate.localeCompare(b.startDate);
@@ -121,6 +124,11 @@ export function createDemoSource(snapshot: DataSnapshot, name = 'demo'): DataSou
       const next: Trip = { ...trip, budget: budget ? copy(budget) : null };
       db = { ...db, trips: upsert(db.trips, next) };
       return copy(next);
+    },
+    async saveBooking(booking) {
+      if (!db.bookings.some((b) => b.id === booking.id)) throw new Error('Booking not found');
+      db = { ...db, bookings: upsert(db.bookings, copy(booking)) };
+      return copy(booking);
     },
   };
 }

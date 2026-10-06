@@ -95,6 +95,28 @@ export interface FlightData {
   cabin: string | null;
   confirmation: string;
   passenger: string;
+  /** A picture of the boarding pass the user added. Kept in the booking's JSON, not a column. */
+  passImage?: PassImage | null;
+  /** Where the barcode sits on `passImage`, as fractions of its size. */
+  passCrop?: PassCrop | null;
+}
+
+/**
+ * An image file and its pixel size. `uri` is a file URI from the photo picker, or `fixture:<name>`
+ * for a scenario's bundled sample.
+ */
+export interface PassImage {
+  uri: string;
+  width: number;
+  height: number;
+}
+
+/** A rectangle on an image, each value a fraction (0–1) of the image's width or height. */
+export interface PassCrop {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 export interface HotelData {
@@ -133,7 +155,10 @@ export interface TicketData {
 interface BookingBase {
   id: string;
   tripId: string;
-  /** Storage path of the original file (PDF, screenshot), if one was imported. */
+  /**
+   * Storage path of the original file (PDF, screenshot), if one was imported; `fixture:<name>` for
+   * a scenario's bundled sample.
+   */
   originalPath: string | null;
 }
 

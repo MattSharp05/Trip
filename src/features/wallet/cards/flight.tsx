@@ -21,4 +21,5 @@ function FlightCard({ entry, onPress }: WalletCardRendererProps<'flight'>) {
 export const flightCard: WalletCardDef<'flight'> = {
   label: () => 'Flight',
   Card: FlightCard,
+  detailHref: (id) => `/organize/flight/${encodeURIComponent(id)}`,
 };

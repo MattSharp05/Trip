@@ -195,6 +195,23 @@ describe('supabase source', () => {
     });
   });
 
+  it('saves a booking by updating its JSON data and original path', async () => {
+    const data = { confirmation: 'KXJ4PL', passCrop: { x: 0.1, y: 0.5, width: 0.6, height: 0.3 } };
+    mockTables.bookings = {
+      data: { id: 'b1', trip_id: 't1', type: 'flight', original_path: null, data },
+      error: null,
+    };
+    const saved = await supabaseSource.saveBooking({
+      id: 'b1',
+      tripId: 't1',
+      originalPath: null,
+      type: 'flight',
+      data: data as never,
+    });
+    expect(mockUpdates.at(-1)).toEqual({ data, original_path: null });
+    expect(saved).toMatchObject({ id: 'b1', type: 'flight', data });
+  });
+
   it('throws the query error', async () => {
     mockTables.documents = { data: null, error: { message: 'JWT expired' } };
     await expect(supabaseSource.listDocuments()).rejects.toThrow('JWT expired');

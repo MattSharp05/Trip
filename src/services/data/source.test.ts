@@ -63,6 +63,21 @@ describe('demo source', () => {
     await expect(source.saveTripBudget('nope', null)).rejects.toThrow();
   });
 
+  it('saves a booking in memory and refuses an unknown one', async () => {
+    const source = createDemoSource(vegasSnapshot);
+    const flight = (await source.getTripData('trip-vegas'))!.bookings.find(
+      (b) => b.id === 'booking-flight-out',
+    )!;
+    if (flight.type !== 'flight') throw new Error('expected a flight');
+    const passCrop = { x: 0.2, y: 0.5, width: 0.6, height: 0.3 };
+    await source.saveBooking({ ...flight, data: { ...flight.data, passCrop } });
+    const saved = (await source.getTripData('trip-vegas'))!.bookings.find(
+      (b) => b.id === flight.id,
+    );
+    expect(saved?.data).toMatchObject({ gate: 'E75', passCrop });
+    await expect(source.saveBooking({ ...flight, id: 'nope' })).rejects.toThrow('not found');
+  });
+
   it('returns copies, so callers cannot change stored data', async () => {
     const source = createDemoSource(vegasSnapshot);
     (await source.listTrips())[0].city = 'Changed';
