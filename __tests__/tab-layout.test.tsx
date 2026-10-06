@@ -3,6 +3,7 @@ import { renderRouter, screen } from 'expo-router/testing-library';
 import TabLayout from '../app/(tabs)/_layout';
 import RootLayout from '../app/_layout';
 import Index from '../app/index';
+import GalleryScreen from '../app/dev/gallery';
 import DiscoverScreen from '../app/(tabs)/discover/index';
 import OrganizeScreen from '../app/(tabs)/organize/index';
 import PlanScreen from '../app/(tabs)/plan/index';
@@ -19,6 +20,7 @@ describe('tab layout', () => {
         '(tabs)/plan/index': PlanScreen,
         '(tabs)/organize/index': OrganizeScreen,
         '(tabs)/discover/index': DiscoverScreen,
+        'dev/gallery': GalleryScreen,
       },
       { initialUrl: '/' },
     );
