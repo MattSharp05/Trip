@@ -22,8 +22,8 @@ tags:
       id: itinerary-list
     timeout: 30000
 
-# Friday's four stops, in order.
-- assertVisible: '10:00 AM'
+# Friday's four stops, in order. Times use a narrow no-break space before AM/PM (iOS), so '.'.
+- assertVisible: '10:00.AM'
 - assertVisible: 'Brunch at Mon Ami Gabi'
 - assertVisible: 'Bellagio Fountains'
 - assertVisible: 'Sphere Experience'
