@@ -2,8 +2,8 @@ name: CI
 
 # Two levels (TDD → CI pipeline, ADR 0005):
 # - PR gate: lint + typecheck + expo-doctor, and Jest, in parallel; skipped for docs-only PRs.
-# - Push to main: the same checks on the full suite, then (when supabase/** changed) the Supabase
-#   migrations + RLS test, then an EAS Update to branch `main`, which the `main` channel serves to
+# - Push to main: the same checks on the full suite, then the Supabase migrations (a no-op unless
+#   one is new; plus the RLS test when supabase/** changed), then an EAS Update to branch `main`, which the `main` channel serves to
 #   Expo Go (the QA link in CLAUDE.md).
 
 on:
@@ -78,9 +78,9 @@ jobs:
   supabase:
     name: Supabase migrations + RLS test
     needs: [changes, check, test]
-    if: >-
-      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
-      needs.changes.outputs.supabase == 'true'
+    # Apply runs on every push (a no-op when nothing is new), so a failed apply is retried by the
+    # next push instead of an update shipping against an old schema.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
@@ -105,6 +105,7 @@ jobs:
       - name: Apply migrations and auth config
         run: node scripts/supabase-apply.mjs
       - name: RLS test (two throwaway users)
+        if: needs.changes.outputs.supabase == 'true'
         run: node scripts/supabase-rls-test.mjs
 
   update:
@@ -114,7 +115,7 @@ jobs:
     if: >-
       !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' &&
       needs.check.result == 'success' && needs.test.result == 'success' &&
-      needs.supabase.result != 'failure'
+      needs.supabase.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

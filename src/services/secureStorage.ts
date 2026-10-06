@@ -1,8 +1,9 @@
 import * as SecureStore from 'expo-secure-store';
 
-// SecureStore warns above ~2 KB per value and a Supabase session (two JWTs plus the user) is
+// SecureStore warns above 2048 bytes per value and a Supabase session (two JWTs plus the user) is
 // bigger, so each value is split into chunks under `<key>.<i>` with the chunk count at `<key>`.
-const CHUNK_SIZE = 1800;
+// 600 UTF-16 units stay under 2048 bytes even if every character takes 3 bytes in UTF-8.
+const CHUNK_SIZE = 600;
 
 // SecureStore keys allow only [A-Za-z0-9._-]; supabase-js uses keys like `sb-<ref>-auth-token`.
 function safeKey(key: string): string {

@@ -18,6 +18,8 @@ const { anon, service_role: serviceRole } = await apiKeys();
 const options = { auth: { persistSession: false, autoRefreshToken: false } };
 const admin = createClient(url, serviceRole, options);
 
+const users = [];
+const files = [];
 let failures = 0;
 function check(label, ok, detail = '') {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${ok || !detail ? '' : ` — ${detail}`}`);
@@ -33,6 +35,7 @@ async function newUser() {
     email_confirm: true,
   });
   if (error) throw error;
+  users.push({ id: data.user.id });
   const client = createClient(url, anon, options);
   const signIn = await client.auth.signInWithPassword({ email, password });
   if (signIn.error) throw signIn.error;
@@ -45,13 +48,9 @@ async function insertOne(client, table, row) {
   return data;
 }
 
-const users = [];
-const files = [];
 try {
   const a = await newUser();
-  users.push(a);
   const b = await newUser();
-  users.push(b);
   const anonymous = createClient(url, anon, options);
 
   // User A: one row in every table.
@@ -103,6 +102,23 @@ try {
 
     const anonRead = await anonymous.from(table).select('id').eq('id', row.id);
     check(`${table}: anonymous can't read`, !anonRead.data?.length);
+
+    const anonUpdate = await anonymous
+      .from(table)
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', row.id)
+      .select('id');
+    check(`${table}: anonymous can't update`, !anonUpdate.data?.length);
+
+    const anonDelete = await anonymous.from(table).delete().eq('id', row.id).select('id');
+    check(`${table}: anonymous can't delete`, !anonDelete.data?.length);
+
+    // A copy of A's row claiming A's user_id: only RLS can stop it.
+    const copy = Object.fromEntries(
+      Object.entries(row).filter(([key]) => !['id', 'created_at', 'updated_at'].includes(key)),
+    );
+    const anonInsert = await anonymous.from(table).insert(copy);
+    check(`${table}: anonymous can't insert`, Boolean(anonInsert.error));
   }
 
   const still = await a.client.from('trips').select('id').eq('id', trip.id);
