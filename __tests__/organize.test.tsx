@@ -6,6 +6,10 @@ import WalletItemRoute from '../app/(tabs)/organize/item/[id]';
 import { exitScenario, loadScenario } from '@/scenarios';
 import { useTripStore } from '@/stores/trip';
 
+jest.mock('@/services/supabase', () => ({
+  supabase: { auth: require('@/features/auth/testing').fakeAuth },
+}));
+
 const routes = {
   '(tabs)/organize/_layout': OrganizeLayout,
   '(tabs)/organize/index': OrganizeRoute,

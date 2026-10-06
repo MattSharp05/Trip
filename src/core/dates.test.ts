@@ -5,6 +5,7 @@ import {
   dayLabelLong,
   dayOfMonth,
   daysBetween,
+  instantIn,
   shiftDay,
   timeLabel,
   tripDays,
@@ -60,5 +61,15 @@ describe('dates', () => {
     expect(timeLabel('15:00')).toBe('3:00 PM');
     expect(timeLabel('00:05')).toBe('12:05 AM');
     expect(timeLabel('12:00')).toBe('12:00 PM');
+  });
+
+  it('turns a wall-clock time in a timezone into an instant', () => {
+    expect(instantIn('America/Los_Angeles', '2026-11-13', '12:00')).toBe(
+      '2026-11-13T20:00:00.000Z',
+    );
+    expect(instantIn('Asia/Tokyo', '2026-11-13', '12:00')).toBe('2026-11-13T03:00:00.000Z');
+    expect(dayIn('Asia/Tokyo', new Date(instantIn('Asia/Tokyo', '2026-11-13', '12:00')))).toBe(
+      '2026-11-13',
+    );
   });
 });
