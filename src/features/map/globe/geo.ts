@@ -1,14 +1,11 @@
-import type { LngLat } from './types';
-
-/** react-native-maps coordinates. */
-export const latLng = ({ lat, lng }: LngLat) => ({ latitude: lat, longitude: lng });
+import type { LngLat } from '../types';
 
 const rad = (deg: number) => (deg * Math.PI) / 180;
 const deg = (r: number) => (r * 180) / Math.PI;
 
 /**
  * Points along the great circle from `a` to `b` (spherical interpolation), endpoints included.
- * Flight arcs on both the MapLibre globe and Apple Maps are drawn from these.
+ * The globe's flight arc is drawn from these.
  */
 export function greatCircle(a: LngLat, b: LngLat, segments = 64): LngLat[] {
   const [φ1, λ1, φ2, λ2] = [rad(a.lat), rad(a.lng), rad(b.lat), rad(b.lng)];

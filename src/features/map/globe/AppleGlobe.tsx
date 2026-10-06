@@ -5,13 +5,14 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import { mapColors } from '@/theme';
 import { Icon } from '@/ui';
 
-import { along, greatCircle, latLng } from './geo';
-import type { LngLat } from './types';
-import { flight, planeTiming } from './vegasDay';
+import { latLng } from '../bounds';
+import type { LngLat } from '../types';
+import { along, greatCircle } from './geo';
+import { flight, planeTiming } from './sample';
 
 /**
- * Apple Maps' own globe (satellite flyover zoomed out) with the same arc and a plane moved from JS,
- * for comparison with the MapLibre globe.
+ * Apple Maps' own globe (satellite flyover zoomed out) with the flight's great-circle arc and a
+ * plane moved from JS. Built in the TR-5 spike (ADR 0002); TR-16 turns it into the Trips globe.
  */
 export function AppleGlobe({ onReady }: { onReady: () => void }) {
   const arc = useMemo(() => greatCircle(flight.from, flight.to), []);

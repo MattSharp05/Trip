@@ -27,8 +27,6 @@ const routes = {
   'dev/index': DevIndexScreen,
   'dev/gallery': GalleryScreen,
   'scenario/[name]': ScenarioRoute,
-  // Native maps don't render in Jest; the index only links to it.
-  'dev/map-spike': () => null,
 };
 
 describe('scenario deep links', () => {
@@ -83,7 +81,7 @@ describe('/dev index', () => {
       expect(await screen.findByText(name)).toBeOnTheScreen();
     }
     expect(screen.getByText('Design gallery')).toBeOnTheScreen();
-    expect(screen.getByText('Map spike')).toBeOnTheScreen();
+    expect(screen.queryByText('Map spike')).toBeNull();
   });
 
   it('loads a scenario when tapped', async () => {
