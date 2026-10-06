@@ -1,5 +1,7 @@
 import type { SFSymbol } from 'expo-symbols';
 
+import { colors } from '@/theme/colors';
+
 export type TabName = 'trips' | 'plan' | 'organize' | 'discover';
 
 export interface TabDefinition {
@@ -17,7 +19,7 @@ export const TABS: readonly TabDefinition[] = [
 ];
 
 /** Tint for the selected tab (design.md accent). */
-export const TAB_TINT = '#FF6B22';
+export const TAB_TINT = colors.accent;
 
 export function tabTitle(name: TabName): string {
   const tab = TABS.find((t) => t.name === name);
