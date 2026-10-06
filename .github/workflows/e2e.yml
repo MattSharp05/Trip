@@ -11,7 +11,7 @@ name: E2E
 
 on:
   push:
-    branches: [main]
+    branches: [main, tr-8/maestro-e2e] # TEMP (TR-8 verification): branch trigger removed before review
   workflow_dispatch:
 
 concurrency:
