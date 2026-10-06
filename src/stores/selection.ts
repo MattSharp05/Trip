@@ -29,8 +29,11 @@ interface SelectionState {
   picks: number;
   /** The sheet's segment: the day's itinerary or the trip's Bucket List. */
   planMode: PlanMode;
-  /** Start a trip's selection on its opening day (see `openingDay`). */
-  initForTrip: (trip: SelectionTrip) => void;
+  /**
+   * Start a trip's selection on its opening day (see `openingDay`). `view` defaults to the loaded
+   * scenario's; the trip switcher passes `{}` so a chosen trip opens on its own first day or today.
+   */
+  initForTrip: (trip: SelectionTrip, view?: ScenarioView) => void;
   selectDay: (day: string) => void;
   /**
    * Pick an item (null clears it). `day` moves to the item's day first, for a pin of another day.
@@ -65,8 +68,7 @@ const CLEARED = {
 export const useSelectionStore = create<SelectionState>()((set) => ({
   ...CLEARED,
   picks: 0,
-  initForTrip: (trip) => {
-    const { view } = useScenarioStore.getState();
+  initForTrip: (trip, view = useScenarioStore.getState().view) => {
     set({
       tripId: trip.id,
       selectedDay: openingDay(trip, view, now()),
