@@ -1,5 +1,5 @@
 # Technical Design — Trip
-Status: Draft · PRD: https://app.notion.com/p/3f124983f3ca81b4be8dd2226fdb12a1 · Design: [`design.md`](design.md)
+Status: Approved 2026-10-06 · PRD: https://app.notion.com/p/3f124983f3ca81b4be8dd2226fdb12a1 · Design: [`design.md`](design.md)
 
 Hard constraints from the PRD: iPhone only, **$0 running cost**, and everything must run in
 **Expo Go** during the demo phase (no paid Apple account, no Mac, no custom native code).
