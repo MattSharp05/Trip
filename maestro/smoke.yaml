@@ -1,0 +1,26 @@
+# Smoke: the e2e build launches signed out on the welcome screen, and a scenario link opens the
+# app with its four tabs. Runs on every e2e run (TR-8). APP_ID defaults to the EAS simulator
+# build; for Expo Go pass -e APP_ID=host.exp.Exponent -e LINK=<the Expo Go scenario link>.
+appId: ${APP_ID}
+env:
+  APP_ID: com.mattsharp05.trip
+  LINK: trip://scenario/vegas-trips
+tags:
+  - smoke
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: 'Continue with email'
+    timeout: 60000
+- takeScreenshot: smoke-1-welcome
+- openLink: ${LINK}
+- extendedWaitUntil:
+    visible:
+      id: trip-card-trip-vegas
+    timeout: 30000
+- assertVisible: 'Trips'
+- assertVisible: 'Plan'
+- assertVisible: 'Organize'
+- assertVisible: 'Discover'
+- takeScreenshot: smoke-2-tabs

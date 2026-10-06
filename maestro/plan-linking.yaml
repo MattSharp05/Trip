@@ -1,12 +1,12 @@
 # TR-17: the Plan screen's itinerary and map, linked both ways, on vegas-plan-day-2.
-# Runs on EAS (iOS simulator) once TR-8 sets up the Maestro job; until then it is run by hand:
-#   maestro test maestro/plan-linking.yaml
-# APP_ID and LINK default to Expo Go and the main channel's scenario link; the EAS job overrides
-# them for its simulator build (LINK=trip://scenario/vegas-plan-day-2).
+# Runs on every e2e run (TR-8) on the EAS simulator build. In Expo Go by hand:
+#   maestro test -e APP_ID=host.exp.Exponent \
+#     -e LINK='exp://u.expo.dev/0458c1dd-61a0-47f7-ac52-c648b4458fea/--/scenario/vegas-plan-day-2?runtime-version=exposdk:57.0.0&channel-name=main' \
+#     maestro/plan-linking.yaml
 appId: ${APP_ID}
 env:
-  APP_ID: host.exp.Exponent
-  LINK: exp://u.expo.dev/0458c1dd-61a0-47f7-ac52-c648b4458fea/--/scenario/vegas-plan-day-2?runtime-version=exposdk:57.0.0&channel-name=main
+  APP_ID: com.mattsharp05.trip
+  LINK: trip://scenario/vegas-plan-day-2
 tags:
   - plan
   - checkpoint

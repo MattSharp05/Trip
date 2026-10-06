@@ -2,5 +2,18 @@
   "cli": {
     "version": ">= 16.0.0",
     "appVersionSource": "remote"
+  },
+  "build": {
+    "e2e": {
+      "environment": "preview",
+      "distribution": "internal",
+      "developmentClient": false,
+      "ios": {
+        "simulator": true
+      },
+      "env": {
+        "EXPO_PUBLIC_SCENARIOS": "1"
+      }
+    }
   }
 }

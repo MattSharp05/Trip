@@ -1,0 +1,20 @@
+# Opens one scenario by name, waits for its screen and takes a screenshot named after it: the QA
+# picture for a ticket. The e2e workflow runs it through the files in maestro/shots/ (one per
+# scenario). By hand: maestro test -e SCENARIO=vegas-wallet -e READY_ID=<testID> maestro/scenario.yaml
+appId: ${APP_ID}
+env:
+  APP_ID: com.mattsharp05.trip
+  SCENARIO: vegas-plan-day-2
+  # A testID that is on screen once the scenario has loaded.
+  READY_ID: itinerary-list
+---
+- launchApp
+- openLink: trip://scenario/${SCENARIO}
+- extendedWaitUntil:
+    visible:
+      id: ${READY_ID}
+    timeout: 30000
+# Let maps and photos settle before the picture.
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: ${SCENARIO}

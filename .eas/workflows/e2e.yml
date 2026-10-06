@@ -1,0 +1,51 @@
+# On-device flows (TR-8, ADR 0005, ADR 0015): Maestro on an iOS simulator build of the `e2e`
+# profile. Started by .github/workflows/e2e.yml (`eas workflow:run`), or by hand with
+#   npx eas-cli workflow:run .eas/workflows/e2e.yml --ref main
+# The native build is reused while the iOS fingerprint is unchanged: only the JS bundle is
+# repacked onto it. A new fingerprint (native dependency or app config change) builds once.
+# Screenshots land in the maestro job's "Maestro Test Results" artifact (scripts/qa-shots.mjs).
+name: e2e
+
+jobs:
+  fingerprint:
+    name: Fingerprint
+    type: fingerprint
+    environment: preview
+
+  get_build:
+    name: Find a build with this fingerprint
+    needs: [fingerprint]
+    type: get-build
+    params:
+      platform: ios
+      profile: e2e
+      simulator: true
+      fingerprint_hash: ${{ needs.fingerprint.outputs.ios_fingerprint_hash }}
+      wait_for_in_progress: true
+
+  repack:
+    name: Repack the JS onto it
+    needs: [get_build]
+    if: ${{ needs.get_build.outputs.build_id }}
+    type: repack
+    params:
+      build_id: ${{ needs.get_build.outputs.build_id }}
+      profile: e2e
+
+  build:
+    name: Build (native change)
+    needs: [get_build]
+    if: ${{ !needs.get_build.outputs.build_id }}
+    type: build
+    params:
+      platform: ios
+      profile: e2e
+
+  maestro:
+    name: Maestro flows
+    after: [repack, build]
+    type: maestro
+    environment: preview
+    params:
+      build_id: ${{ needs.repack.outputs.build_id || needs.build.outputs.build_id }}
+      flow_path: ['maestro/smoke.yaml', 'maestro/shots', 'maestro/plan-linking.yaml']
