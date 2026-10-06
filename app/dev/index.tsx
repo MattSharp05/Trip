@@ -2,7 +2,11 @@ import { Redirect, useRouter, type Href } from 'expo-router';
 import { ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { loadScenario, SCENARIOS, scenariosEnabled, TAB_HREF } from '@/scenarios';
+import { now } from '@/core/clock';
+import { exitScenario, loadScenario, SCENARIOS, scenariosEnabled, TAB_HREF } from '@/scenarios';
+import { useTripData, useTrips } from '@/services/data';
+import { useScenarioStore } from '@/stores/scenario';
+import { useTripStore } from '@/stores/trip';
 import { colors, screenPadding, spacing } from '@/theme';
 import { ListRow, Surface, Text } from '@/ui';
 
@@ -38,6 +42,8 @@ function DevIndex() {
         Developer
       </Text>
 
+      <Session />
+
       <Text variant="subhead" tone="secondary" style={styles.sectionTitle}>
         SCENARIOS
       </Text>
@@ -67,6 +73,40 @@ function DevIndex() {
         ))}
       </Surface>
     </ScrollView>
+  );
+}
+
+/** What's loaded now, so QA can check a scenario's data before the screens that show it exist. */
+function Session() {
+  const active = useScenarioStore((s) => s.active);
+  const tripId = useTripStore((s) => s.selectedTripId);
+  const trips = useTrips();
+  const trip = useTripData(tripId);
+  if (!active) return null;
+
+  const today = now().toLocaleString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: trip.data?.trip.timezone ?? 'America/Los_Angeles',
+  });
+  const summary = trip.data
+    ? `${trip.data.trip.city}: ${trip.data.items.length} plans, ${trip.data.bookings.length} bookings`
+    : 'No trip selected';
+
+  return (
+    <>
+      <Text variant="subhead" tone="secondary" style={styles.sectionTitle}>
+        DEMO SESSION
+      </Text>
+      <Surface padding="none" style={styles.card}>
+        <ListRow title={active} subtitle={`Today is ${today}`} separator />
+        <ListRow title={`${trips.data?.length ?? 0} trips`} subtitle={summary} separator />
+        <ListRow title="Exit demo session" onPress={exitScenario} />
+      </Surface>
+    </>
   );
 }
 

@@ -94,6 +94,19 @@ describe('/dev index', () => {
     expect(useScenarioStore.getState().view).toEqual({ organizeView: 'budget', currency: 'EUR' });
   });
 
+  it('shows the loaded demo session and exits it', async () => {
+    renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
+    await act(async () => {});
+    renderRouter(routes, { initialUrl: '/dev' });
+    expect(await screen.findByText('Today is Fri, Nov 13, 9:00 AM')).toBeOnTheScreen();
+    expect(await screen.findByText('4 trips')).toBeOnTheScreen();
+    expect(await screen.findByText('Las Vegas: 15 plans, 5 bookings')).toBeOnTheScreen();
+    fireEvent.press(screen.getByText('Exit demo session'));
+    await act(async () => {});
+    expect(useScenarioStore.getState().active).toBeNull();
+    expect(screen.queryByText('DEMO SESSION')).toBeNull();
+  });
+
   it('opens the design gallery', async () => {
     const router = renderRouter(routes, { initialUrl: '/dev' });
     fireEvent.press(await screen.findByText('Design gallery'));
