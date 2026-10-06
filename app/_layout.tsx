@@ -8,6 +8,7 @@ import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AuthProvider, useAuth } from '@/features/auth';
+import { useScenarioActive } from '@/scenarios';
 import { colors } from '@/theme';
 
 // Keep the splash screen up until the stored session has been read, so a signed-in user never sees
@@ -42,12 +43,13 @@ export default function RootLayout() {
 }
 
 /**
- * The auth gate: signed-in users get the tabs, signed-out users get Welcome. Developer screens
- * (`/dev/*`) and scenario links (`/scenario/*`, TR-6) are outside both guards so QA links open
- * either way.
+ * The auth gate: signed-in users get the tabs, signed-out users get Welcome. A loaded scenario's
+ * demo session (TR-6) also opens the tabs, so QA links work signed out. Developer screens (`/dev/*`)
+ * and scenario links (`/scenario/*`) are outside both guards.
  */
 function RootStack() {
   const auth = useAuth();
+  const scenarioActive = useScenarioActive();
   const signedIn = auth.status === 'signedIn';
 
   useEffect(() => {
@@ -60,10 +62,10 @@ function RootStack() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={signedIn}>
+      <Stack.Protected guard={signedIn || scenarioActive}>
         <Stack.Screen name="(tabs)" />
       </Stack.Protected>
-      <Stack.Protected guard={!signedIn}>
+      <Stack.Protected guard={!signedIn && !scenarioActive}>
         <Stack.Screen name="auth" />
       </Stack.Protected>
       <Stack.Screen

@@ -12,9 +12,11 @@ import Welcome from '../app/auth/index';
 import SignIn from '../app/auth/sign-in';
 import SignUp from '../app/auth/sign-up';
 import GalleryScreen from '../app/dev/gallery';
+import ScenarioRoute from '../app/scenario/[name]';
 import RootLayout from '../app/_layout';
 import Index from '../app/index';
 import { emitAuthChange, fakeAuth, resetFakeAuth, testSession } from '@/features/auth/testing';
+import { exitScenario } from '@/scenarios';
 
 jest.mock('@/services/supabase', () => ({
   supabase: { auth: require('@/features/auth/testing').fakeAuth },
@@ -34,6 +36,7 @@ const routes = {
   'auth/sign-in': SignIn,
   'auth/forgot-password': ForgotPassword,
   'dev/gallery': GalleryScreen,
+  'scenario/[name]': ScenarioRoute,
 };
 
 async function fill(email: string, password?: string) {
@@ -63,6 +66,17 @@ describe('auth gate', () => {
     expect(await screen.findByText('My Trips')).toBeOnTheScreen();
     expect(router.getPathname()).toBe('/dev/gallery');
     await act(async () => {});
+  });
+
+  it('lets a scenario link into the tabs while signed out, and back to Welcome on exit', async () => {
+    resetFakeAuth(null);
+    const router = renderRouter(routes, { initialUrl: '/scenario/empty-account' });
+    expect(await screen.findByRole('header', { name: 'Trips' })).toBeOnTheScreen();
+    expect(router.getPathname()).toBe('/trips');
+
+    act(() => exitScenario());
+    expect(await screen.findByRole('button', { name: 'Continue with email' })).toBeOnTheScreen();
+    expect(router.getPathname()).toBe('/auth');
   });
 
   it('signs up and lands on Trips', async () => {
