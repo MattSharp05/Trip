@@ -15,8 +15,13 @@ Follows the `dev-workflow` skill (ticket-driven: Notion → branch → PR → QA
 - Tickets data source: collection://3627b61b-ada0-45e8-a69e-2cb41034b942   (ID prefix: TR)
 - Epics data source: collection://863c0317-6a10-4e3d-a94d-4391a87359fa
 - GitHub: MattSharp05/Trip
-- Preview URLs: batched QA mode, so no per-PR previews. QA happens in Expo Go on the latest `main`
-  (EAS Update channel for `main`; link on the project page once Epic 0 sets it up).
+- Preview URLs: batched QA mode, so no per-PR previews. QA happens in Expo Go on the latest `main`.
+- QA link (latest `main` in Expo Go): `exp://u.expo.dev/0458c1dd-61a0-47f7-ac52-c648b4458fea?runtime-version=exposdk:57.0.0&channel-name=main`
+  (QR: https://qr.expo.dev/eas-update?slug=exp&projectId=0458c1dd-61a0-47f7-ac52-c648b4458fea&runtimeVersion=exposdk:57.0.0&channel=main,
+  or expo.dev → project `matthew` → Updates → branch `main`). Change `exposdk:57.0.0` on an SDK upgrade.
+- CI: `.github/workflows/ci.yml`. PRs: lint + format + typecheck + expo-doctor, and Jest (skipped
+  for docs-only PRs). Push to `main`: same checks, then `eas update --branch main` (needs the
+  `EXPO_TOKEN` repo secret).
 - QA mode: batched (batch ends at ⭐ checkpoint waves)
 - Parallel builders: 2 (a 3rd only when Files touched are clearly separate)
 - Approval: standing (every planned ticket pre-approved; stop only at ⭐ checkpoints and blocks)
