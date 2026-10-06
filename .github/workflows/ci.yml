@@ -2,8 +2,9 @@ name: CI
 
 # Two levels (TDD → CI pipeline, ADR 0005):
 # - PR gate: lint + typecheck + expo-doctor, and Jest, in parallel; skipped for docs-only PRs.
-# - Push to main: the same checks on the full suite, then an EAS Update to branch `main`, which
-#   the `main` channel serves to Expo Go (the QA link in CLAUDE.md).
+# - Push to main: the same checks on the full suite, then the Supabase migrations (a no-op unless
+#   one is new; plus the RLS test when supabase/** changed), then an EAS Update to branch `main`, which the `main` channel serves to
+#   Expo Go (the QA link in CLAUDE.md).
 
 on:
   pull_request:
@@ -26,11 +27,11 @@ jobs:
     timeout-minutes: 5
     outputs:
       code: ${{ github.event_name == 'push' || steps.filter.outputs.code == 'true' }}
+      supabase: ${{ steps.filter.outputs.supabase == 'true' }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
-        if: github.event_name == 'pull_request'
         with:
           predicate-quantifier: every
           filters: |
@@ -38,6 +39,8 @@ jobs:
               - '**'
               - '!docs/**'
               - '!**/*.md'
+            supabase:
+              - 'supabase/**'
 
   check:
     name: Lint, typecheck, expo-doctor
@@ -72,10 +75,47 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm test -- --ci
 
+  supabase:
+    name: Supabase migrations + RLS test
+    needs: [changes, check, test]
+    # Apply runs on every push (a no-op when nothing is new), so a failed apply is retried by the
+    # next push instead of an update shipping against an old schema.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: supabase-migrations
+      cancel-in-progress: false
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: wghftsubdrkxfzysovou
+    steps:
+      - name: Require the SUPABASE_ACCESS_TOKEN secret
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "::error title=SUPABASE_ACCESS_TOKEN missing::Add the SUPABASE_ACCESS_TOKEN repository secret (GitHub → Settings → Secrets and variables → Actions) with a personal access token from supabase.com/dashboard/account/tokens."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Apply migrations and auth config
+        run: node scripts/supabase-apply.mjs
+      - name: RLS test (two throwaway users)
+        if: needs.changes.outputs.supabase == 'true'
+        run: node scripts/supabase-rls-test.mjs
+
   update:
     name: EAS Update (main)
-    needs: [check, test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # After the database migrates, so a published update never runs against an older schema.
+    needs: [check, test, supabase]
+    if: >-
+      !cancelled() && github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      needs.check.result == 'success' && needs.test.result == 'success' &&
+      needs.supabase.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

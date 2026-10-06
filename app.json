@@ -21,7 +21,8 @@
           "imageWidth": 76
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -31,7 +32,9 @@
       "router": {},
       "eas": {
         "projectId": "0458c1dd-61a0-47f7-ac52-c648b4458fea"
-      }
+      },
+      "supabaseUrl": "https://wghftsubdrkxfzysovou.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndnaGZ0c3ViZHJreGZ6eXNvdm91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNzc1MDQsImV4cCI6MjEwNjg1MzUwNH0.YyR7B-dkXWsc7744KkToi249M-pnw_4Rsw6th6VcLKw"
     },
     "owner": "mattsharp05s-team",
     "updates": {
