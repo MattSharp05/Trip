@@ -19,6 +19,10 @@ Follows the `dev-workflow` skill (ticket-driven: Notion → branch → PR → QA
 - QA link (latest `main` in Expo Go): `exp://u.expo.dev/0458c1dd-61a0-47f7-ac52-c648b4458fea?runtime-version=exposdk:57.0.0&channel-name=main`
   (QR: https://qr.expo.dev/eas-update?slug=exp&projectId=0458c1dd-61a0-47f7-ac52-c648b4458fea&runtimeVersion=exposdk:57.0.0&channel=main,
   or expo.dev → project `matthew` → Updates → branch `main`). Change `exposdk:57.0.0` on an SDK upgrade.
+- QA links on ticket pages: put a **scannable QR image** directly under each QA check that has a
+  link (Matthew scans it with the iPhone camera), plus the link as text. Make it with
+  `python3 scripts/qa-qr.py "<link>" qr.png --upload <upload_url> <authorization>` after the
+  Notion connector's `notion-create-file-upload`, then place the printed `<image …>` under the check.
 - CI: `.github/workflows/ci.yml`. PRs: lint + format + typecheck + expo-doctor, and Jest (skipped
   for docs-only PRs). Push to `main`: same checks, then `eas update --branch main` (needs the
   `EXPO_TOKEN` repo secret).
