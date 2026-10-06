@@ -1,5 +1,4 @@
-import { addDays, format, parseISO } from 'date-fns';
-import { formatInTimeZone } from 'date-fns-tz';
+import { dayIn } from './dates';
 
 /**
  * Trips list logic (TR-10). A trip is past once its end date is before "today" in the trip's own
@@ -19,9 +18,9 @@ export interface DatedTrip {
 /** Today's date (`YYYY-MM-DD`) in an IANA timezone at an instant; UTC if the zone is unknown. */
 export function todayIn(timezone: string, at: Date): string {
   try {
-    return formatInTimeZone(at, timezone, 'yyyy-MM-dd');
+    return dayIn(timezone, at);
   } catch {
-    return formatInTimeZone(at, 'UTC', 'yyyy-MM-dd');
+    return dayIn('UTC', at);
   }
 }
 
@@ -54,16 +53,4 @@ export function filterTrips<T extends DatedTrip>(
 /** The trip to show when none is selected: the next or current one, else the latest past one. */
 export function defaultTrip<T extends DatedTrip>(trips: readonly T[], at: Date): T | null {
   return filterTrips(trips, 'upcoming', at)[0] ?? filterTrips(trips, 'past', at)[0] ?? null;
-}
-
-/** `Nov 12 – Nov 16, 2026`; across New Year, `Dec 18 – Jan 6, 2027` (as in the mockup). */
-export function formatTripDates(startDate: string, endDate: string): string {
-  const start = parseISO(startDate);
-  const end = parseISO(endDate);
-  return `${format(start, 'MMM d')} – ${format(end, 'MMM d, yyyy')}`;
-}
-
-/** A calendar date (`YYYY-MM-DD`) plus some days. */
-export function addDaysTo(date: string, days: number): string {
-  return format(addDays(parseISO(date), days), 'yyyy-MM-dd');
 }

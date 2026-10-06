@@ -6,7 +6,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { now } from '@/core/clock';
-import { addDaysTo } from '@/core/trips';
+import { shiftDay } from '@/core/dates';
 import { useCreateTrip } from '@/services/data';
 import type { PlaceResult } from '@/services/places';
 import { findCoverPhoto, trackPhotoDownload } from '@/services/photos';
@@ -66,7 +66,7 @@ export function CreateTripScreen() {
   const chooseTrip = useChooseTrip();
   const [place, setPlace] = useState<PlaceResult | null>(null);
   const [startDate, setStartDate] = useState(() => toDay(now()));
-  const [endDate, setEndDate] = useState(() => addDaysTo(toDay(now()), 4));
+  const [endDate, setEndDate] = useState(() => shiftDay(toDay(now()), 4));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

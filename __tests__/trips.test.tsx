@@ -91,7 +91,7 @@ describe('Trips tab', () => {
     // Today is Fri Nov 13 2026: New York (Oct 16–20) is over.
     expect(cardNames()).toEqual([
       'Las Vegas, Nov 12 – Nov 16, 2026',
-      'Cape Town, Dec 18 – Jan 6, 2027',
+      'Cape Town, Dec 18, 2026 – Jan 6, 2027',
       'Tokyo, Mar 20 – Mar 29, 2027',
     ]);
     fireEvent.press(screen.getByRole('tab', { name: 'Past' }));
@@ -100,7 +100,7 @@ describe('Trips tab', () => {
     expect(cardNames()).toEqual([
       'New York, Oct 16 – Oct 20, 2026',
       'Las Vegas, Nov 12 – Nov 16, 2026',
-      'Cape Town, Dec 18 – Jan 6, 2027',
+      'Cape Town, Dec 18, 2026 – Jan 6, 2027',
       'Tokyo, Mar 20 – Mar 29, 2027',
     ]);
     // Every sample trip has a cover photo.
@@ -112,7 +112,9 @@ describe('Trips tab', () => {
   it('tapping a card selects the trip and opens Plan', async () => {
     const router = renderRouter(routes, { initialUrl: '/scenario/vegas-trips' });
     act(() => useTripStore.getState().selectTrip(null));
-    fireEvent.press(await screen.findByRole('button', { name: 'Cape Town, Dec 18 – Jan 6, 2027' }));
+    fireEvent.press(
+      await screen.findByRole('button', { name: 'Cape Town, Dec 18, 2026 – Jan 6, 2027' }),
+    );
     await act(async () => {});
     expect(useTripStore.getState().selectedTripId).toBe('trip-cape-town');
     expect(router.getPathname()).toBe('/plan');

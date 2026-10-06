@@ -1,4 +1,4 @@
-import { addDaysTo, defaultTrip, filterTrips, formatTripDates, isPast, todayIn } from './trips';
+import { defaultTrip, filterTrips, isPast, todayIn } from './trips';
 
 const trip = (
   id: string,
@@ -70,16 +70,5 @@ describe('defaultTrip', () => {
     expect(defaultTrip(trips, AT)?.id).toBe('vegas');
     expect(defaultTrip(filterTrips(trips, 'past', AT), AT)?.id).toBe('new-york');
     expect(defaultTrip([], AT)).toBeNull();
-  });
-});
-
-describe('trip dates', () => {
-  it('formats a range like the mockup', () => {
-    expect(formatTripDates('2026-11-12', '2026-11-16')).toBe('Nov 12 – Nov 16, 2026');
-    expect(formatTripDates('2026-12-18', '2027-01-06')).toBe('Dec 18 – Jan 6, 2027');
-  });
-
-  it('adds days across months and years', () => {
-    expect(addDaysTo('2026-12-30', 4)).toBe('2027-01-03');
   });
 });
