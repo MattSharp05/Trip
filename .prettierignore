@@ -1,0 +1,8 @@
+node_modules/
+.expo/
+dist/
+package-lock.json
+docs/
+CLAUDE.md
+README.md
+assets/

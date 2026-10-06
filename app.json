@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Trip",
+    "slug": "matthew",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "trip",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": false,
+      "icon": "./assets/expo.icon"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#000000",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76
+        }
+      ],
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0458c1dd-61a0-47f7-ac52-c648b4458fea"
+      }
+    },
+    "owner": "mattsharp05s-team"
+  }
+}

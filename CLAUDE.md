@@ -34,14 +34,40 @@ TanStack Query + Zustand; Jest + RN Testing Library; Maestro on EAS (simulator) 
 EAS Update to the `main` channel on every merge.
 
 ## Commands
-_After Epic 0._
+Node 22 (`.nvmrc`), npm (`package-lock.json`). Add packages with `npx expo install <pkg>` (SDK-matched versions).
+- `npm start` — Expo dev server (open in Expo Go)
+- `npm run lint` — ESLint (expo config + Prettier compat)
+- `npm run typecheck` — `tsc --noEmit` (strict)
+- `npm test` — Jest (`jest-expo/ios` preset) + React Native Testing Library
+- `npm run format` / `npm run format:check` — Prettier
+- `npx expo-doctor` — dependency/config check (must report no issues)
+- `npx expo export --platform ios` — proves the bundle builds
+- Never `expo prebuild` (no `ios/`; ADR 0001).
 
 ## Structure
-_After Epic 0._
+See [TDD → Project structure](docs/TDD.md#project-structure).
+- `app/` — Expo Router routes only. `app/(tabs)/_layout.tsx` is the native tab bar (Trips, Plan,
+  Organize, Discover); each tab is a folder with its own Stack.
+- `src/core/` — pure TypeScript, no React Native imports (tab config, later Smart Add, dates, money).
+- `src/features/<feature>/`, `src/ui/`, `src/theme/`, `src/services/`, `src/scenarios/`, `src/stores/`.
+- `supabase/` (migrations, Edge Functions), `maestro/` (on-device flows), `docs/`.
+- Import from `src/` with the `@/` alias (`@/core/tabs`).
 
 ## Conventions
-_After the technical design._
+See [TDD → Conventions](docs/TDD.md#conventions).
+- TypeScript strict; ESLint + Prettier (single quotes, width 100). Named exports only in `src/`
+  (lint-enforced); default exports only for routes in `app/`.
+- Expo Go only: every dependency with native code must be in the SDK's bundled modules (a Jest test
+  enforces it). New libraries or services need an ADR.
+- Colours, spacing, radii only from `src/theme`; icons via SF Symbols; copy per `docs/design.md`.
+- Network calls through `src/services/` + TanStack Query; dates via `date-fns`(`-tz`); money in
+  integer minor units.
+- Conventional Commits with the ticket ID (`feat(plan): … [TR-12]`); branches `tr-<n>/<slug>`.
 
 ## Testing
-_After the technical design. Scenario links use deep links (e.g. `trip://scenario/vegas-day-3`),
-disabled for real accounts._
+See [TDD → Testing strategy](docs/TDD.md#testing-strategy).
+- Unit tests sit next to the code (`src/core/*.test.ts`); route/app-level tests in `__tests__/`.
+- Routes are tested with `renderRouter` from `expo-router/testing-library` (RNTL 13; v14's async
+  render doesn't work with it yet).
+- On-device: Maestro flows in `maestro/`, run on EAS on `main`.
+- Scenario links use deep links (e.g. `trip://scenario/vegas-day-3`), disabled for real accounts.
