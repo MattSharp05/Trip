@@ -39,8 +39,8 @@ See `docs/TDD.md` (approved) and `docs/decisions/`. In short: Expo SDK 57 + Type
 Expo Router with native tabs, **Expo Go compatible only** (no custom native code until Phase B);
 Supabase free (Postgres + RLS, Auth, Storage, Edge Functions holding every third-party key);
 Gemini Flash free tier behind a `ParseProvider` switch; map per the TR map spike (ADR 0002);
-TanStack Query + Zustand; Jest + RN Testing Library; Maestro on EAS (simulator) on `main`;
-EAS Update to the `main` channel on every merge.
+TanStack Query + Zustand; Jest + RN Testing Library; Maestro on `main` (EAS simulator build, GitHub
+macOS runner); EAS Update to the `main` channel on every merge.
 
 ## Commands
 Node 22 (`.nvmrc`), npm (`package-lock.json`). Add packages with `npx expo install <pkg>` (SDK-matched versions).
@@ -83,5 +83,10 @@ See [TDD → Testing strategy](docs/TDD.md#testing-strategy).
 - Unit tests sit next to the code (`src/core/*.test.ts`); route/app-level tests in `__tests__/`.
 - Routes are tested with `renderRouter` from `expo-router/testing-library` (RNTL 13; v14's async
   render doesn't work with it yet).
-- On-device: Maestro flows in `maestro/`, run on EAS on `main`.
+- On-device (ADR 0015): Maestro flows in `maestro/` run on every push to `main` (GitHub job
+  `E2E`, iOS simulator; the app is an EAS `e2e` build reused by fingerprint). Never on PRs.
+  - A ticket's QA screenshot: add `maestro/shots/<scenario>.yaml` (copy `vegas-plan-day-2.yaml`,
+    set `SCENARIO` and a `READY_ID` testID). Other `takeScreenshot`s in flows are collected too.
+  - After the merge's E2E run: `node scripts/qa-shots.mjs` → `qa-shots/<name>.png`
+    (`--run <id>` for a given run). Run it now on `main`: GitHub → Actions → E2E → Run workflow.
 - Scenario links use deep links (e.g. `trip://scenario/vegas-day-3`), disabled for real accounts.

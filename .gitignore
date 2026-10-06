@@ -25,3 +25,4 @@ test-results/
 # metro / typescript
 .metro-health-check*
 *.tsbuildinfo
+qa-shots/

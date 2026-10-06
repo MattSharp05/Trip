@@ -24,7 +24,7 @@ Hard constraints from the PRD: iPhone only, **$0 running cost**, and everything 
 | Photos | Unsplash API (free key) for trip covers, Wikimedia for landmarks, Ticketmaster images for events | Free with attribution |
 | Flight status | Free tier of a flight-status API (AeroDataBox via RapidAPI, or similar; picked in its ticket), day-of-flight only | Free tier allowance is small |
 | TikTok / Reels | TikTok oEmbed (public) and page metadata via Edge Function → Gemini extracts places → Photon geocodes | No scraping; uses what a shared link exposes |
-| Tests | Jest (`jest-expo`) + React Native Testing Library; Maestro on EAS (iOS simulator) | Unit/component on Linux CI; on-device flows in Expo's cloud (ADR 0005) |
+| Tests | Jest (`jest-expo`) + React Native Testing Library; Maestro on an EAS iOS simulator build | Unit/component on Linux CI; on-device flows on GitHub's macOS runner (ADR 0005, 0015) |
 | Delivery | **EAS Update** to the `main` channel on every merge | Matthew opens the latest `main` in Expo Go; no per-PR previews (batched QA) |
 
 Free-tier limits to remember: Supabase pauses a project after ~1 week without activity (keep-alive
@@ -114,7 +114,7 @@ Client: TanStack Query caches per trip; Zustand holds selection and UI state. On
   maths, currency conversion, parse-schema validation), Edge Function handlers (Deno test).
 - **Component (RN Testing Library):** screens render from scenario fixtures; map ↔ list selection
   logic through the store.
-- **On-device (Maestro on EAS, iOS simulator):** key flows per scenario, screenshots for QA media.
+- **On-device (Maestro, iOS simulator build from EAS; ADR 0015):** key flows per scenario, screenshots for QA media.
   Simulator builds need no paid Apple account. Runs on `main` only (build minutes are limited on the
   free plan); tagged flows can be run for a PR on demand.
 - **Real phone:** Matthew's iPhone in Expo Go is the QA of record (Kart Racer lesson).
@@ -123,7 +123,7 @@ Client: TanStack Query caches per trip; Zustand holds selection and UI state. On
   - PR gate (each job ≤ 5 min, in parallel): lint + typecheck + `expo-doctor`; Jest unit/component;
     Deno tests for changed functions; a "what changed" job skips JS jobs for docs-only PRs.
   - On `main`: the full Jest suite, `eas update --branch main` (QA link), Supabase migrations +
-    function deploys when `supabase/` changed, Maestro flows on EAS.
+    function deploys when `supabase/` changed; Maestro flows in a separate `E2E` workflow.
 
 ## Environments & deploy
 - **Local/QA:** Expo Go on Matthew's iPhone, opening the `main` EAS Update channel (link on the
