@@ -1,4 +1,4 @@
-# 0010 — The Plan sheet: `@gorhom/bottom-sheet`
+# 0011 — The Plan sheet: `@gorhom/bottom-sheet`
 
 **Context.** TR-17 puts the itinerary in a sheet over the Plan map, snapping at half and full
 height, with a list that scrolls inside it. The TDD's stack table names `@gorhom/bottom-sheet` for
