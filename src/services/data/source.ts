@@ -3,6 +3,7 @@ import type {
   DataSnapshot,
   Expense,
   ItineraryItem,
+  NewTrip,
   TravelDocument,
   Trip,
   TripData,
@@ -17,6 +18,7 @@ export interface DataSource {
   readonly id: string;
   readonly kind: 'demo' | 'supabase';
   listTrips(): Promise<Trip[]>;
+  createTrip(trip: NewTrip): Promise<Trip>;
   getTripData(tripId: string): Promise<TripData | null>;
   listDocuments(): Promise<TravelDocument[]>;
   saveItineraryItem(item: ItineraryItem): Promise<ItineraryItem>;
@@ -51,6 +53,14 @@ export function createDemoSource(snapshot: DataSnapshot, name = 'demo'): DataSou
     kind: 'demo',
     async listTrips() {
       return copy([...db.trips].sort(byStart));
+    },
+    async createTrip(input) {
+      const trip: Trip = {
+        ...copy(input),
+        id: `trip-${Date.now().toString(36)}-${db.trips.length}`,
+      };
+      db = { ...db, trips: [...db.trips, trip] };
+      return copy(trip);
     },
     async getTripData(tripId) {
       const trip = db.trips.find((t) => t.id === tripId);

@@ -7,7 +7,8 @@ import { Icon } from './Icon';
 import { Text } from './Text';
 
 export interface PhotoCardProps {
-  source: ImageSource | number;
+  /** The photo; without one the card is a plain raised surface (no photo found yet). */
+  source?: ImageSource | number | null;
   title: string;
   subtitle?: string;
   height?: number;
@@ -28,8 +29,18 @@ export function PhotoCard({
   const label = subtitle ? `${title}, ${subtitle}` : title;
   const content = (
     <>
-      <Image source={source} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
-      <View style={styles.scrim} testID={testID ? `${testID}-scrim` : undefined} />
+      {source ? (
+        <>
+          <Image
+            source={source}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            transition={200}
+            testID={testID ? `${testID}-photo` : undefined}
+          />
+          <View style={styles.scrim} testID={testID ? `${testID}-scrim` : undefined} />
+        </>
+      ) : null}
       <View style={styles.footer}>
         <View style={styles.text}>
           <Text variant="title" numberOfLines={1}>

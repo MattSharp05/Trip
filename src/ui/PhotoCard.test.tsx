@@ -29,4 +29,11 @@ describe('PhotoCard', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Las Vegas, Nov 12' }));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
+
+  it('falls back to the plain surface when there is no photo', () => {
+    render(<PhotoCard source={null} title="Lisbon" testID="card" />);
+    expect(screen.getByText('Lisbon')).toBeOnTheScreen();
+    expect(screen.queryByTestId('card-photo')).toBeNull();
+    expect(screen.queryByTestId('card-scrim')).toBeNull();
+  });
 });

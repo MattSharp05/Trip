@@ -33,7 +33,7 @@ export const trips: Trip[] = [
     timezone: NY,
     startDate: '2026-10-16',
     endDate: '2026-10-20',
-    coverPhotoUrl: null,
+    coverPhotoUrl: commons('Manhattan from Weehawken, NJ.jpg'),
   },
   {
     id: VEGAS,
@@ -56,7 +56,7 @@ export const trips: Trip[] = [
     timezone: 'Africa/Johannesburg',
     startDate: '2026-12-18',
     endDate: '2027-01-06',
-    coverPhotoUrl: null,
+    coverPhotoUrl: commons('Table Mountain DanieVDM.jpg'),
   },
   {
     id: 'trip-tokyo',
@@ -67,7 +67,7 @@ export const trips: Trip[] = [
     timezone: 'Asia/Tokyo',
     startDate: '2027-03-20',
     endDate: '2027-03-29',
-    coverPhotoUrl: null,
+    coverPhotoUrl: commons('Tokyo skyline seen from Tokyo Skytree.jpg'),
   },
 ];
 
