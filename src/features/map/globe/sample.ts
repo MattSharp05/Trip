@@ -2,7 +2,7 @@
 export const planeTiming = { flightMs: 7000, loopMs: 8000 } as const;
 
 /**
- * The sample flight from the TR-5 spike: Tampa to Las Vegas (TPA → LAS). TR-16 replaces it with
+ * The sample flight from the TR-5 spike: Tampa to Las Vegas (TPA → LAS). TR-23 replaces it with
  * the trip's real flights.
  */
 export const flight = {
