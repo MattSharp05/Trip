@@ -8,6 +8,14 @@ import { View } from 'react-native';
 
 export const mapCalls: { method: string; args: unknown[] }[] = [];
 
+/** What `getCamera()` resolves to; tests set it to stand in for where the user dragged the map. */
+export const mapCamera = {
+  center: { latitude: 0, longitude: 0 },
+  pitch: 0,
+  heading: 0,
+  altitude: 0,
+};
+
 const record =
   (method: string) =>
   (...args: unknown[]) =>
@@ -28,6 +36,11 @@ function MapView({
     animateCamera: record('animateCamera'),
     animateToRegion: record('animateToRegion'),
     fitToCoordinates: record('fitToCoordinates'),
+    setCamera: record('setCamera'),
+    getCamera: async () => {
+      record('getCamera')();
+      return mapCamera;
+    },
   }));
   return (
     <View testID={testID} {...props}>
