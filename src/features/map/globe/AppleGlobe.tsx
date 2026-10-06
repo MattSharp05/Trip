@@ -12,7 +12,8 @@ import { flight, planeTiming } from './sample';
 
 /**
  * Apple Maps' own globe (satellite flyover zoomed out) with the flight's great-circle arc and a
- * plane moved from JS. Built in the TR-5 spike (ADR 0002); TR-16 turns it into the Trips globe.
+ * plane moved from JS. Built in the TR-5 spike (ADR 0002); TR-23 turns it into the flight globe.
+ * The Trips globe (TR-16) is `TripsGlobe` in features/trips, spun by `useGlobeSpin`.
  */
 export function AppleGlobe({ onReady }: { onReady: () => void }) {
   const arc = useMemo(() => greatCircle(flight.from, flight.to), []);

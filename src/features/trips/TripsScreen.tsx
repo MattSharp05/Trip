@@ -11,6 +11,7 @@ import { Button, IconButton, Segmented, Skeleton, Text } from '@/ui';
 
 import { useChooseTrip, useRestoreSelectedTrip } from './selectedTrip';
 import { TRIP_CARD_HEIGHT, TripCard } from './TripCard';
+import { TripsGlobe } from './TripsGlobe';
 
 const SEGMENTS = [
   { value: 'upcoming', label: 'Upcoming' },
@@ -25,8 +26,9 @@ const EMPTY_FILTER: Record<TripFilter, string> = {
 };
 
 /**
- * The Trips tab (TR-10): My Trips, Upcoming / Past / All, a photo card per trip. Tapping a card
- * selects the trip and opens Plan; `+` creates one; the profile button opens Settings.
+ * The Trips tab (TR-10): My Trips, a globe with the shown trips' dots (TR-16), Upcoming / Past /
+ * All, a photo card per trip. Tapping a card or a dot selects the trip and opens Plan; `+` creates
+ * one; the profile button opens Settings.
  */
 export function TripsScreen() {
   const insets = useSafeAreaInsets();
@@ -113,15 +115,20 @@ export function TripsScreen() {
             testID="trips-create"
           />
         </View>
-        {hasTrips ? (
-          <Segmented
-            segments={SEGMENTS}
-            value={filter}
-            onChange={setFilter}
-            testID="trips-filter"
-          />
-        ) : null}
       </View>
+      {hasTrips ? (
+        <>
+          <TripsGlobe trips={shown} onOpen={open} />
+          <View style={styles.header}>
+            <Segmented
+              segments={SEGMENTS}
+              value={filter}
+              onChange={setFilter}
+              testID="trips-filter"
+            />
+          </View>
+        </>
+      ) : null}
       {body}
     </View>
   );
