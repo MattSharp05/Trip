@@ -45,6 +45,29 @@ module.exports = defineConfig([
     rules: { 'no-restricted-syntax': ['error', ...hexRules, ...emojiRules] },
   },
   {
+    // Passport and visa data never reaches AI (ADR 0004, TR-20): the documents feature can't import
+    // the Edge Function caller or any parse/import/AI module. Checked by noAi.test.ts.
+    files: ['src/features/documents/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '(^|/)(services/functions|features/(import|smart-?add|discover))(/|$)',
+              message: 'Documents never go to AI: no Edge Function or import pipeline here.',
+            },
+            {
+              regex:
+                '(^|/)([^/]*([Pp]arse|[Gg]emini|[Cc]laude|[Aa]nthropic|[Oo]pen[Aa][Ii])[^/]*|ai([-_.][^/]*)?)(/|$)',
+              message: 'Documents never go to AI: no parse or AI modules here.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // The tokens themselves; emoji stay banned here too.
     files: ['src/theme/**/*.{ts,tsx}'],
     rules: { 'no-restricted-syntax': ['error', ...emojiRules] },
