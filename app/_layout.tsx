@@ -43,7 +43,7 @@ export default function RootLayout() {
 }
 
 /**
- * The auth gate: signed-in users get the tabs, signed-out users get Welcome. A loaded scenario's
+ * The auth gate: signed-in users get the tabs and Settings, signed-out users get Welcome. A loaded scenario's
  * demo session (TR-6) also opens the tabs, so QA links work signed out. Developer screens (`/dev/*`)
  * and scenario links (`/scenario/*`) are outside both guards.
  */
@@ -64,6 +64,7 @@ function RootStack() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={signedIn || scenarioActive}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="settings" />
       </Stack.Protected>
       <Stack.Protected guard={!signedIn && !scenarioActive}>
         <Stack.Screen name="auth" />

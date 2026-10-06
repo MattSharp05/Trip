@@ -26,8 +26,7 @@ const EMPTY_FILTER: Record<TripFilter, string> = {
 
 /**
  * The Trips tab (TR-10): My Trips, Upcoming / Past / All, a photo card per trip. Tapping a card
- * selects the trip and opens Plan; `+` creates one. The profile button joins the header with
- * Settings (TR-11).
+ * selects the trip and opens Plan; `+` creates one; the profile button opens Settings.
  */
 export function TripsScreen() {
   const insets = useSafeAreaInsets();
@@ -95,9 +94,17 @@ export function TripsScreen() {
     <View style={[styles.screen, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text variant="largeTitle" accessibilityRole="header">
+          <Text variant="largeTitle" accessibilityRole="header" style={styles.title}>
             My Trips
           </Text>
+          <IconButton
+            icon="person.crop.circle"
+            label="Settings"
+            variant="plain"
+            size="lg"
+            onPress={() => router.push('/settings')}
+            testID="trips-settings"
+          />
           <IconButton
             icon="plus"
             label="Create a trip"
@@ -122,8 +129,9 @@ export function TripsScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, gap: spacing.md, backgroundColor: colors.background },
+  title: { flex: 1 },
   header: { gap: spacing.md, paddingHorizontal: screenPadding },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   list: { gap: spacing.md, paddingHorizontal: screenPadding },
   message: { alignItems: 'center', gap: spacing.md, padding: screenPadding },
   empty: {
