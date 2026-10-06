@@ -19,4 +19,5 @@ function TicketCard({ entry, places, onPress }: WalletCardRendererProps<'ticket'
 export const ticketCard: WalletCardDef<'ticket'> = {
   label: () => 'Ticket',
   Card: TicketCard,
+  detailHref: (id) => `/organize/ticket/${encodeURIComponent(id)}`,
 };
