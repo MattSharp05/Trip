@@ -1,0 +1,35 @@
+name: Supabase keep-alive
+
+# Free Supabase projects pause after about a week without traffic (ADR 0003). A cheap REST select
+# with the public anon key every 3 days keeps the project awake. RLS returns no rows; any 2xx
+# counts as activity.
+
+on:
+  schedule:
+    - cron: '17 6 */3 * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/keepalive.yml
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    name: Ping Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: app.json
+          sparse-checkout-cone-mode: false
+      - name: REST select with the anon key
+        run: |
+          url="$(jq -r '.expo.extra.supabaseUrl' app.json)"
+          key="$(jq -r '.expo.extra.supabaseAnonKey' app.json)"
+          curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors \
+            "$url/rest/v1/trips?select=id&limit=1" \
+            -H "apikey: $key" -H "Authorization: Bearer $key"
+          echo

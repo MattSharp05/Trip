@@ -48,6 +48,11 @@ Node 22 (`.nvmrc`), npm (`package-lock.json`). Add packages with `npx expo insta
 - `npx expo-doctor` — dependency/config check (must report no issues)
 - `npx expo export --platform ios` — proves the bundle builds
 - Never `expo prebuild` (no `ios/`; ADR 0001).
+- Supabase (needs `SUPABASE_ACCESS_TOKEN`; Management API only, no direct Postgres):
+  `npm run db:apply` applies new `supabase/migrations/*.sql` + `supabase/auth.json` (never edit an
+  applied migration; add a new one), `npm run db:types` also regenerates
+  `src/services/database.types.ts`, `npm run db:test-rls` runs the two-user RLS test. CI on `main`
+  runs apply + RLS test when `supabase/**` changed.
 
 ## Structure
 See [TDD → Project structure](docs/TDD.md#project-structure).

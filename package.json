@@ -13,16 +13,21 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "db:apply": "node scripts/supabase-apply.mjs",
+    "db:types": "node scripts/supabase-apply.mjs --types",
+    "db:test-rls": "node scripts/supabase-rls-test.mjs"
   },
   "dependencies": {
     "@gorhom/bottom-sheet": "^5.2.14",
+    "@supabase/supabase-js": "^2.117.2",
     "expo": "~57.0.27",
     "expo-constants": "~57.0.21",
     "expo-font": "~57.0.4",
     "expo-image": "~57.0.5",
     "expo-linking": "~57.0.12",
     "expo-router": "~57.0.25",
+    "expo-secure-store": "~57.0.4",
     "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.3",
@@ -35,6 +40,7 @@
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
+    "react-native-url-polyfill": "^4.0.0",
     "react-native-webview": "13.16.1",
     "react-native-worklets": "0.10.1"
   },
