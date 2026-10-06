@@ -1,6 +1,5 @@
-import { tabTitle } from '@/core/tabs';
-import { PlaceholderScreen } from '@/ui/PlaceholderScreen';
+import { OrganizeScreen } from '@/features/wallet';
 
-export default function OrganizeScreen() {
-  return <PlaceholderScreen title={tabTitle('organize')} />;
+export default function OrganizeRoute() {
+  return <OrganizeScreen />;
 }
