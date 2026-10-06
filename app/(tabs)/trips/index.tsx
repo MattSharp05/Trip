@@ -9,9 +9,14 @@ export default function TripsScreen() {
     <PlaceholderScreen title={tabTitle('trips')}>
       {/* Temporary: moves to Settings → Developer when that screen exists. */}
       {devToolsEnabled() ? (
-        <Link href="/dev/gallery" asChild>
-          <Button label="Design gallery" variant="secondary" icon="square.grid.2x2" />
-        </Link>
+        <>
+          <Link href="/dev/gallery" asChild>
+            <Button label="Design gallery" variant="secondary" icon="square.grid.2x2" />
+          </Link>
+          <Link href="/dev/map-spike" asChild>
+            <Button label="Map spike" variant="secondary" icon="map" />
+          </Link>
+        </>
       ) : null}
     </PlaceholderScreen>
   );
