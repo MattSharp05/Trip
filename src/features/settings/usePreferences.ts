@@ -3,6 +3,7 @@ import { create } from 'zustand';
 
 import type { TemperatureUnit } from '@/core/weather';
 import { useAuth } from '@/features/auth';
+import { useActiveSource } from '@/services/data/active';
 import { supabase } from '@/services/supabase';
 import { useScenarioStore } from '@/stores/scenario';
 
@@ -29,6 +30,14 @@ export const usePreferenceStore = create<PreferenceState>()((set, get) => ({
     set({ owner, changes: get().owner === owner ? { ...get().changes, ...changes } : changes }),
   clear: () => set({ owner: null, changes: {} }),
 }));
+
+// Loading a scenario (again) puts a fresh demo data source in place: start from its defaults, and
+// drop the changes when leaving it, so scenario links stay deterministic.
+useActiveSource.subscribe((state, prev) => {
+  if (state.source === prev.source) return;
+  if (usePreferenceStore.getState().owner?.startsWith('demo:'))
+    usePreferenceStore.getState().clear();
+});
 
 export interface UsePreferences {
   preferences: Preferences;

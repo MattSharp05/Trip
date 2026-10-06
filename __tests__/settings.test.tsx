@@ -22,7 +22,8 @@ import { DayHeader } from '@/features/plan';
 import { emitAuthChange, fakeAuth, resetFakeAuth, testSession } from '@/features/auth/testing';
 import { clearPreferenceCache, useTemperatureUnit } from '@/features/settings';
 import * as prefs from '@/features/settings/preferences';
-import { exitScenario } from '@/scenarios';
+import { usePreferenceStore } from '@/features/settings/usePreferences';
+import { exitScenario, loadScenario } from '@/scenarios';
 import { queryClient } from '@/services/data/hooks';
 import { useTripStore } from '@/stores/trip';
 
@@ -203,6 +204,10 @@ describe('settings', () => {
 
     fireEvent.press(screen.getByTestId('settings-dev'));
     expect(router.getPathname()).toBe('/dev');
+
+    // Opening the scenario again starts from its defaults.
+    act(() => void loadScenario('vegas-plan-day-2'));
+    expect(usePreferenceStore.getState().changes).toEqual({});
   });
 
   it('shows Terms and Privacy as readable pages', async () => {
