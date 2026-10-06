@@ -93,7 +93,7 @@ describe('scenariosEnabled', () => {
 describe('scenarioLink', () => {
   it('builds the Expo Go link to the main channel', () => {
     expect(scenarioLink('vegas-plan-day-2')).toBe(
-      'exp://u.expo.dev/0458c1dd-61a0-47f7-ac52-c648b4458fea/--/scenario/vegas-plan-day-2?channel-name=main',
+      'exp://u.expo.dev/0458c1dd-61a0-47f7-ac52-c648b4458fea/--/scenario/vegas-plan-day-2?runtime-version=exposdk:57.0.0&channel-name=main',
     );
   });
 

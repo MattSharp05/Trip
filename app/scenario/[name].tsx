@@ -8,7 +8,7 @@ import { colors, spacing } from '@/theme';
 import { Button, Text } from '@/ui';
 
 /**
- * Deep link into a scenario: `exp://u.expo.dev/<project>/--/scenario/<name>?channel-name=main`
+ * Deep link into a scenario: `exp://u.expo.dev/<project>/--/scenario/<name>?runtime-version=exposdk:57.0.0&channel-name=main`
  * (Expo Go) or `trip://scenario/<name>`. Loads the demo session, then opens the scenario's tab.
  */
 export default function ScenarioRoute() {
