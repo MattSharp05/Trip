@@ -73,7 +73,10 @@ describe('Plan map on vegas-plan-day-2', () => {
 
   it('selects a pin, shows its label and flies to it in half a second', async () => {
     await openPlan('vegas-plan-day-2');
-    expect(screen.queryByText('Sphere Experience')).toBeNull();
+    // Unselected pins have no label (the itinerary row below has the same title).
+    expect(
+      within(screen.getByTestId('pin-place-sphere')).queryByText('Sphere Experience'),
+    ).toBeNull();
 
     fireEvent(screen.getByTestId('pin-place-sphere'), 'touchEnd');
     expect(within(screen.getByTestId('pin-place-sphere')).getByText('Sphere Experience'));

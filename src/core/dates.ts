@@ -1,4 +1,11 @@
-import { addDays, differenceInCalendarDays, eachDayOfInterval, format, parseISO } from 'date-fns';
+import {
+  addDays,
+  differenceInCalendarDays,
+  eachDayOfInterval,
+  format,
+  parse,
+  parseISO,
+} from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 
 /**
@@ -38,6 +45,10 @@ export const dayOfMonth = (day: string) => format(parseISO(day), 'd');
 export const dayLabel = (day: string) => format(parseISO(day), 'EEE, MMM d');
 /** "Friday, November 13" (VoiceOver) */
 export const dayLabelLong = (day: string) => format(parseISO(day), 'EEEE, MMMM d');
+
+/** "3:00 PM" from a wall-clock `HH:MM` (24h); no timezone shift, like days. */
+export const timeLabel = (time: string) =>
+  format(parse(time, 'HH:mm', new Date(2000, 0, 1)), 'h:mm a');
 
 /** "Nov 12 – Nov 16, 2026", or "Dec 18, 2026 – Jan 6, 2027" across a new year. */
 export function dateRangeLabel(startDate: string, endDate: string): string {

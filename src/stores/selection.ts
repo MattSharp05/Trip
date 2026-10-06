@@ -7,10 +7,15 @@ import type { Trip } from '@/services/data/types';
 
 import { useScenarioStore, type ScenarioView } from './scenario';
 
+/** Where an item was picked: the side that didn't pick it follows (TDD → Architecture). */
+export type SelectionSource = 'list' | 'map';
+
+export type PlanMode = NonNullable<ScenarioView['planMode']>;
+
 /**
  * What the Plan tab has selected: one day of the trip and, optionally, one itinerary item. The map,
- * the date pills, the day header and (TR-17) the itinerary list all read and write it, so they
- * never disagree (TDD → Architecture). The trip itself is `useTripStore`.
+ * the date pills, the day header and the itinerary list all read and write it, so they never
+ * disagree (TDD → Architecture). The trip itself is `useTripStore`.
  */
 interface SelectionState {
   /** The trip the selection belongs to; a different trip starts a fresh selection. */
@@ -18,10 +23,20 @@ interface SelectionState {
   /** `YYYY-MM-DD`, a day of the trip. */
   selectedDay: string | null;
   selectedItemId: string | null;
+  /** Who picked the item; null when nobody did (a scenario opened on it). */
+  selectedBy: SelectionSource | null;
+  /** Counts picks, so picking the same item again still brings the map back to it. */
+  picks: number;
+  /** The sheet's segment: the day's itinerary or the trip's Bucket List. */
+  planMode: PlanMode;
   /** Start a trip's selection on its opening day (see `openingDay`). */
   initForTrip: (trip: SelectionTrip) => void;
   selectDay: (day: string) => void;
-  selectItem: (itemId: string | null) => void;
+  /**
+   * Pick an item (null clears it). `day` moves to the item's day first, for a pin of another day.
+   */
+  selectItem: (itemId: string | null, by?: SelectionSource, day?: string) => void;
+  setPlanMode: (mode: PlanMode) => void;
 }
 
 export type SelectionTrip = Pick<Trip, 'id' | 'startDate' | 'endDate' | 'timezone'>;
@@ -39,27 +54,43 @@ export function openingDay(trip: SelectionTrip, view: ScenarioView, instant: Dat
   return within(today, trip) ? today : trip.startDate;
 }
 
-export const useSelectionStore = create<SelectionState>()((set) => ({
+const CLEARED = {
   tripId: null,
   selectedDay: null,
   selectedItemId: null,
+  selectedBy: null,
+  planMode: 'itinerary',
+} as const;
+
+export const useSelectionStore = create<SelectionState>()((set) => ({
+  ...CLEARED,
+  picks: 0,
   initForTrip: (trip) => {
     const { view } = useScenarioStore.getState();
     set({
       tripId: trip.id,
       selectedDay: openingDay(trip, view, now()),
       selectedItemId: view.itemId ?? null,
+      selectedBy: null,
+      planMode: view.planMode ?? 'itinerary',
     });
   },
   // A new day clears the item: it belonged to the old day.
-  selectDay: (selectedDay) => set({ selectedDay, selectedItemId: null }),
-  selectItem: (selectedItemId) => set({ selectedItemId }),
+  selectDay: (selectedDay) => set({ selectedDay, selectedItemId: null, selectedBy: null }),
+  selectItem: (selectedItemId, by = 'list', day) =>
+    set((s) => ({
+      selectedDay: day ?? s.selectedDay,
+      selectedItemId,
+      selectedBy: selectedItemId ? by : null,
+      picks: s.picks + 1,
+    })),
+  setPlanMode: (planMode) => set({ planMode }),
 }));
 
 // Loading or leaving a scenario starts over: the next screen to show a trip re-initialises it.
 useScenarioStore.subscribe((state, prev) => {
   if (state.view !== prev.view || state.active !== prev.active) {
-    useSelectionStore.setState({ tripId: null, selectedDay: null, selectedItemId: null });
+    useSelectionStore.setState(CLEARED);
   }
 });
 
@@ -81,7 +112,11 @@ export function useTripSelection(trip: SelectionTrip | undefined) {
   return {
     selectedDay: current ? state.selectedDay : trip ? openingDay(trip, view, now()) : null,
     selectedItemId: current ? state.selectedItemId : (view.itemId ?? null),
+    selectedBy: current ? state.selectedBy : null,
+    picks: state.picks,
+    planMode: current ? state.planMode : (view.planMode ?? 'itinerary'),
     selectDay: state.selectDay,
     selectItem: state.selectItem,
+    setPlanMode: state.setPlanMode,
   };
 }
