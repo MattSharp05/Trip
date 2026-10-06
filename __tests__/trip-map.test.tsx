@@ -1,8 +1,7 @@
-import { act, fireEvent, render, renderRouter, screen, within } from 'expo-router/testing-library';
+import { render } from '@testing-library/react-native';
+import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
 import { createRef } from 'react';
-// The automatic Jest mock (__mocks__/react-native-maps.tsx) records camera calls.
-// eslint-disable-next-line import/namespace
-import { mapCalls } from 'react-native-maps';
+import * as maps from 'react-native-maps';
 
 import TabLayout from '../app/(tabs)/_layout';
 import PlanScreen from '../app/(tabs)/plan/index';
@@ -11,15 +10,26 @@ import ScenarioRoute from '../app/scenario/[name]';
 import RootLayout from '../app/_layout';
 import { FLY_MS, TripMap, type MapPin, type TripMapHandle } from '@/features/map';
 import { AppleGlobe } from '@/features/map/globe';
+import { resetFakeAuth } from '@/features/auth/testing';
 import { exitScenario } from '@/scenarios';
 
-const calls = mapCalls as { method: string; args: any[] }[];
+// Signed out: scenario links get through the auth gate on their own (TR-7).
+jest.mock('@/services/supabase', () => ({
+  supabase: { auth: require('@/features/auth/testing').fakeAuth },
+}));
+
+// The automatic Jest mock (__mocks__/react-native-maps.tsx) records camera calls.
+const calls = (maps as unknown as { mapCalls: { method: string; args: any[] }[] }).mapCalls;
 
 const routes = {
   _layout: RootLayout,
   '(tabs)/_layout': TabLayout,
   '(tabs)/trips/index': TripsScreen,
   '(tabs)/plan/index': PlanScreen,
+  '(tabs)/organize/index': () => null,
+  '(tabs)/discover/index': () => null,
+  'dev/gallery': () => null,
+  'auth/index': () => null,
   'scenario/[name]': ScenarioRoute,
 };
 
@@ -32,6 +42,7 @@ async function openPlan(scenario: string) {
 
 beforeEach(() => {
   calls.length = 0;
+  resetFakeAuth(null);
 });
 afterEach(() => act(() => exitScenario()));
 

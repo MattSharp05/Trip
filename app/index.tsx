@@ -1,5 +1,8 @@
 import { Redirect } from 'expo-router';
 
+import { useAuth } from '@/features/auth';
+
 export default function Index() {
-  return <Redirect href="/trips" />;
+  const { status } = useAuth();
+  return <Redirect href={status === 'signedIn' ? '/trips' : '/auth'} />;
 }

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -22,14 +22,15 @@ export default function PlanScreen() {
   const scenarioDay = useScenarioStore((s) => s.view.day);
   const map = useRef<TripMapHandle>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Stable, so pins that didn't change skip re-rendering.
+  const select = useCallback((id: string) => {
+    setSelectedId(id);
+    map.current?.flyTo(id);
+  }, []);
 
   if (!tripId) return <PlaceholderScreen title={tabTitle('plan')} />;
 
   const focusDay = scenarioDay ?? trip.data?.trip.startDate;
-  const select = (id: string) => {
-    setSelectedId(id);
-    map.current?.flyTo(id);
-  };
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
