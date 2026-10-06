@@ -33,6 +33,12 @@
         "projectId": "0458c1dd-61a0-47f7-ac52-c648b4458fea"
       }
     },
-    "owner": "mattsharp05s-team"
+    "owner": "mattsharp05s-team",
+    "updates": {
+      "url": "https://u.expo.dev/0458c1dd-61a0-47f7-ac52-c648b4458fea"
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    }
   }
 }
