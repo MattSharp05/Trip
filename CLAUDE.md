@@ -18,15 +18,20 @@ Follows the `dev-workflow` skill (ticket-driven: Notion → branch → PR → QA
 - Preview URLs: batched QA mode, so no per-PR previews. QA happens in Expo Go on the latest `main`
   (EAS Update channel for `main`; link on the project page once Epic 0 sets it up).
 - QA mode: batched (batch ends at ⭐ checkpoint waves)
+- Parallel builders: 2 (a 3rd only when Files touched are clearly separate)
+- Approval: standing (every planned ticket pre-approved; stop only at ⭐ checkpoints and blocks)
 - Merge policy: fast. When `main` moved after a PR's CI went green (no conflict): merge now;
   main's full suite checks the combination and a red main is reverted.
 - Expo project ID: 0458c1dd-61a0-47f7-ac52-c648b4458fea (`eas init --id …`)
 - Supabase project ref: wghftsubdrkxfzysovou
 
 ## Stack
-_To be filled after the technical design (`/plan-work`). Fixed so far: Expo (React Native +
-TypeScript), Expo Go compatible throughout the demo phase; Supabase (free) for auth, database and
-storage; Google Gemini free tier for import parsing, behind a switch (Claude in Phase B)._
+See `docs/TDD.md` (approved) and `docs/decisions/`. In short: Expo SDK 57 + TypeScript strict,
+Expo Router with native tabs, **Expo Go compatible only** (no custom native code until Phase B);
+Supabase free (Postgres + RLS, Auth, Storage, Edge Functions holding every third-party key);
+Gemini Flash free tier behind a `ParseProvider` switch; map per the TR map spike (ADR 0002);
+TanStack Query + Zustand; Jest + RN Testing Library; Maestro on EAS (simulator) on `main`;
+EAS Update to the `main` channel on every merge.
 
 ## Commands
 _After Epic 0._
