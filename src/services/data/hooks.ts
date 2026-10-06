@@ -2,7 +2,7 @@ import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 
 import { useDataSource } from './active';
 import type { DataSource } from './source';
-import type { BucketItem, Expense, ItineraryItem } from './types';
+import type { BucketItem, Expense, ItineraryItem, NewTrip } from './types';
 
 /**
  * One client for the app. Hooks pass it explicitly, so they work without a provider in the
@@ -48,7 +48,7 @@ export function useDocuments() {
   );
 }
 
-function useWrite<T>(write: (source: DataSource, value: T) => Promise<unknown>) {
+function useWrite<T, R>(write: (source: DataSource, value: T) => Promise<R>) {
   const source = useDataSource();
   return useMutation(
     {
@@ -59,6 +59,7 @@ function useWrite<T>(write: (source: DataSource, value: T) => Promise<unknown>) 
   );
 }
 
+export const useCreateTrip = () => useWrite((s, trip: NewTrip) => s.createTrip(trip));
 export const useSaveItineraryItem = () =>
   useWrite((s, item: ItineraryItem) => s.saveItineraryItem(item));
 export const useDeleteItineraryItem = () => useWrite((s, id: string) => s.deleteItineraryItem(id));

@@ -6,6 +6,7 @@ import type {
   Expense,
   ItemKind,
   ItineraryItem,
+  PhotoCredit,
   Place,
   TravelDocument,
   Trip,
@@ -45,6 +46,7 @@ const toTrip = (r: Row<'trips'>): Trip => ({
   startDate: r.start_date,
   endDate: r.end_date,
   coverPhotoUrl: r.cover_photo_url,
+  coverPhotoCredit: (r.cover_photo_credit as PhotoCredit | null) ?? null,
 });
 
 const toPlace = (r: Row<'places'>): Place => ({
@@ -117,6 +119,27 @@ export const supabaseSource: DataSource = {
     const supabase = client();
     const rows = checkRow(await supabase.from('trips').select('*').order('start_date'));
     return rows.map(toTrip);
+  },
+  async createTrip(trip) {
+    const supabase = client();
+    const row = checkRow(
+      await supabase
+        .from('trips')
+        .insert({
+          city: trip.city,
+          country: trip.country,
+          lat: trip.lat,
+          lng: trip.lng,
+          timezone: trip.timezone,
+          start_date: trip.startDate,
+          end_date: trip.endDate,
+          cover_photo_url: trip.coverPhotoUrl,
+          cover_photo_credit: trip.coverPhotoCredit ? { ...trip.coverPhotoCredit } : null,
+        })
+        .select()
+        .single(),
+    );
+    return toTrip(row);
   },
   async getTripData(tripId) {
     const supabase = client();

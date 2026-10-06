@@ -5,6 +5,7 @@ import DiscoverScreen from '../app/(tabs)/discover/index';
 import OrganizeScreen from '../app/(tabs)/organize/index';
 import PlanScreen from '../app/(tabs)/plan/index';
 import TripsScreen from '../app/(tabs)/trips/index';
+import DevIndexScreen from '../app/dev/index';
 import GalleryScreen from '../app/dev/gallery';
 import RootLayout from '../app/_layout';
 import { resetFakeAuth, testSession } from '@/features/auth/testing';
@@ -24,12 +25,13 @@ const routes = {
   '(tabs)/plan/index': PlanScreen,
   '(tabs)/organize/index': OrganizeScreen,
   '(tabs)/discover/index': DiscoverScreen,
+  'dev/index': DevIndexScreen,
   'dev/gallery': GalleryScreen,
 };
 
 describe('design gallery', () => {
-  it('opens from the Trips placeholder', async () => {
-    const router = renderRouter(routes, { initialUrl: '/' });
+  it('opens from the developer index', async () => {
+    const router = renderRouter(routes, { initialUrl: '/dev' });
     fireEvent.press(await screen.findByRole('button', { name: 'Design gallery' }));
     expect(router.getPathname()).toBe('/dev/gallery');
     await act(async () => {});
@@ -78,7 +80,7 @@ describe('design gallery', () => {
     process.env.EXPO_PUBLIC_SCENARIOS = 'off';
     try {
       const router = renderRouter(routes, { initialUrl: '/dev/gallery' });
-      expect(await screen.findByRole('header', { name: 'Trips' })).toBeOnTheScreen();
+      expect(await screen.findByRole('header', { name: 'My Trips' })).toBeOnTheScreen();
       expect(router.getPathname()).toBe('/trips');
       expect(screen.queryByRole('button', { name: 'Design gallery' })).toBeNull();
     } finally {

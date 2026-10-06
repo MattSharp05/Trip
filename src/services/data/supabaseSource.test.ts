@@ -4,6 +4,7 @@ import { supabaseSource } from './supabaseSource';
 // the table's canned response.
 const mockTables: Record<string, { data: unknown; error: { message: string } | null }> = {};
 const mockUpserts: unknown[] = [];
+const mockInserts: unknown[] = [];
 
 jest.mock('../supabase', () => ({
   supabase: {
@@ -14,6 +15,10 @@ jest.mock('../supabase', () => ({
       for (const m of ['select', 'order', 'eq', 'in', 'delete', 'single', 'maybeSingle']) {
         builder[m] = () => builder;
       }
+      builder.insert = (row: unknown) => {
+        mockInserts.push(row);
+        return builder;
+      };
       builder.upsert = (row: unknown) => {
         mockUpserts.push(row);
         return builder;
@@ -34,6 +39,7 @@ const tripRow = {
   start_date: '2026-11-12',
   end_date: '2026-11-16',
   cover_photo_url: null,
+  cover_photo_credit: null,
   created_at: '',
   updated_at: '',
 };
@@ -67,8 +73,50 @@ describe('supabase source', () => {
         startDate: '2026-11-12',
         endDate: '2026-11-16',
         coverPhotoUrl: null,
+        coverPhotoCredit: null,
       },
     ]);
+  });
+
+  it('creates a trip with its cover credit as snake_case', async () => {
+    const credit = {
+      source: 'unsplash' as const,
+      photographer: 'Ana Lisboa',
+      photographerUrl: 'https://unsplash.com/@ana',
+      photoUrl: 'https://unsplash.com/photos/x',
+    };
+    mockTables.trips = {
+      data: {
+        ...tripRow,
+        city: 'Lisbon',
+        cover_photo_url: 'https://img',
+        cover_photo_credit: credit,
+      },
+      error: null,
+    };
+    const trip = await supabaseSource.createTrip({
+      city: 'Lisbon',
+      country: 'Portugal',
+      lat: 38.7,
+      lng: -9.1,
+      timezone: 'Europe/Lisbon',
+      startDate: '2027-04-03',
+      endDate: '2027-04-08',
+      coverPhotoUrl: 'https://img',
+      coverPhotoCredit: credit,
+    });
+    expect(mockInserts.at(-1)).toEqual({
+      city: 'Lisbon',
+      country: 'Portugal',
+      lat: 38.7,
+      lng: -9.1,
+      timezone: 'Europe/Lisbon',
+      start_date: '2027-04-03',
+      end_date: '2027-04-08',
+      cover_photo_url: 'https://img',
+      cover_photo_credit: credit,
+    });
+    expect(trip).toMatchObject({ id: 't1', city: 'Lisbon', coverPhotoCredit: credit });
   });
 
   it('trims Postgres times to HH:MM and writes snake_case rows', async () => {

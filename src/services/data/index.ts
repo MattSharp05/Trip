@@ -1,6 +1,7 @@
 export { useActiveSource, useDataSource } from './active';
 export {
   dataKeys,
+  useCreateTrip,
   queryClient,
   useDeleteBucketItem,
   useDeleteItineraryItem,

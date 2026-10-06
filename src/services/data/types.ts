@@ -10,6 +10,14 @@ export interface Money {
   currency: string;
 }
 
+/** Credit for a cover photo (Unsplash guidelines: "Photo by <name> on Unsplash", with links). */
+export interface PhotoCredit {
+  source: 'unsplash';
+  photographer: string;
+  photographerUrl: string;
+  photoUrl: string;
+}
+
 export interface Trip {
   id: string;
   city: string;
@@ -21,9 +29,14 @@ export interface Trip {
   startDate: string;
   endDate: string;
   coverPhotoUrl: string | null;
+  /** Who took the cover photo; null (or absent in fixtures) when it needs no credit line. */
+  coverPhotoCredit?: PhotoCredit | null;
   /** Not in the database yet: demo data only. */
   budget?: Money | null;
 }
+
+/** What "create a trip" saves; the source assigns the id. */
+export type NewTrip = Omit<Trip, 'id' | 'budget'>;
 
 export interface Place {
   id: string;

@@ -48,6 +48,12 @@ const vegas = (
 /** Every scenario, in the order the /dev index lists them. Names are used in QA links: never rename. */
 export const SCENARIOS: readonly Scenario[] = [
   vegas({
+    name: 'vegas-trips',
+    description: 'Trips tab: New York (past), Las Vegas (now), Cape Town, Tokyo.',
+    tab: 'trips',
+    view: {},
+  }),
+  vegas({
     name: 'vegas-plan-day-2',
     description: 'Plan tab, Las Vegas, Fri Nov 13: brunch, fountains, Sphere, Carbone.',
     tab: 'plan',

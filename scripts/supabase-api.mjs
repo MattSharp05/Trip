@@ -7,7 +7,7 @@ export function projectRef() {
   return process.env.SUPABASE_PROJECT_REF || 'wghftsubdrkxfzysovou';
 }
 
-function token() {
+export function token() {
   const value = process.env.SUPABASE_ACCESS_TOKEN;
   if (!value) {
     console.error(

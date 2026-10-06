@@ -346,6 +346,7 @@ export type Database = {
         Row: {
           city: string;
           country: string | null;
+          cover_photo_credit: Json | null;
           cover_photo_url: string | null;
           created_at: string;
           end_date: string;
@@ -360,6 +361,7 @@ export type Database = {
         Insert: {
           city: string;
           country?: string | null;
+          cover_photo_credit?: Json | null;
           cover_photo_url?: string | null;
           created_at?: string;
           end_date: string;
@@ -374,6 +376,7 @@ export type Database = {
         Update: {
           city?: string;
           country?: string | null;
+          cover_photo_credit?: Json | null;
           cover_photo_url?: string | null;
           created_at?: string;
           end_date?: string;
