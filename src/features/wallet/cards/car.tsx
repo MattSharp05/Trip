@@ -19,4 +19,5 @@ function CarCard({ entry, places, onPress }: WalletCardRendererProps<'car'>) {
 export const carCard: WalletCardDef<'car'> = {
   label: () => 'Rental car',
   Card: CarCard,
+  detailHref: (id) => `/organize/car/${encodeURIComponent(id)}`,
 };

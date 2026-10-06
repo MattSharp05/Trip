@@ -22,4 +22,5 @@ function HotelCard({ entry, onPress }: WalletCardRendererProps<'hotel'>) {
 export const hotelCard: WalletCardDef<'hotel'> = {
   label: () => 'Hotel',
   Card: HotelCard,
+  detailHref: (id) => `/organize/hotel/${encodeURIComponent(id)}`,
 };
