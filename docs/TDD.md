@@ -11,8 +11,8 @@ Hard constraints from the PRD: iPhone only, **$0 running cost**, and everything 
 | Navigation | **Expo Router** with `unstable-native-tabs` | File-based routes; the native iOS tab bar (Liquid Glass on iOS 26), included in Expo Go |
 | Icons / images | `expo-symbols` (SF Symbols), `expo-image` | Native icons per `design.md`; cached images |
 | Sheets, gestures, motion | `@gorhom/bottom-sheet`, `react-native-gesture-handler`, `react-native-reanimated` | Itinerary sheet over the map, drag to reorder; all in Expo Go |
-| City map | **Decided by the TR map spike** (ADR 0002). Default: `react-native-maps` (Apple Maps, dark) | Free, no key, native gestures, in Expo Go |
-| Flight globe | Default: MapLibre GL JS (globe projection) in `react-native-webview`, OpenFreeMap tiles with our dark style | Free, no key, real globe with great-circle arcs; WebView is in Expo Go |
+| City map | `react-native-maps` (Apple Maps, dark), decided by the TR-5 spike (ADR 0002) | Free, no key, native gestures, in Expo Go |
+| Flight globe | `react-native-maps` flyover globe (`hybridFlyover`), geodesic arc as a polyline, plane marker (ADR 0002) | Free, no key, same native map as the city map; no WebView |
 | Server state | TanStack Query | Caching, retries, optimistic updates (Smart Add undo) |
 | UI state | Zustand | Selected trip/day/item shared by map and list |
 | Backend | **Supabase free**: Postgres + RLS, Auth, Storage, Edge Functions (Deno) | One free service for accounts, data, files and server code (ADR 0003) |
@@ -46,7 +46,7 @@ visa images never go to AI**.
  │ services/* (api clients)      │                 │  places         → Photon      │
  └───────────────────────────────┘                 │  flight-status  → free API    │
    direct, no key: Open-Meteo, Frankfurter,        │  photos         → Unsplash    │
-   OpenFreeMap tiles (globe)                       └──────────────────────────────┘
+   Apple Maps (react-native-maps)                  └──────────────────────────────┘
 ```
 - **Every third-party key lives in Edge Function secrets**, never in the app bundle. The app only
   holds the Supabase URL and anon key (public by design; RLS protects data).
