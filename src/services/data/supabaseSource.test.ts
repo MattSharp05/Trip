@@ -5,6 +5,7 @@ import { supabaseSource } from './supabaseSource';
 const mockTables: Record<string, { data: unknown; error: { message: string } | null }> = {};
 const mockUpserts: unknown[] = [];
 const mockInserts: unknown[] = [];
+const mockUpdates: unknown[] = [];
 
 jest.mock('../supabase', () => ({
   supabase: {
@@ -17,6 +18,10 @@ jest.mock('../supabase', () => ({
       }
       builder.insert = (row: unknown) => {
         mockInserts.push(row);
+        return builder;
+      };
+      builder.update = (row: unknown) => {
+        mockUpdates.push(row);
         return builder;
       };
       builder.upsert = (row: unknown) => {
@@ -138,6 +143,23 @@ describe('supabase source', () => {
       start_time: '10:00',
       place_id: 'p1',
     });
+  });
+
+  it('saves a booking by updating its JSON data and original path', async () => {
+    const data = { confirmation: 'KXJ4PL', passCrop: { x: 0.1, y: 0.5, width: 0.6, height: 0.3 } };
+    mockTables.bookings = {
+      data: { id: 'b1', trip_id: 't1', type: 'flight', original_path: null, data },
+      error: null,
+    };
+    const saved = await supabaseSource.saveBooking({
+      id: 'b1',
+      tripId: 't1',
+      originalPath: null,
+      type: 'flight',
+      data: data as never,
+    });
+    expect(mockUpdates.at(-1)).toEqual({ data, original_path: null });
+    expect(saved).toMatchObject({ id: 'b1', type: 'flight', data });
   });
 
   it('throws the query error', async () => {

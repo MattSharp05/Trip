@@ -6,6 +6,7 @@ export {
   useDeleteBucketItem,
   useDeleteItineraryItem,
   useDocuments,
+  useSaveBooking,
   useSaveBucketItem,
   useSaveExpense,
   useSaveItineraryItem,

@@ -23,7 +23,17 @@
       ],
       "expo-font",
       "expo-secure-store",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-sharing",
+      "expo-asset",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Trip opens your photos when you add a boarding pass, so it can show the pass's code.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

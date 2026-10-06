@@ -1,4 +1,5 @@
 import type {
+  Booking,
   BucketItem,
   DataSnapshot,
   Expense,
@@ -26,6 +27,8 @@ export interface DataSource {
   saveBucketItem(item: BucketItem): Promise<BucketItem>;
   deleteBucketItem(id: string): Promise<void>;
   saveExpense(expense: Expense): Promise<Expense>;
+  /** Updates an existing booking's JSON data and original file (e.g. a boarding pass crop). */
+  saveBooking(booking: Booking): Promise<Booking>;
 }
 
 const byStart = (a: Trip, b: Trip) => a.startDate.localeCompare(b.startDate);
@@ -97,6 +100,11 @@ export function createDemoSource(snapshot: DataSnapshot, name = 'demo'): DataSou
     async saveExpense(expense) {
       db = { ...db, expenses: upsert(db.expenses, copy(expense)) };
       return copy(expense);
+    },
+    async saveBooking(booking) {
+      if (!db.bookings.some((b) => b.id === booking.id)) throw new Error('Booking not found');
+      db = { ...db, bookings: upsert(db.bookings, copy(booking)) };
+      return copy(booking);
     },
   };
 }
