@@ -65,4 +65,30 @@ describe('useTripSelection', () => {
     act(() => result.current.selectItem('item-07'));
     expect(result.current.selectedItemId).toBe('item-07');
   });
+
+  it('records who picked the item and counts picks; a new day clears both', () => {
+    const { result } = renderHook(() => useTripSelection(trip));
+    const before = result.current.picks;
+    act(() => result.current.selectItem('item-07'));
+    expect(result.current).toMatchObject({ selectedItemId: 'item-07', selectedBy: 'list' });
+    act(() => result.current.selectItem('item-07', 'map'));
+    expect(result.current).toMatchObject({ selectedBy: 'map', picks: before + 2 });
+
+    act(() => result.current.selectDay('2026-11-14'));
+    expect(result.current).toMatchObject({ selectedItemId: null, selectedBy: null });
+  });
+
+  it('a pick on another day moves to that day', () => {
+    const { result } = renderHook(() => useTripSelection(trip));
+    act(() => result.current.selectItem('item-11', 'map', '2026-11-15'));
+    expect(result.current).toMatchObject({ selectedDay: '2026-11-15', selectedItemId: 'item-11' });
+  });
+
+  it("opens on the scenario's plan mode and keeps the chosen one", () => {
+    act(() => useScenarioStore.getState().start('a', { planMode: 'bucket' }));
+    const { result } = renderHook(() => useTripSelection(trip));
+    expect(result.current.planMode).toBe('bucket');
+    act(() => result.current.setPlanMode('itinerary'));
+    expect(result.current.planMode).toBe('itinerary');
+  });
 });

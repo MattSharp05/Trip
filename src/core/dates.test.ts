@@ -6,6 +6,7 @@ import {
   dayOfMonth,
   daysBetween,
   shiftDay,
+  timeLabel,
   tripDays,
   weekdayShort,
 } from './dates';
@@ -52,5 +53,12 @@ describe('dates', () => {
     expect(dayLabelLong('2026-11-13')).toBe('Friday, November 13');
     expect(dateRangeLabel('2026-11-12', '2026-11-16')).toBe('Nov 12 – Nov 16, 2026');
     expect(dateRangeLabel('2026-12-18', '2027-01-06')).toBe('Dec 18, 2026 – Jan 6, 2027');
+  });
+
+  it('formats wall-clock times as "9:00 AM"', () => {
+    expect(timeLabel('09:00')).toBe('9:00 AM');
+    expect(timeLabel('15:00')).toBe('3:00 PM');
+    expect(timeLabel('00:05')).toBe('12:05 AM');
+    expect(timeLabel('12:00')).toBe('12:00 PM');
   });
 });

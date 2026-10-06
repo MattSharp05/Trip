@@ -30,6 +30,12 @@ const EMPTY: DataSnapshot = {
   documents: [],
 };
 
+/** The Vegas trip with Saturday, Nov 14 left free (its gondola and Forum Shops removed). */
+const vegasFreeSaturday: DataSnapshot = {
+  ...vegasSnapshot,
+  items: vegasSnapshot.items.filter((item) => item.day !== '2026-11-14'),
+};
+
 const vegas = (
   s: Omit<Scenario, 'data' | 'tripId' | 'today'> & { today?: string; data?: DataSnapshot },
 ): Scenario => ({
@@ -66,6 +72,13 @@ export const SCENARIOS: readonly Scenario[] = [
     tab: 'plan',
     today: '2026-11-12T07:30:00-05:00',
     view: { day: '2026-11-12', itemId: 'item-01', planMode: 'itinerary' },
+  }),
+  vegas({
+    name: 'vegas-free-day',
+    data: vegasFreeSaturday,
+    description: 'Plan tab on Sat Nov 14 with nothing planned: the free-day state.',
+    tab: 'plan',
+    view: { day: '2026-11-14', planMode: 'itinerary' },
   }),
   vegas({
     name: 'vegas-bucket',
