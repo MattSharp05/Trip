@@ -140,6 +140,8 @@ jobs:
       - name: Publish to branch main
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          # Scenario links and the /dev index stay on for QA during the demo phase (TR-6).
+          EXPO_PUBLIC_SCENARIOS: '1'
         run: |
           subject="$(printf '%s\n' "$COMMIT_MESSAGE" | head -n 1)"
           eas update --branch main --platform ios --environment preview \
