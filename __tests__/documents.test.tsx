@@ -18,6 +18,10 @@ jest.mock('@/features/documents/photos', () => ({
   pickDocumentPhotos: () => mockPick(),
 }));
 
+jest.mock('@/services/supabase', () => ({
+  supabase: { auth: require('@/features/auth/testing').fakeAuth },
+}));
+
 const routes = {
   '(tabs)/organize/_layout': OrganizeLayout,
   '(tabs)/organize/index': OrganizeRoute,

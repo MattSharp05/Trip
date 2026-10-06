@@ -1,8 +1,6 @@
-import { StyleSheet, View } from 'react-native';
+import { BudgetScreen } from '@/features/budget';
 
-/** Organize → Budget. Intentionally empty: TR-21 builds the budget here. */
+/** Organize → Budget (TR-21). */
 export function BudgetSlot() {
-  return <View style={styles.slot} testID="budget-slot" />;
+  return <BudgetScreen />;
 }
-
-const styles = StyleSheet.create({ slot: { flex: 1 } });

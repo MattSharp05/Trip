@@ -45,6 +45,8 @@ const tripRow = {
   end_date: '2026-11-16',
   cover_photo_url: null,
   cover_photo_credit: null,
+  budget_minor: null,
+  budget_currency: null,
   created_at: '',
   updated_at: '',
 };
@@ -79,8 +81,56 @@ describe('supabase source', () => {
         endDate: '2026-11-16',
         coverPhotoUrl: null,
         coverPhotoCredit: null,
+        budget: null,
       },
     ]);
+  });
+
+  it('reads and writes a trip budget as minor units + currency', async () => {
+    mockTables.trips = {
+      data: { ...tripRow, budget_minor: 250000, budget_currency: 'USD' },
+      error: null,
+    };
+    const trip = await supabaseSource.saveTripBudget('t1', {
+      amountMinor: 250000,
+      currency: 'USD',
+    });
+    expect(mockUpdates.at(-1)).toEqual({ budget_minor: 250000, budget_currency: 'USD' });
+    expect(trip.budget).toEqual({ amountMinor: 250000, currency: 'USD' });
+    mockTables.trips = { data: tripRow, error: null };
+    await supabaseSource.saveTripBudget('t1', null);
+    expect(mockUpdates.at(-1)).toEqual({ budget_minor: null, budget_currency: null });
+  });
+
+  it('saves an expense with its note', async () => {
+    mockTables.expenses = {
+      data: {
+        id: 'e1',
+        user_id: 'u1',
+        trip_id: 't1',
+        amount_minor: 8400,
+        currency: 'JPY',
+        category: 'Food & Drinks',
+        booking_id: null,
+        paid_at: '2026-11-13T20:00:00.000Z',
+        description: 'Ramen',
+        created_at: '',
+        updated_at: '',
+      },
+      error: null,
+    };
+    const saved = await supabaseSource.saveExpense({
+      id: 'e1',
+      tripId: 't1',
+      amountMinor: 8400,
+      currency: 'JPY',
+      category: 'Food & Drinks',
+      bookingId: null,
+      paidAt: '2026-11-13T20:00:00.000Z',
+      description: 'Ramen',
+    });
+    expect(mockUpserts.at(-1)).toMatchObject({ amount_minor: 8400, description: 'Ramen' });
+    expect(saved).toMatchObject({ amountMinor: 8400, currency: 'JPY', description: 'Ramen' });
   });
 
   it('creates a trip with its cover credit as snake_case', async () => {

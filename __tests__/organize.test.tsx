@@ -7,6 +7,10 @@ import WalletItemRoute from '../app/(tabs)/organize/item/[id]';
 import { exitScenario, loadScenario } from '@/scenarios';
 import { useTripStore } from '@/stores/trip';
 
+jest.mock('@/services/supabase', () => ({
+  supabase: { auth: require('@/features/auth/testing').fakeAuth },
+}));
+
 // The hotel screen looks for a photo; no Unsplash key yet, so the function finds none.
 jest.mock('@/services/photos', () => ({ findCoverPhoto: async () => null }));
 

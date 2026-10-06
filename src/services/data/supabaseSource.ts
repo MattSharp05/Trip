@@ -47,6 +47,10 @@ const toTrip = (r: Row<'trips'>): Trip => ({
   endDate: r.end_date,
   coverPhotoUrl: r.cover_photo_url,
   coverPhotoCredit: (r.cover_photo_credit as PhotoCredit | null) ?? null,
+  budget:
+    r.budget_minor != null && r.budget_currency
+      ? { amountMinor: r.budget_minor, currency: r.budget_currency }
+      : null,
 });
 
 const toPlace = (r: Row<'places'>): Place => ({
@@ -101,6 +105,7 @@ const toExpense = (r: Row<'expenses'>): Expense => ({
   category: r.category ?? 'Other',
   bookingId: r.booking_id,
   paidAt: r.paid_at,
+  ...(r.description ? { description: r.description } : {}),
 });
 
 const toDocument = (r: Row<'documents'>): TravelDocument => ({
@@ -268,11 +273,27 @@ export const supabaseSource: DataSource = {
           category: expense.category,
           booking_id: expense.bookingId,
           paid_at: expense.paidAt,
+          description: expense.description ?? null,
         })
         .select()
         .single(),
     );
     return toExpense(row);
+  },
+  async saveTripBudget(tripId, budget) {
+    const supabase = client();
+    const row = checkRow(
+      await supabase
+        .from('trips')
+        .update({
+          budget_minor: budget?.amountMinor ?? null,
+          budget_currency: budget?.currency ?? null,
+        })
+        .eq('id', tripId)
+        .select()
+        .single(),
+    );
+    return toTrip(row);
   },
   async saveBooking(booking) {
     const supabase = client();

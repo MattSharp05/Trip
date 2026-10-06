@@ -156,6 +156,7 @@ export type Database = {
           category: string | null;
           created_at: string;
           currency: string;
+          description: string | null;
           id: string;
           paid_at: string | null;
           trip_id: string;
@@ -168,6 +169,7 @@ export type Database = {
           category?: string | null;
           created_at?: string;
           currency: string;
+          description?: string | null;
           id?: string;
           paid_at?: string | null;
           trip_id: string;
@@ -180,6 +182,7 @@ export type Database = {
           category?: string | null;
           created_at?: string;
           currency?: string;
+          description?: string | null;
           id?: string;
           paid_at?: string | null;
           trip_id?: string;
@@ -188,7 +191,7 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: 'expenses_booking_id_user_id_fkey';
+            foreignKeyName: 'expenses_booking_fkey';
             columns: ['booking_id', 'user_id'];
             isOneToOne: false;
             referencedRelation: 'bookings';
@@ -350,6 +353,8 @@ export type Database = {
       };
       trips: {
         Row: {
+          budget_currency: string | null;
+          budget_minor: number | null;
           city: string;
           country: string | null;
           cover_photo_credit: Json | null;
@@ -365,6 +370,8 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          budget_currency?: string | null;
+          budget_minor?: number | null;
           city: string;
           country?: string | null;
           cover_photo_credit?: Json | null;
@@ -380,6 +387,8 @@ export type Database = {
           user_id?: string;
         };
         Update: {
+          budget_currency?: string | null;
+          budget_minor?: number | null;
           city?: string;
           country?: string | null;
           cover_photo_credit?: Json | null;

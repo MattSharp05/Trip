@@ -14,6 +14,11 @@ jest.mock('@/services/photos', () => ({
   findCoverPhoto: (query: string) => mockFindCoverPhoto(query),
 }));
 
+// Organize → Budget reads preferences, which import the Supabase client.
+jest.mock('@/services/supabase', () => ({
+  supabase: { auth: require('@/features/auth/testing').fakeAuth },
+}));
+
 const routes = {
   '(tabs)/organize/_layout': OrganizeLayout,
   '(tabs)/organize/index': OrganizeRoute,

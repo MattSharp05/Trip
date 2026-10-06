@@ -29,6 +29,11 @@ jest.mock('expo-asset', () => ({
   Asset: { loadAsync: jest.fn(async () => [{ localUri: 'file:///sample.png', uri: '' }]) },
 }));
 
+// Organize → Budget reads preferences, which import the Supabase client.
+jest.mock('@/services/supabase', () => ({
+  supabase: { auth: require('@/features/auth/testing').fakeAuth },
+}));
+
 const routes = {
   '(tabs)/organize/_layout': OrganizeLayout,
   '(tabs)/organize/index': OrganizeRoute,
