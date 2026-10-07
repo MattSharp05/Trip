@@ -1,9 +1,8 @@
 # Opens LINK and accepts iOS's "Open in …?" confirmation (custom-scheme links on the simulator;
 # Expo Go links too). Used by the other flows through runFlow; not run on its own. Retried because
-# a slow simulator can time out opening the link while that confirmation is up.
+# a slow simulator can time out opening the link while that confirmation is up. Callers pass APP_ID
+# and LINK; no defaults here, since a subflow's env replaces the caller's (TR-41).
 appId: ${APP_ID}
-env:
-  APP_ID: com.mattsharp05.trip
 ---
 - retry:
     maxRetries: 2

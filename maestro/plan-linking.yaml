@@ -27,8 +27,17 @@ tags:
 - assertVisible: '10:00.AM, Brunch at Mon Ami Gabi.*'
 - assertVisible: '.*Bellagio Fountains.*'
 - assertVisible: '.*Sphere Experience.*'
-- assertVisible: '.*Dinner at Carbone.*'
 - takeScreenshot: plan-linking-1-day
+# With travel legs between rows (TR-22) Carbone sits below the half-height sheet and Sphere under the
+# tab bar, so drag the sheet up by its day header to see them all. Tapping a row brings it back down.
+- swipe:
+    from:
+      id: day-header
+    direction: UP
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: '.*Dinner at Carbone.*'
+    timeout: 10000
 
 # Row → map: the Sphere row is selected and its pin shows its label.
 - tapOn:
