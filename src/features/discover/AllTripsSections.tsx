@@ -4,7 +4,7 @@ import { now } from '@/core/clock';
 import type { Trip } from '@/services/data';
 import { spacing } from '@/theme';
 import type { CityReel } from '@/services/cityLinks';
-import { Skeleton, Text } from '@/ui';
+import { LoadError, Skeleton, Text } from '@/ui';
 
 import { tripSectionTitle, type DiscoverFilter } from './discover';
 import { EventsRow, Note, REELS_TITLE, Section } from './DiscoverParts';
@@ -25,8 +25,17 @@ interface Props {
  * and a video's places save to that section's trip.
  */
 export function AllTripsSections({ filter, query, notify, openReel }: Props) {
-  const { trips, isPending } = useUpcomingTrips();
+  const { trips, isPending, isError, retry } = useUpcomingTrips();
 
+  if (isError) {
+    return (
+      <LoadError
+        message="Couldn't load your trips. Check your connection."
+        onRetry={retry}
+        testID="discover-all-error"
+      />
+    );
+  }
   if (isPending) {
     return (
       <View style={styles.loading} testID="discover-all-loading">

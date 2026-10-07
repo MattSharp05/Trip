@@ -4,19 +4,21 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { useFlightStatus } from '@/services/flightStatus';
 import { colors, continuous, radii, screenPadding, spacing } from '@/theme';
-import { Button, ListRow, Skeleton, Surface, Text, Toast } from '@/ui';
+import { Button, ListRow, LoadError, Skeleton, Surface, Text, Toast } from '@/ui';
 
 import { addFlightToCalendar, openOriginal } from './actions';
 import { FlightRoute } from './FlightRoute';
 import { StatusPill } from './FlightStatusPill';
 import { liveFacts } from './status';
 import { useFlightBooking } from './useFlightBooking';
+import { useWallet } from '../useWallet';
 
 /**
  * A flight's details: airline, route with each airport's local times, the facts you need at the
  * airport, the boarding pass, and the original booking.
  */
 export function FlightDetail({ id }: { id: string }) {
+  const { loadError, retry } = useWallet();
   const router = useRouter();
   const { flight: booking, isLoading } = useFlightBooking(id);
   const [toast, setToast] = useState<string | null>(null);
@@ -124,6 +126,8 @@ export function FlightDetail({ id }: { id: string }) {
               />
             </Surface>
           </>
+        ) : loadError ? (
+          <LoadError message="Couldn't load this flight. Check your connection." onRetry={retry} />
         ) : (
           <View style={styles.missing}>
             <Text variant="headline">This flight is no longer in your wallet</Text>

@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSaveBooking } from '@/services/data';
 import type { PassCrop } from '@/services/data/types';
 import { colors, continuous, passColors, radii, screenPadding, spacing } from '@/theme';
-import { Button, Icon, ListRow, Skeleton, Surface, Text, Toast } from '@/ui';
+import { Button, Icon, ListRow, LoadError, Skeleton, Surface, Text, Toast } from '@/ui';
 
 import { pickPassImage } from './actions';
 import { CropEditor } from './CropEditor';
@@ -14,6 +14,7 @@ import { FlightRoute } from './FlightRoute';
 import { PassCode } from './PassCode';
 import { useBrightnessBoost } from './useBrightnessBoost';
 import { useFlightBooking } from './useFlightBooking';
+import { useWallet } from '../useWallet';
 
 function Field({ label, value, end }: { label: string; value: string | null; end?: boolean }) {
   return (
@@ -33,6 +34,7 @@ function Field({ label, value, end }: { label: string; value: string | null; end
  * the user added. The screen goes to full brightness while it's open.
  */
 export function BoardingPass({ id }: { id: string }) {
+  const { loadError, retry } = useWallet();
   useBrightnessBoost();
   const { flight: booking, isLoading } = useFlightBooking(id);
   const save = useSaveBooking();
@@ -77,9 +79,16 @@ export function BoardingPass({ id }: { id: string }) {
         {isLoading ? (
           <Skeleton height={520} radius="card" />
         ) : !flight ? (
-          <View style={styles.missing}>
-            <Text variant="headline">This flight is no longer in your wallet</Text>
-          </View>
+          loadError ? (
+            <LoadError
+              message="Couldn't load this flight. Check your connection."
+              onRetry={retry}
+            />
+          ) : (
+            <View style={styles.missing}>
+              <Text variant="headline">This flight is no longer in your wallet</Text>
+            </View>
+          )
         ) : editing && image ? (
           <CropEditor
             image={image}

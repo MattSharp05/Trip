@@ -72,6 +72,12 @@ export function BudgetScreen() {
         <Text variant="subhead" tone="secondary" style={styles.centered}>
           Check your connection and try again.
         </Text>
+        <Button
+          label="Try again"
+          variant="secondary"
+          onPress={() => void tripData.refetch()}
+          testID="budget-retry"
+        />
       </View>
     );
   }

@@ -2,7 +2,7 @@ import { Stack } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { colors, screenPadding, spacing } from '@/theme';
-import { ListRow, Skeleton, Surface, Text } from '@/ui';
+import { ListRow, LoadError, Skeleton, Surface, Text } from '@/ui';
 
 import { walletLabel, WalletEntryCard } from './cards/registry';
 import { formatMonthYear } from './format';
@@ -22,7 +22,7 @@ function facts(entry: WalletEntry): { title: string; value: string }[] {
  * its confirmation number.
  */
 export function WalletItemDetail({ id }: { id: string }) {
-  const { entries, places, isLoading } = useWallet();
+  const { entries, places, isLoading, loadError, retry } = useWallet();
   const entry = entries.find((e) => e.id === id);
   const title = entry ? walletLabel(entry) : '';
   const rows = entry ? facts(entry) : [];
@@ -43,6 +43,8 @@ export function WalletItemDetail({ id }: { id: string }) {
             </Surface>
           ) : null}
         </>
+      ) : loadError ? (
+        <LoadError message="Couldn't load this item. Check your connection." onRetry={retry} />
       ) : (
         <View style={styles.missing}>
           <Text variant="headline">This item is no longer in your wallet</Text>

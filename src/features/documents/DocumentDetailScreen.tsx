@@ -6,7 +6,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useDocuments } from '@/services/data';
 import type { TravelDocument } from '@/services/data/types';
 import { colors, screenPadding, spacing } from '@/theme';
-import { Button, Icon, ListRow, Skeleton, Surface, Text } from '@/ui';
+import { Button, Icon, ListRow, LoadError, Skeleton, Surface, Text } from '@/ui';
 
 import { DocumentPhoto } from './DocumentPhoto';
 import { warningText } from './expiry';
@@ -141,6 +141,11 @@ export function DocumentDetailScreen({ id }: { id: string }) {
         </>
       ) : document ? (
         <Detail document={document} />
+      ) : documents.isError ? (
+        <LoadError
+          message="Couldn't load this document. Check your connection."
+          onRetry={() => void documents.refetch()}
+        />
       ) : (
         <View style={styles.missing}>
           <Text variant="headline">This document is no longer in your wallet</Text>

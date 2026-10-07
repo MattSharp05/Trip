@@ -10,7 +10,7 @@ import { TextField } from '@/features/auth/TextField';
 import { useDocuments } from '@/services/data';
 import type { TravelDocument } from '@/services/data/types';
 import { colors, continuous, radii, screenPadding, spacing } from '@/theme';
-import { Button, Icon, IconButton, Segmented, Skeleton, Text } from '@/ui';
+import { Button, Icon, IconButton, LoadError, Segmented, Skeleton, Text } from '@/ui';
 
 import { DocumentPhoto } from './DocumentPhoto';
 import {
@@ -272,6 +272,11 @@ export function DocumentFormScreen({ id }: { id?: string }) {
           <Skeleton height={66} radius="card" />
           <Skeleton height={66} radius="card" />
         </View>
+      ) : id && !document && documents.isError ? (
+        <LoadError
+          message="Couldn't load this document. Check your connection."
+          onRetry={() => void documents.refetch()}
+        />
       ) : id && !document ? (
         <View style={[styles.screen, styles.missing]}>
           <Text variant="headline">This document is no longer in your wallet</Text>
