@@ -97,6 +97,7 @@ const toBucket = (r: Row<'bucket_items'>): BucketItem => ({
   source: r.source,
   fixedDate: r.fixed_date,
   fixedTime: hhmm(r.fixed_time),
+  ...(r.title ? { title: r.title } : {}),
 });
 
 const toExpense = (r: Row<'expenses'>): Expense => ({
@@ -274,6 +275,7 @@ export const supabaseSource: DataSource = {
           source: item.source,
           fixed_date: item.fixedDate,
           fixed_time: item.fixedTime,
+          title: item.title || null,
         })
         .select()
         .single(),

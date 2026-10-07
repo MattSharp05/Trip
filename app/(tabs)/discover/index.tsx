@@ -1,6 +1,5 @@
-import { tabTitle } from '@/core/tabs';
-import { PlaceholderScreen } from '@/ui/PlaceholderScreen';
+import { DiscoverScreen } from '@/features/discover';
 
-export default function DiscoverScreen() {
-  return <PlaceholderScreen title={tabTitle('discover')} />;
+export default function DiscoverRoute() {
+  return <DiscoverScreen />;
 }

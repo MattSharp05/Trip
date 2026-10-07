@@ -1,0 +1,583 @@
+{
+  "_embedded": {
+    "events": [
+      {
+        "name": "Las Vegas Wine & Food Festival",
+        "type": "event",
+        "id": "vvG1IZ9Kb1",
+        "test": false,
+        "url": "https://www.ticketmaster.com/event/vvG1IZ9Kb1",
+        "locale": "en-us",
+        "images": [
+          {
+            "ratio": "3_2",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_3_2_305.jpg",
+            "width": 305,
+            "height": 203,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_640.jpg",
+            "width": 640,
+            "height": 360,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_1024.jpg",
+            "width": 1024,
+            "height": 576,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_2048.jpg",
+            "width": 2048,
+            "height": 1152,
+            "fallback": false
+          }
+        ],
+        "dates": {
+          "start": {
+            "localDate": "2026-11-11",
+            "dateTBD": false,
+            "dateTBA": false,
+            "timeTBA": false,
+            "noSpecificTime": false,
+            "localTime": "17:00:00",
+            "dateTime": "2026-11-11T17:00:00Z"
+          },
+          "timezone": "America/Los_Angeles",
+          "status": {
+            "code": "onsale"
+          },
+          "spanMultipleDays": false
+        },
+        "classifications": [
+          {
+            "primary": true,
+            "segment": {
+              "id": "KZFzniwnSyZfZ7v7nM",
+              "name": "Miscellaneous"
+            },
+            "genre": {
+              "id": "g",
+              "name": "Food & Drink"
+            },
+            "subGenre": {
+              "id": "s",
+              "name": "Food & Drink"
+            },
+            "family": false
+          }
+        ],
+        "_embedded": {
+          "venues": [
+            {
+              "name": "Venetian Expo",
+              "type": "venue",
+              "id": "KovZVene",
+              "address": {
+                "line1": "201 Sands Ave"
+              },
+              "city": {
+                "name": "Las Vegas"
+              },
+              "state": {
+                "stateCode": "NV"
+              },
+              "location": {
+                "longitude": "-115.1648",
+                "latitude": "36.1221"
+              },
+              "timezone": "America/Los_Angeles"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Vegas Golden Knights vs. Colorado Avalanche",
+        "type": "event",
+        "id": "vvG1IZ9Kb2",
+        "test": false,
+        "url": "https://www.ticketmaster.com/event/vvG1IZ9Kb2",
+        "locale": "en-us",
+        "images": [
+          {
+            "ratio": "3_2",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_3_2_305.jpg",
+            "width": 305,
+            "height": 203,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_640.jpg",
+            "width": 640,
+            "height": 360,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_1024.jpg",
+            "width": 1024,
+            "height": 576,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_2048.jpg",
+            "width": 2048,
+            "height": 1152,
+            "fallback": false
+          }
+        ],
+        "dates": {
+          "start": {
+            "localDate": "2026-11-12",
+            "dateTBD": false,
+            "dateTBA": false,
+            "timeTBA": false,
+            "noSpecificTime": false,
+            "localTime": "19:00:00",
+            "dateTime": "2026-11-12T19:00:00Z"
+          },
+          "timezone": "America/Los_Angeles",
+          "status": {
+            "code": "onsale"
+          },
+          "spanMultipleDays": false
+        },
+        "classifications": [
+          {
+            "primary": true,
+            "segment": {
+              "id": "KZFzniwnSyZfZ7v7nS",
+              "name": "Sports"
+            },
+            "genre": {
+              "id": "g",
+              "name": "Hockey"
+            },
+            "subGenre": {
+              "id": "s",
+              "name": "NHL"
+            },
+            "family": false
+          }
+        ],
+        "_embedded": {
+          "venues": [
+            {
+              "name": "T-Mobile Arena",
+              "type": "venue",
+              "id": "KovZT-Mo",
+              "address": {
+                "line1": "3780 Las Vegas Blvd S"
+              },
+              "city": {
+                "name": "Las Vegas"
+              },
+              "state": {
+                "stateCode": "NV"
+              },
+              "location": {
+                "longitude": "-115.17845",
+                "latitude": "36.10279"
+              },
+              "timezone": "America/Los_Angeles"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Vegas Golden Knights vs. Colorado Avalanche",
+        "type": "event",
+        "id": "vvG1IZ9Kb3",
+        "test": false,
+        "url": "https://www.ticketmaster.com/event/vvG1IZ9Kb3",
+        "locale": "en-us",
+        "images": [
+          {
+            "ratio": "3_2",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_3_2_305.jpg",
+            "width": 305,
+            "height": 203,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_640.jpg",
+            "width": 640,
+            "height": 360,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_1024.jpg",
+            "width": 1024,
+            "height": 576,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_2048.jpg",
+            "width": 2048,
+            "height": 1152,
+            "fallback": false
+          }
+        ],
+        "dates": {
+          "start": {
+            "localDate": "2026-11-12",
+            "dateTBD": false,
+            "dateTBA": false,
+            "timeTBA": false,
+            "noSpecificTime": false,
+            "localTime": "19:00:00",
+            "dateTime": "2026-11-12T19:00:00Z"
+          },
+          "timezone": "America/Los_Angeles",
+          "status": {
+            "code": "onsale"
+          },
+          "spanMultipleDays": false
+        },
+        "classifications": [
+          {
+            "primary": true,
+            "segment": {
+              "id": "KZFzniwnSyZfZ7v7nS",
+              "name": "Sports"
+            },
+            "genre": {
+              "id": "g",
+              "name": "Hockey"
+            },
+            "subGenre": {
+              "id": "s",
+              "name": "NHL"
+            },
+            "family": false
+          }
+        ],
+        "_embedded": {
+          "venues": [
+            {
+              "name": "T-Mobile Arena",
+              "type": "venue",
+              "id": "KovZT-Mo",
+              "address": {
+                "line1": "3780 Las Vegas Blvd S"
+              },
+              "city": {
+                "name": "Las Vegas"
+              },
+              "state": {
+                "stateCode": "NV"
+              },
+              "location": {
+                "longitude": "-115.17845",
+                "latitude": "36.10279"
+              },
+              "timezone": "America/Los_Angeles"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Dead & Company",
+        "type": "event",
+        "id": "vvG1IZ9Kb4",
+        "test": false,
+        "url": "https://www.ticketmaster.com/event/vvG1IZ9Kb4",
+        "locale": "en-us",
+        "images": [
+          {
+            "ratio": "3_2",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_3_2_305.jpg",
+            "width": 305,
+            "height": 203,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_640.jpg",
+            "width": 640,
+            "height": 360,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_1024.jpg",
+            "width": 1024,
+            "height": 576,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_2048.jpg",
+            "width": 2048,
+            "height": 1152,
+            "fallback": false
+          }
+        ],
+        "dates": {
+          "start": {
+            "localDate": "2026-11-13",
+            "dateTBD": false,
+            "dateTBA": false,
+            "timeTBA": false,
+            "noSpecificTime": false,
+            "localTime": "19:30:00",
+            "dateTime": "2026-11-13T19:30:00Z"
+          },
+          "timezone": "America/Los_Angeles",
+          "status": {
+            "code": "onsale"
+          },
+          "spanMultipleDays": false
+        },
+        "classifications": [
+          {
+            "primary": true,
+            "segment": {
+              "id": "KZFzniwnSyZfZ7v7nM",
+              "name": "Music"
+            },
+            "genre": {
+              "id": "g",
+              "name": "Rock"
+            },
+            "subGenre": {
+              "id": "s",
+              "name": "Pop"
+            },
+            "family": false
+          }
+        ],
+        "_embedded": {
+          "venues": [
+            {
+              "name": "Sphere",
+              "type": "venue",
+              "id": "KovZSphe",
+              "address": {
+                "line1": "255 Sands Ave"
+              },
+              "city": {
+                "name": "Las Vegas"
+              },
+              "state": {
+                "stateCode": "NV"
+              },
+              "location": {
+                "longitude": "-115.16165",
+                "latitude": "36.12082"
+              },
+              "timezone": "America/Los_Angeles"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Fred again..",
+        "type": "event",
+        "id": "vvG1IZ9Kb5",
+        "test": false,
+        "url": "https://www.ticketmaster.com/event/vvG1IZ9Kb5",
+        "locale": "en-us",
+        "images": [
+          {
+            "ratio": "3_2",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_3_2_305.jpg",
+            "width": 305,
+            "height": 203,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_640.jpg",
+            "width": 640,
+            "height": 360,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_1024.jpg",
+            "width": 1024,
+            "height": 576,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_2048.jpg",
+            "width": 2048,
+            "height": 1152,
+            "fallback": false
+          }
+        ],
+        "dates": {
+          "start": {
+            "localDate": "2026-11-14",
+            "dateTBD": false,
+            "dateTBA": false,
+            "timeTBA": false,
+            "noSpecificTime": false,
+            "localTime": "22:30:00",
+            "dateTime": "2026-11-14T22:30:00Z"
+          },
+          "timezone": "America/Los_Angeles",
+          "status": {
+            "code": "onsale"
+          },
+          "spanMultipleDays": false
+        },
+        "classifications": [
+          {
+            "primary": true,
+            "segment": {
+              "id": "KZFzniwnSyZfZ7v7nM",
+              "name": "Music"
+            },
+            "genre": {
+              "id": "g",
+              "name": "Dance/Electronic"
+            },
+            "subGenre": {
+              "id": "s",
+              "name": "Dance"
+            },
+            "family": false
+          }
+        ],
+        "_embedded": {
+          "venues": [
+            {
+              "name": "XS Nightclub",
+              "type": "venue",
+              "id": "KovZXSN",
+              "address": {
+                "line1": "3131 Las Vegas Blvd S"
+              },
+              "city": {
+                "name": "Las Vegas"
+              },
+              "state": {
+                "stateCode": "NV"
+              },
+              "location": {
+                "longitude": "-115.16536",
+                "latitude": "36.12715"
+              },
+              "timezone": "America/Los_Angeles"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Hip-Hop Saturdays",
+        "type": "event",
+        "id": "vvG1IZ9Kb6",
+        "test": false,
+        "url": "https://www.ticketmaster.com/event/vvG1IZ9Kb6",
+        "locale": "en-us",
+        "images": [
+          {
+            "ratio": "3_2",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_3_2_305.jpg",
+            "width": 305,
+            "height": 203,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_640.jpg",
+            "width": 640,
+            "height": 360,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_1024.jpg",
+            "width": 1024,
+            "height": 576,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_2048.jpg",
+            "width": 2048,
+            "height": 1152,
+            "fallback": false
+          }
+        ],
+        "dates": {
+          "start": {
+            "localDate": "2026-11-14",
+            "dateTBD": false,
+            "dateTBA": false,
+            "timeTBA": false,
+            "noSpecificTime": false,
+            "localTime": "22:00:00",
+            "dateTime": "2026-11-14T22:00:00Z"
+          },
+          "timezone": "America/Los_Angeles",
+          "status": {
+            "code": "onsale"
+          },
+          "spanMultipleDays": false
+        },
+        "classifications": [
+          {
+            "primary": true,
+            "segment": {
+              "id": "KZFzniwnSyZfZ7v7nM",
+              "name": "Music"
+            },
+            "genre": {
+              "id": "g",
+              "name": "Hip-Hop/Rap"
+            },
+            "subGenre": {
+              "id": "s",
+              "name": "Urban"
+            },
+            "family": false
+          }
+        ],
+        "_embedded": {
+          "venues": [
+            {
+              "name": "XS Nightclub",
+              "type": "venue",
+              "id": "KovZXSN",
+              "address": {
+                "line1": "3131 Las Vegas Blvd S"
+              },
+              "city": {
+                "name": "Las Vegas"
+              },
+              "state": {
+                "stateCode": "NV"
+              },
+              "location": {
+                "longitude": "-115.16536",
+                "latitude": "36.12715"
+              },
+              "timezone": "America/Los_Angeles"
+            }
+          ]
+        }
+      }
+    ],
+    "_links": {}
+  },
+  "page": {
+    "size": 6,
+    "totalElements": 11,
+    "totalPages": 2,
+    "number": 0
+  }
+}
