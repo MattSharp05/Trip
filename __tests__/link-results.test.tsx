@@ -12,6 +12,7 @@ import { resetFakeAuth } from '@/features/auth/testing';
 import { useClipboardOfferStore } from '@/features/links';
 import { exitScenario } from '@/scenarios';
 import { searchSpots } from '@/services/places';
+import { useScenarioStore } from '@/stores/scenario';
 
 jest.mock('@/services/supabase', () => ({
   supabase: { auth: require('@/features/auth/testing').fakeAuth },
@@ -119,6 +120,8 @@ describe('link-results', () => {
     ]);
     expect(screen.getByText('Added 2 places to your Bucket List')).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'Bucket List (7)' })).toBeSelected();
+    // The sample is used up once its sheet closes: the Plan screen doesn't reopen it (TR-43).
+    expect(useScenarioStore.getState().view.linkSample).toBeUndefined();
 
     // Each saved row's play button opens the video.
     const watch = screen.getAllByLabelText('Watch on TikTok');

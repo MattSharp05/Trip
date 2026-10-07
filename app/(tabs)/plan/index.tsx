@@ -57,7 +57,8 @@ const TOP_ESTIMATE = 140;
 const TOAST_BOTTOM = 49 + spacing.md;
 
 /** Demo sessions whose sample video has been opened: once per scenario load. */
-const openedSamples = new WeakSet<DataSource>();
+/** How long a scenario's sample video waits before its results sheet opens (TR-43). */
+const SAMPLE_OPEN_DELAY_MS = 600;
 
 /**
  * The native tab bar floats over the bottom of the screen (iOS 26): the itinerary and Bucket List
@@ -174,19 +175,27 @@ export default function PlanScreen() {
     },
     [closeAddSheet, openLink],
   );
-  // A scenario can open straight on the results for a sample video.
+  // A scenario can open straight on the results for a sample video, once its trip has loaded and
+  // the scenario link's tab switch has settled (TR-43). Every Plan screen that mounts opens it; it
+  // is used up only when the sheet this screen opened closes (saved or dismissed), so a screen torn
+  // down by the redirect doesn't use it up for the one that stays.
   const source = useDataSource();
+  const tripLoaded = trip.data !== undefined;
+  const sampleOpened = useRef<DataSource | null>(null);
   useEffect(() => {
     const sample = useScenarioStore.getState().view.linkSample;
-    if (!sample || source.kind !== 'demo' || openedSamples.has(source)) return;
-    // On the next tick, and only marked as opened then: if this first Plan screen is torn down at
-    // once (the scenario link's redirect), the one that stays still opens the sheet (TR-41).
+    if (!sample || source.kind !== 'demo' || !tripLoaded || sampleOpened.current === source) return;
     const timer = setTimeout(() => {
-      openedSamples.add(source);
+      sampleOpened.current = source;
       openLink(LINK_SAMPLES[sample].result.url);
-    }, 0);
+    }, SAMPLE_OPEN_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [openLink, source]);
+  }, [openLink, source, tripLoaded]);
+  useEffect(() => {
+    if (sampleOpened.current !== source || links.isOpen) return;
+    const { view } = useScenarioStore.getState();
+    if (view.linkSample) useScenarioStore.setState({ view: { ...view, linkSample: undefined } });
+  }, [links.isOpen, source]);
 
   // Smart Add (TR-29): the new stop's day opens with it selected, so the map flies to it.
   const smart = useSmartAdd(tripId, trip.data);
