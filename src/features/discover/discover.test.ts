@@ -1,4 +1,6 @@
+import { planBucketSmartAdd } from '@/features/bucket';
 import { vegasSnapshot } from '@/scenarios/fixtures/vegas';
+import type { Place, TripData } from '@/services/data/types';
 import type { TripEvent } from '@/services/events';
 
 import { FIXTURE_EVENTS, fixtureEvents } from '../../../supabase/functions/_shared/events/fixtures';
@@ -173,6 +175,39 @@ describe('saving', () => {
       windowStart: '09:00',
       windowEnd: '22:00',
       fixedDate: null,
+    });
+  });
+});
+
+describe('Smart Add places a saved event (TR-29)', () => {
+  const trip = vegasSnapshot.trips.find((t) => t.id === 'trip-vegas')!;
+  const tripData: TripData = { trip, ...data, bookings: [], expenses: [] };
+
+  it('on its own date and time, as a fixed event with its name', () => {
+    const zouk = byId('fx:zouk-1113');
+    const venue = { ...venuePlace(zouk), id: 'place-zouk' } as Place;
+    const item = eventBucketItem(trip.id, zouk, venue.id);
+    const plan = planBucketSmartAdd(
+      { ...tripData, places: [...data.places, venue], bucketItems: [...data.bucketItems, item] },
+      item,
+    );
+    if (!('change' in plan)) throw new Error(plan.message);
+    expect(plan.change.save[0]).toMatchObject({
+      day: '2026-11-13',
+      startTime: '22:30',
+      placeId: 'place-zouk',
+      kind: 'event',
+      fixed: true,
+      title: 'Late night at Zouk Nightclub',
+    });
+    expect(plan.change.removeBucket).toEqual([item.id]);
+  });
+
+  it('says so when it overlaps a fixed stop (the Golden Knights game runs into dinner at Carbone)', () => {
+    const knights = byId('fx:golden-knights-1113');
+    const item = eventBucketItem(trip.id, knights, 'place-t-mobile');
+    expect(planBucketSmartAdd(tripData, item)).toEqual({
+      message: 'Overlaps Dinner at Carbone at 8:00 PM.',
     });
   });
 });
