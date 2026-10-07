@@ -423,6 +423,7 @@ export const bucketItems: BucketItem[] = [
     source: 'search',
   }),
   bucket('bucket-fred-again', 'place-xs', {
+    title: 'Fred again..',
     durationMinutes: 180,
     source: 'discover',
     fixedDate: '2026-11-14',

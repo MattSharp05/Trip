@@ -29,6 +29,7 @@ export function TripMap({
   dimmedIds,
   fitIds,
   onPinPress,
+  onLongPress,
   ref,
   testID = 'trip-map',
 }: TripMapProps) {
@@ -111,6 +112,14 @@ export function TripMap({
         pitchEnabled
         rotateEnabled
         toolbarEnabled={false}
+        onLongPress={
+          onLongPress
+            ? (e) => {
+                const { latitude, longitude } = e.nativeEvent.coordinate;
+                onLongPress({ lat: latitude, lng: longitude });
+              }
+            : undefined
+        }
       >
         {route.length > 1 ? (
           <Polyline

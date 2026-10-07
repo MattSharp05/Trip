@@ -5,9 +5,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tripDays } from '@/core/dates';
 import { tabTitle } from '@/core/tabs';
 import { temperatureUnitForLocale } from '@/core/weather';
+import {
+  AddPlaceSheet,
+  BucketList,
+  bucketEntries,
+  bucketPins,
+  useBucketActions,
+  type BucketEntry,
+} from '@/features/bucket';
 import { TripDayMap, type TripMapHandle } from '@/features/map';
 import {
-  BucketListSlot,
   DatePills,
   DayHeader,
   Itinerary,
@@ -21,7 +28,7 @@ import { useTripForecast } from '@/services/weather';
 import { useTripSelection } from '@/stores/selection';
 import { useTripStore } from '@/stores/trip';
 import { colors, radii, screenPadding, spacing } from '@/theme';
-import { PlaceholderScreen, Skeleton } from '@/ui';
+import { PlaceholderScreen, Skeleton, Toast } from '@/ui';
 
 /** Share of the screen the map shows above the half-height sheet (reference mockup, Plan). */
 const MAP_SHARE = 0.36;
@@ -29,6 +36,9 @@ const MAP_SHARE = 0.36;
 const SHEET_OVERLAP = radii.photo;
 /** Header and date pills, until the body under them has been measured. */
 const TOP_ESTIMATE = 140;
+
+/** The toast floats above the tab bar (49 pt on iPhone) over the sheet. */
+const TOAST_BOTTOM = 49 + spacing.md;
 
 /** Until Settings has a units preference, temperatures follow the phone's region. */
 const UNIT = temperatureUnitForLocale(Intl.DateTimeFormat().resolvedOptions().locale);
@@ -81,6 +91,18 @@ export default function PlanScreen() {
     [selectedDay, entries, selectDay],
   );
 
+  // Bucket List: its places show on the map as outlined pins while the segment is open.
+  const inBucket = selection.planMode === 'bucket';
+  const bucket = useMemo(() => (trip.data ? bucketEntries(trip.data) : undefined), [trip.data]);
+  const savedPins = useMemo(() => (trip.data ? bucketPins(trip.data) : []), [trip.data]);
+  const savedIds = useMemo(() => savedPins.map((p) => p.id), [savedPins]);
+  const actions = useBucketActions(tripId, trip.data?.bucketItems);
+  const [bucketPick, setBucketPick] = useState<string | null>(null);
+  const pickBucketRow = useCallback((entry: BucketEntry) => {
+    setBucketPick(entry.placeId);
+    map.current?.flyTo(entry.placeId);
+  }, []);
+
   const [bodyHeight, setBodyHeight] = useState(() => height - insets.top - TOP_ESTIMATE);
   const mapHeight = Math.round(height * MAP_SHARE);
   const sheetHalf = Math.max(bodyHeight - mapHeight + SHEET_OVERLAP, 0);
@@ -89,6 +111,8 @@ export default function PlanScreen() {
 
   const weather = forecast.data ?? {};
   const bucketCount = trip.data?.bucketItems.length;
+  const near =
+    info && info.lat !== null && info.lng !== null ? { lat: info.lat, lng: info.lng } : null;
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -121,8 +145,11 @@ export default function PlanScreen() {
               ref={map}
               data={trip.data}
               focusDay={selectedDay}
-              selectedId={selectedPlace}
-              onPinPress={pickPin}
+              selectedId={inBucket ? bucketPick : selectedPlace}
+              onPinPress={inBucket ? setBucketPick : pickPin}
+              extraPins={inBucket ? savedPins : undefined}
+              fitIds={inBucket && savedIds.length ? savedIds : undefined}
+              onLongPress={inBucket ? actions.dropPin : undefined}
             />
           ) : (
             <Skeleton height={mapHeight} radius="sm" testID="map-loading" />
@@ -154,9 +181,39 @@ export default function PlanScreen() {
               bottomInset={insets.bottom + spacing.xl}
             />
           }
-          bucketList={<BucketListSlot count={bucketCount} />}
+          bucketList={
+            <BucketList
+              entries={bucket}
+              onSelect={pickBucketRow}
+              onDelete={actions.remove}
+              onAdd={actions.openSearch}
+              bottomInset={insets.bottom + spacing.xl}
+            />
+          }
         />
       </View>
+      <View
+        style={[styles.toast, { bottom: insets.bottom + TOAST_BOTTOM }]}
+        pointerEvents="box-none"
+      >
+        <Toast
+          visible={actions.toast !== null}
+          message={actions.toast?.message ?? ''}
+          actionLabel={actions.toast?.undo ? 'Undo' : undefined}
+          onAction={actions.undo}
+          onDismiss={actions.dismissToast}
+          testID="plan-toast"
+        />
+      </View>
+      <AddPlaceSheet
+        mode={actions.addMode}
+        near={near}
+        onClose={actions.closeSheet}
+        onPickSpot={actions.pickSpot}
+        onDropPin={actions.startDropPin}
+        onSavePin={actions.savePin}
+        saving={actions.saving}
+      />
     </View>
   );
 }
@@ -167,5 +224,6 @@ const styles = StyleSheet.create({
   pills: { paddingBottom: spacing.md },
   pillsLoading: { paddingHorizontal: screenPadding },
   body: { flex: 1 },
+  toast: { position: 'absolute', left: screenPadding, right: screenPadding },
   dayLoading: { paddingHorizontal: screenPadding, paddingVertical: spacing.md },
 });

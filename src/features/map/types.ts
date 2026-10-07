@@ -17,6 +17,8 @@ export interface MapPin {
   photo: string | null;
   /** Shown under the pin when it's selected, and read by VoiceOver. */
   label: string;
+  /** A saved place not on a day yet (Bucket List): drawn as an orange outline. */
+  outlined?: boolean;
 }
 
 /** What the screen can ask the map to do (ADR 0002). */
@@ -37,6 +39,8 @@ export interface TripMapProps {
   /** Pins the "fit the day" button frames. Defaults to the route. */
   fitIds?: string[];
   onPinPress?: (id: string) => void;
+  /** Touch and hold on the map (not on a pin): where the finger was. */
+  onLongPress?: (coordinate: LngLat) => void;
   ref?: Ref<TripMapHandle>;
   testID?: string;
 }
