@@ -34,7 +34,8 @@
           "cameraPermission": "Trip uses the camera when you take a photo of your passport or visa.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

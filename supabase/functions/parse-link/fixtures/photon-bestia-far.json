@@ -1,0 +1,99 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "R",
+        "osm_id": 170117,
+        "osm_key": "place",
+        "osm_value": "city",
+        "type": "city",
+        "name": "Las Vegas",
+        "county": "Clark",
+        "state": "Nevada",
+        "country": "United States",
+        "countrycode": "US",
+        "extra": { "admin_level": "8" },
+        "extent": [-115.406575, 36.401481, -115.062066, 36.129554]
+      },
+      "geometry": { "type": "Point", "coordinates": [-115.1484131, 36.1674263] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "W",
+        "osm_id": 364489406,
+        "osm_key": "building",
+        "osm_value": "stadium",
+        "type": "house",
+        "housenumber": "3780",
+        "name": "T-Mobile Arena",
+        "street": "South Las Vegas Boulevard",
+        "city": "Paradise",
+        "county": "Clark",
+        "state": "Nevada",
+        "country": "United States",
+        "postcode": "89109",
+        "countrycode": "US",
+        "extent": [-115.1792491, 36.1036661, -115.1771342, 36.1016535]
+      },
+      "geometry": { "type": "Point", "coordinates": [-115.1782239, 36.102678] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "R",
+        "osm_id": 19641890,
+        "osm_key": "boundary",
+        "osm_value": "statistical",
+        "type": "other",
+        "name": "Las Vegas Valley",
+        "county": "Clark",
+        "state": "Nevada",
+        "country": "United States",
+        "countrycode": "US",
+        "extent": [-115.3428978, 36.3361856, -114.7699227, 35.9090772]
+      },
+      "geometry": { "type": "Point", "coordinates": [-115.1797755, 36.1226049] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "R",
+        "osm_id": 170118,
+        "osm_key": "place",
+        "osm_value": "city",
+        "type": "city",
+        "name": "North Las Vegas",
+        "county": "Clark",
+        "state": "Nevada",
+        "country": "United States",
+        "countrycode": "US",
+        "extra": { "admin_level": "8" },
+        "extent": [-115.2120179, 36.435247, -114.89279, 36.1848303]
+      },
+      "geometry": { "type": "Point", "coordinates": [-115.1214745, 36.2005191] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "W",
+        "osm_id": 586928078,
+        "osm_key": "tourism",
+        "osm_value": "attraction",
+        "type": "house",
+        "name": "Las Vegas Strip",
+        "street": "Avenue of the Hiltons",
+        "city": "Winchester",
+        "county": "Clark",
+        "state": "Nevada",
+        "country": "United States",
+        "postcode": "89169",
+        "countrycode": "US",
+        "extent": [-115.199273, 36.1490553, -115.1489997, 36.0896746]
+      },
+      "geometry": { "type": "Point", "coordinates": [-115.1742536, 36.1194215] }
+    }
+  ]
+}

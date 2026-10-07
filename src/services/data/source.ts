@@ -9,6 +9,8 @@ import type {
   NewTrip,
   Place,
   PlaceInput,
+  SavedLink,
+  SavedLinkInput,
   TravelDocument,
   Trip,
   TripData,
@@ -32,6 +34,9 @@ export interface DataSource {
   deleteItineraryItem(id: string): Promise<void>;
   /** Adds a place (no id) or updates one; returns it with its id. */
   savePlace(place: PlaceInput): Promise<Place>;
+  /** Adds a saved TikTok or Instagram link (no id) or updates one; returns it with its id. */
+  saveLink(link: SavedLinkInput): Promise<SavedLink>;
+  /** Saves a bucket item, with `saved_link_id` from `item.link`. */
   saveBucketItem(item: BucketItem): Promise<BucketItem>;
   deleteBucketItem(id: string): Promise<void>;
   saveExpense(expense: Expense): Promise<Expense>;
@@ -63,6 +68,7 @@ export function createDemoSource(snapshot: DataSnapshot, name = 'demo'): DataSou
   let db: DataSnapshot = JSON.parse(JSON.stringify(snapshot));
   const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
   demoCount += 1;
+  let linkCount = 0;
 
   return {
     id: `demo:${name}:${demoCount}`,
@@ -121,6 +127,10 @@ export function createDemoSource(snapshot: DataSnapshot, name = 'demo'): DataSou
       };
       db = { ...db, places: upsert(db.places, place) };
       return copy(place);
+    },
+    async saveLink(input) {
+      // Demo links live on the bucket items that point at them; nothing else lists them.
+      return copy({ ...input, id: input.id ?? `link-${Date.now().toString(36)}-${++linkCount}` });
     },
     async saveBucketItem(item) {
       db = { ...db, bucketItems: upsert(db.bucketItems, copy(item)) };

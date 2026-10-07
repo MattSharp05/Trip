@@ -175,6 +175,23 @@ export type Booking =
 
 export type BookingType = Booking['type'];
 
+/** A TikTok or Instagram video the traveller saved places from (TR-30). */
+export interface SavedLink {
+  id: string;
+  tripId: string;
+  url: string;
+  platform: 'tiktok' | 'instagram';
+  /** The caption, when the platform shares it. */
+  title: string | null;
+  author: string | null;
+  thumbnailUrl: string | null;
+  /** The places saved from it. */
+  placeIds: string[];
+}
+
+/** What "save a link" takes; without an id it adds a new one. */
+export type SavedLinkInput = Omit<SavedLink, 'id'> & { id?: string };
+
 export interface BucketItem {
   id: string;
   tripId: string;
@@ -190,6 +207,8 @@ export interface BucketItem {
   fixedTime: string | null;
   /** Display title (an event's name); without one, screens show the place's name. */
   title?: string;
+  /** The video it was saved from, for "Watch" (absent in most fixtures). */
+  link?: SavedLink | null;
 }
 
 export interface Expense {

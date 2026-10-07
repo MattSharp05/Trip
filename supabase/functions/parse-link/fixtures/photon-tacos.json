@@ -1,0 +1,87 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "W",
+        "osm_id": 745375113,
+        "osm_key": "amenity",
+        "osm_value": "restaurant",
+        "type": "house",
+        "housenumber": "1724",
+        "name": "Tacos El Gordo",
+        "street": "East Charleston Boulevard",
+        "district": "Huntridge",
+        "city": "Las Vegas",
+        "county": "Clark",
+        "state": "Nevada",
+        "country": "United States",
+        "postcode": "89104",
+        "countrycode": "US",
+        "extent": [-115.1266864, 36.1586205, -115.1265147, 36.1583519]
+      },
+      "geometry": { "type": "Point", "coordinates": [-115.1265713, 36.1584656] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "W",
+        "osm_id": 276427198,
+        "osm_key": "amenity",
+        "osm_value": "fast_food",
+        "type": "house",
+        "housenumber": "3049",
+        "name": "Tacos El Gordo",
+        "street": "South Las Vegas Boulevard",
+        "city": "Winchester",
+        "county": "Clark",
+        "state": "Nevada",
+        "country": "United States",
+        "postcode": "89109",
+        "countrycode": "US",
+        "extent": [-115.1647009, 36.1322855, -115.164288, 36.131958]
+      },
+      "geometry": { "type": "Point", "coordinates": [-115.1644527, 36.1321233] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "N",
+        "osm_id": 5593143158,
+        "osm_key": "amenity",
+        "osm_value": "restaurant",
+        "type": "house",
+        "name": "Tacos El Gordo",
+        "street": "Losee Road",
+        "city": "North Las Vegas",
+        "county": "Clark",
+        "state": "Nevada",
+        "country": "United States",
+        "postcode": "89030",
+        "countrycode": "US"
+      },
+      "geometry": { "type": "Point", "coordinates": [-115.1256246, 36.2187354] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "N",
+        "osm_id": 4808967172,
+        "osm_key": "amenity",
+        "osm_value": "fuel",
+        "type": "house",
+        "housenumber": "3260",
+        "name": "(Maybe closed) Tacos El Gordo",
+        "street": "Losee Road",
+        "city": "North Las Vegas",
+        "county": "Clark",
+        "state": "Nevada",
+        "country": "United States",
+        "postcode": "89030",
+        "countrycode": "US"
+      },
+      "geometry": { "type": "Point", "coordinates": [-115.125847, 36.2186372] }
+    }
+  ]
+}

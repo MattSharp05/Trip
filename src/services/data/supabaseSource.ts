@@ -8,6 +8,7 @@ import type {
   ItineraryItem,
   PhotoCredit,
   Place,
+  SavedLink,
   TravelDocument,
   Trip,
 } from './types';
@@ -100,6 +101,17 @@ const toBucket = (r: Row<'bucket_items'>): BucketItem => ({
   ...(r.title ? { title: r.title } : {}),
 });
 
+const toLink = (r: Row<'saved_links'>): SavedLink => ({
+  id: r.id,
+  tripId: r.trip_id ?? '',
+  url: r.url,
+  platform: r.platform === 'instagram' ? 'instagram' : 'tiktok',
+  title: r.title,
+  author: r.author,
+  thumbnailUrl: r.thumbnail_url,
+  placeIds: r.place_ids,
+});
+
 const toExpense = (r: Row<'expenses'>): Expense => ({
   id: r.id,
   tripId: r.trip_id,
@@ -154,7 +166,7 @@ export const supabaseSource: DataSource = {
     const supabase = client();
     const tripRow = check(await supabase.from('trips').select('*').eq('id', tripId).maybeSingle());
     if (!tripRow) return null;
-    const [items, bookings, bucketItems, expenses] = await Promise.all([
+    const [items, bookings, bucketRows, expenses, links] = await Promise.all([
       supabase
         .from('itinerary_items')
         .select('*')
@@ -164,15 +176,22 @@ export const supabaseSource: DataSource = {
       supabase.from('bookings').select('*').eq('trip_id', tripId),
       supabase.from('bucket_items').select('*').eq('trip_id', tripId),
       supabase.from('expenses').select('*').eq('trip_id', tripId),
+      supabase.from('saved_links').select('*').eq('trip_id', tripId),
     ]).then(
-      ([i, b, k, e]) =>
+      ([i, b, k, e, l]) =>
         [
           checkRow(i).map(toItem),
           checkRow(b).map(toBooking),
-          checkRow(k).map(toBucket),
+          checkRow(k),
           checkRow(e).map(toExpense),
+          new Map(checkRow(l).map((r) => [r.id, toLink(r)])),
         ] as const,
     );
+    // Each bucket item saved from a video carries it, for "Watch".
+    const bucketItems = bucketRows.map((r) => {
+      const link = r.saved_link_id ? links.get(r.saved_link_id) : undefined;
+      return { ...toBucket(r), ...(link ? { link } : {}) };
+    });
     const placeIds = [
       ...new Set([
         ...items.flatMap((i) => (i.placeId ? [i.placeId] : [])),
@@ -276,11 +295,32 @@ export const supabaseSource: DataSource = {
           fixed_date: item.fixedDate,
           fixed_time: item.fixedTime,
           title: item.title || null,
+          saved_link_id: item.link?.id ?? null,
         })
         .select()
         .single(),
     );
-    return toBucket(row);
+    return { ...toBucket(row), ...(item.link ? { link: item.link } : {}) };
+  },
+  async saveLink(link) {
+    const supabase = client();
+    const row = checkRow(
+      await supabase
+        .from('saved_links')
+        .upsert({
+          ...(link.id ? { id: link.id } : {}),
+          trip_id: link.tripId,
+          url: link.url,
+          platform: link.platform,
+          title: link.title,
+          author: link.author,
+          thumbnail_url: link.thumbnailUrl,
+          place_ids: link.placeIds,
+        })
+        .select()
+        .single(),
+    );
+    return toLink(row);
   },
   async deleteBucketItem(id) {
     const supabase = client();
