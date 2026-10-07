@@ -17,7 +17,7 @@ Hard constraints from the PRD: iPhone only, **$0 running cost**, and everything 
 | UI state | Zustand | Selected trip/day/item shared by map and list |
 | Backend | **Supabase free**: Postgres + RLS, Auth, Storage, Edge Functions (Deno) | One free service for accounts, data, files and server code (ADR 0003) |
 | Import AI | **Gemini Flash free tier**, called only from an Edge Function, behind a `ParseProvider` switch | $0 now, Claude in Phase B by config (ADR 0004) |
-| Events | Ticketmaster Discovery API (free key) via Edge Function | Real events by location and date |
+| Events | Ticketmaster Discovery API (free key) via Edge Function `events` (ADR 0018) | Real events by location and date |
 | Weather | Open-Meteo forecast (no key) | Free; forecast covers ~16 days, beyond that the pills show no weather |
 | Currency | Frankfurter (ECB rates, no key), cached daily | Free |
 | Place search / geocoding | Photon (komoot, OSM data, no key) via Edge Function | Free; Edge Function adds caching and a proper User-Agent |
@@ -90,7 +90,7 @@ Tables (all with `user_id` and RLS `user_id = auth.uid()`):
 - `itinerary_items` (trip, day date, start time local, duration, place, kind, booking?, fixed?)
 - `bookings` (trip, type flight/hotel/car/ticket/reservation, structured JSON, original file path)
 - `documents` (type passport/visa, country, expiry, image path) — not trip-scoped, never parsed by AI
-- `bucket_items` (trip, place, window start/end, duration, source, fixed date/time for events)
+- `bucket_items` (trip, place, window start/end, duration, source, fixed date/time and title for events)
 - `expenses` (trip, amount, currency, category, booking?, paid at)
 - `saved_links` (url, platform, title, thumbnail, extracted place ids) — also feeds Discover's
   "Saved from TikTok & Reels" row in aggregate

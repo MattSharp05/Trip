@@ -249,6 +249,45 @@ describe('supabase source', () => {
     expect(saved).toMatchObject({ id: 'p9', name: 'Eggslut', kind: 'food' });
   });
 
+  it('saves a Discover event as a bucket item with its title and fixed date and time', async () => {
+    mockTables.bucket_items = {
+      data: {
+        id: 'k1',
+        user_id: 'u1',
+        trip_id: 't1',
+        place_id: 'p1',
+        duration_minutes: 180,
+        window_start: null,
+        window_end: null,
+        source: 'discover',
+        fixed_date: '2026-11-14',
+        fixed_time: '20:00:00',
+        title: 'Fred again..',
+        created_at: '',
+        updated_at: '',
+      },
+      error: null,
+    };
+    const saved = await supabaseSource.saveBucketItem({
+      id: 'k1',
+      tripId: 't1',
+      placeId: 'p1',
+      durationMinutes: 180,
+      windowStart: null,
+      windowEnd: null,
+      source: 'discover',
+      fixedDate: '2026-11-14',
+      fixedTime: '20:00',
+      title: 'Fred again..',
+    });
+    expect(mockUpserts.at(-1)).toMatchObject({
+      fixed_date: '2026-11-14',
+      fixed_time: '20:00',
+      title: 'Fred again..',
+    });
+    expect(saved).toMatchObject({ fixedTime: '20:00', title: 'Fred again..' });
+  });
+
   it('inserts imported bookings with the id the app chose', async () => {
     const data = { event: 'La Colombe', placeId: 'p9' };
     mockTables.bookings = {
