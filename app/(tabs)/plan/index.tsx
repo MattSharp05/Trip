@@ -13,6 +13,7 @@ import {
   bucketEntries,
   bucketPins,
   useBucketActions,
+  useSmartAdd,
   type BucketEntry,
 } from '@/features/bucket';
 import { TripDayMap, type TripMapHandle } from '@/features/map';
@@ -130,7 +131,36 @@ export default function PlanScreen() {
   const near =
     info && info.lat !== null && info.lng !== null ? { lat: info.lat, lng: info.lng } : null;
   const editor = useItineraryEditor({ data: trip.data, day: selectedDay, days, near });
-  const toast = editor.toast ?? actions.toast;
+
+  // Smart Add (TR-29): the new stop's day opens with it selected, so the map flies to it.
+  const smart = useSmartAdd(tripId, trip.data);
+  const { setPlanMode } = selection;
+  const { dismissToast: dismissEditToast } = editor;
+  const { dismissToast: dismissBucketToast } = actions;
+  const smartAdd = useCallback(
+    (entry: BucketEntry) => {
+      dismissEditToast();
+      dismissBucketToast();
+      const placed = smart.add(entry);
+      if (!placed) return;
+      setPlanMode('itinerary');
+      setGlobeDay(null);
+      selectItem(placed.itemId, 'map', placed.day);
+    },
+    [smart, setPlanMode, selectItem, dismissEditToast, dismissBucketToast],
+  );
+  // The newest toast wins: an edit or a bucket change replaces Smart Add's.
+  const { dismissToast: dismissSmartToast } = smart;
+  useEffect(() => {
+    if (editor.toast || actions.toast) dismissSmartToast();
+  }, [editor.toast, actions.toast, dismissSmartToast]);
+  const toast = smart.toast ?? editor.toast ?? actions.toast;
+  const toastUndo = smart.toast ? smart.undo : editor.toast ? editor.undo : actions.undo;
+  const toastDismiss = smart.toast
+    ? smart.dismissToast
+    : editor.toast
+      ? editor.dismissToast
+      : actions.dismissToast;
 
   const [bodyHeight, setBodyHeight] = useState(() => height - insets.top - TOP_ESTIMATE);
   const mapHeight = Math.round(height * MAP_SHARE);
@@ -239,6 +269,7 @@ export default function PlanScreen() {
               entries={bucket}
               onSelect={pickBucketRow}
               onDelete={actions.remove}
+              onSmartAdd={smartAdd}
               onAdd={actions.openSearch}
               bottomInset={insets.bottom + spacing.xl}
             />
@@ -253,8 +284,8 @@ export default function PlanScreen() {
           visible={toast !== null}
           message={toast?.message ?? ''}
           actionLabel={toast?.undo ? 'Undo' : undefined}
-          onAction={editor.toast ? editor.undo : actions.undo}
-          onDismiss={editor.toast ? editor.dismissToast : actions.dismissToast}
+          onAction={toastUndo}
+          onDismiss={toastDismiss}
           testID="plan-toast"
         />
       </View>

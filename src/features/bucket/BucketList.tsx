@@ -7,6 +7,7 @@ import { Button, Skeleton, Text } from '@/ui';
 
 import type { BucketEntry } from './bucket';
 import { BUCKET_ROW_HEIGHT, BucketRow } from './BucketRow';
+import { SmartAddButton } from './SmartAddButton';
 
 const SKELETON_ROWS = 4;
 
@@ -15,6 +16,8 @@ export interface BucketListProps {
   entries: BucketEntry[] | undefined;
   onSelect: (entry: BucketEntry) => void;
   onDelete: (entry: BucketEntry) => void;
+  /** Smart Add: places the item in the best day and time. */
+  onSmartAdd?: (entry: BucketEntry) => void;
   /** Opens the Add sheet (search, or drop a pin). */
   onAdd: () => void;
   /** Room under the last row for the tab bar. */
@@ -22,12 +25,24 @@ export interface BucketListProps {
 }
 
 /** The Bucket List segment of the Plan sheet: saved places without a day, and a way to add one. */
-export function BucketList({ entries, onSelect, onDelete, onAdd, bottomInset }: BucketListProps) {
+export function BucketList({
+  entries,
+  onSelect,
+  onDelete,
+  onSmartAdd,
+  onAdd,
+  bottomInset,
+}: BucketListProps) {
   const renderItem = useCallback(
     ({ item }: { item: BucketEntry }) => (
-      <BucketRow entry={item} onPress={onSelect} onDelete={onDelete} />
+      <BucketRow
+        entry={item}
+        onPress={onSelect}
+        onDelete={onDelete}
+        action={onSmartAdd ? <SmartAddButton entry={item} onPress={onSmartAdd} /> : undefined}
+      />
     ),
-    [onSelect, onDelete],
+    [onSelect, onDelete, onSmartAdd],
   );
 
   const add = (
