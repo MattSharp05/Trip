@@ -188,7 +188,7 @@ export interface BucketItem {
   /** Events have a fixed date and time. */
   fixedDate: string | null;
   fixedTime: string | null;
-  /** Display title (an event's name); without one, screens show the place's name. Not in the database yet. */
+  /** Display title (an event's name); without one, screens show the place's name. */
   title?: string;
 }
 

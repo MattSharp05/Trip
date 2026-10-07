@@ -48,6 +48,8 @@ export const weekdayShort = (day: string) => format(parseISO(day), 'EEE');
 export const dayOfMonth = (day: string) => format(parseISO(day), 'd');
 /** "Fri, Nov 13" */
 export const dayLabel = (day: string) => format(parseISO(day), 'EEE, MMM d');
+/** "Nov 14" */
+export const monthDayLabel = (day: string) => format(parseISO(day), 'MMM d');
 /** "Friday, November 13" (VoiceOver) */
 export const dayLabelLong = (day: string) => format(parseISO(day), 'EEEE, MMMM d');
 

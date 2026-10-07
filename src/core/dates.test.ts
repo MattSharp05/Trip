@@ -6,6 +6,7 @@ import {
   dayOfMonth,
   daysBetween,
   instantIn,
+  monthDayLabel,
   shiftDay,
   timeAsDate,
   timeLabel,
@@ -54,6 +55,7 @@ describe('dates', () => {
     expect(dayOfMonth('2026-11-13')).toBe('13');
     expect(dayLabel('2026-11-13')).toBe('Fri, Nov 13');
     expect(dayLabelLong('2026-11-13')).toBe('Friday, November 13');
+    expect(monthDayLabel('2026-11-14')).toBe('Nov 14');
     expect(dateRangeLabel('2026-11-12', '2026-11-16')).toBe('Nov 12 – Nov 16, 2026');
     expect(dateRangeLabel('2026-12-18', '2027-01-06')).toBe('Dec 18, 2026 – Jan 6, 2027');
   });

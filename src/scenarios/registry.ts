@@ -148,6 +148,13 @@ export const SCENARIOS: readonly Scenario[] = [
     view: { day: '2026-11-13', planMode: 'bucket' },
   }),
   vegas({
+    name: 'vegas-discover',
+    description:
+      'Discover tab, Las Vegas Nov 12–16: demo events, Fred again.. saved, UFC 310 planned.',
+    tab: 'discover',
+    view: {},
+  }),
+  vegas({
     name: 'vegas-wallet',
     description: 'Organize tab, Wallet: flights, hotel, car, UFC ticket, passport.',
     tab: 'organize',

@@ -1,0 +1,457 @@
+{
+  "_embedded": {
+    "events": [
+      {
+        "name": "Las Vegas Food Truck Rally",
+        "type": "event",
+        "id": "vvG1IZ9Kb7",
+        "test": false,
+        "url": "https://www.ticketmaster.com/event/vvG1IZ9Kb7",
+        "locale": "en-us",
+        "images": [
+          {
+            "ratio": "3_2",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_3_2_305.jpg",
+            "width": 305,
+            "height": 203,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_640.jpg",
+            "width": 640,
+            "height": 360,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_1024.jpg",
+            "width": 1024,
+            "height": 576,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_2048.jpg",
+            "width": 2048,
+            "height": 1152,
+            "fallback": false
+          }
+        ],
+        "dates": {
+          "start": {
+            "localDate": "2026-11-15",
+            "dateTBD": false,
+            "dateTBA": false,
+            "timeTBA": false,
+            "noSpecificTime": false,
+            "localTime": "11:00:00",
+            "dateTime": "2026-11-15T11:00:00Z"
+          },
+          "timezone": "America/Los_Angeles",
+          "status": {
+            "code": "onsale"
+          },
+          "spanMultipleDays": false
+        },
+        "classifications": [
+          {
+            "primary": true,
+            "segment": {
+              "id": "KZFzniwnSyZfZ7v7nM",
+              "name": "Miscellaneous"
+            },
+            "genre": {
+              "id": "g",
+              "name": "Fairs & Festivals"
+            },
+            "subGenre": {
+              "id": "s",
+              "name": "Food & Drink"
+            },
+            "family": false
+          }
+        ],
+        "_embedded": {
+          "venues": [
+            {
+              "name": "Venetian Expo",
+              "type": "venue",
+              "id": "KovZVene",
+              "address": {
+                "line1": "201 Sands Ave"
+              },
+              "city": {
+                "name": "Las Vegas"
+              },
+              "state": {
+                "stateCode": "NV"
+              },
+              "location": {
+                "longitude": "-115.1648",
+                "latitude": "36.1221"
+              },
+              "timezone": "America/Los_Angeles"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Bruno Mars",
+        "type": "event",
+        "id": "vvG1IZ9Kb8",
+        "test": false,
+        "url": "https://www.ticketmaster.com/event/vvG1IZ9Kb8",
+        "locale": "en-us",
+        "images": [
+          {
+            "ratio": "3_2",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_3_2_305.jpg",
+            "width": 305,
+            "height": 203,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_640.jpg",
+            "width": 640,
+            "height": 360,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_1024.jpg",
+            "width": 1024,
+            "height": 576,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_2048.jpg",
+            "width": 2048,
+            "height": 1152,
+            "fallback": false
+          }
+        ],
+        "dates": {
+          "start": {
+            "localDate": "2026-11-15",
+            "dateTBD": false,
+            "dateTBA": false,
+            "timeTBA": false,
+            "noSpecificTime": false,
+            "localTime": "20:00:00",
+            "dateTime": "2026-11-15T20:00:00Z"
+          },
+          "timezone": "America/Los_Angeles",
+          "status": {
+            "code": "cancelled"
+          },
+          "spanMultipleDays": false
+        },
+        "classifications": [
+          {
+            "primary": true,
+            "segment": {
+              "id": "KZFzniwnSyZfZ7v7nM",
+              "name": "Music"
+            },
+            "genre": {
+              "id": "g",
+              "name": "Pop"
+            },
+            "subGenre": {
+              "id": "s",
+              "name": "Pop"
+            },
+            "family": false
+          }
+        ],
+        "_embedded": {
+          "venues": [
+            {
+              "name": "Dolby Live at Park MGM",
+              "type": "venue",
+              "id": "KovZDolb",
+              "address": {
+                "line1": "3770 Las Vegas Blvd S"
+              },
+              "city": {
+                "name": "Las Vegas"
+              },
+              "state": {
+                "stateCode": "NV"
+              },
+              "location": {
+                "longitude": "-115.17556",
+                "latitude": "36.10226"
+              },
+              "timezone": "America/Los_Angeles"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Mystery Comedy Night",
+        "type": "event",
+        "id": "vvG1IZ9Kb9",
+        "test": false,
+        "url": "https://www.ticketmaster.com/event/vvG1IZ9Kb9",
+        "locale": "en-us",
+        "images": [],
+        "dates": {
+          "start": {
+            "localDate": "2026-11-16",
+            "dateTBD": false,
+            "dateTBA": false,
+            "timeTBA": true,
+            "noSpecificTime": false
+          },
+          "timezone": "America/Los_Angeles",
+          "status": {
+            "code": "onsale"
+          },
+          "spanMultipleDays": false
+        },
+        "classifications": [
+          {
+            "primary": true,
+            "segment": {
+              "id": "KZFzniwnSyZfZ7v7nA",
+              "name": "Arts & Theatre"
+            },
+            "genre": {
+              "id": "g",
+              "name": "Comedy"
+            },
+            "subGenre": {
+              "id": "s",
+              "name": "Comedy"
+            },
+            "family": false
+          }
+        ],
+        "_embedded": {
+          "venues": [
+            {
+              "name": "Dolby Live at Park MGM",
+              "type": "venue",
+              "id": "KovZDolb",
+              "address": {
+                "line1": "3770 Las Vegas Blvd S"
+              },
+              "city": {
+                "name": "Las Vegas"
+              },
+              "state": {
+                "stateCode": "NV"
+              },
+              "location": {
+                "longitude": "-115.17556",
+                "latitude": "36.10226"
+              },
+              "timezone": "America/Los_Angeles"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Country Night in Laughlin",
+        "type": "event",
+        "id": "vvG1IZ9KbA",
+        "test": false,
+        "url": "https://www.ticketmaster.com/event/vvG1IZ9KbA",
+        "locale": "en-us",
+        "images": [
+          {
+            "ratio": "3_2",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_3_2_305.jpg",
+            "width": 305,
+            "height": 203,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_640.jpg",
+            "width": 640,
+            "height": 360,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_1024.jpg",
+            "width": 1024,
+            "height": 576,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_2048.jpg",
+            "width": 2048,
+            "height": 1152,
+            "fallback": false
+          }
+        ],
+        "dates": {
+          "start": {
+            "localDate": "2026-11-14",
+            "dateTBD": false,
+            "dateTBA": false,
+            "timeTBA": false,
+            "noSpecificTime": false,
+            "localTime": "20:00:00",
+            "dateTime": "2026-11-14T20:00:00Z"
+          },
+          "timezone": "America/Los_Angeles",
+          "status": {
+            "code": "onsale"
+          },
+          "spanMultipleDays": false
+        },
+        "classifications": [
+          {
+            "primary": true,
+            "segment": {
+              "id": "KZFzniwnSyZfZ7v7nM",
+              "name": "Music"
+            },
+            "genre": {
+              "id": "g",
+              "name": "Country"
+            },
+            "subGenre": {
+              "id": "s",
+              "name": "Country"
+            },
+            "family": false
+          }
+        ],
+        "_embedded": {
+          "venues": [
+            {
+              "name": "Laughlin Event Center",
+              "type": "venue",
+              "id": "KovZLaug",
+              "address": {
+                "line1": "2700 S Casino Dr"
+              },
+              "city": {
+                "name": "Laughlin"
+              },
+              "state": {
+                "stateCode": "NV"
+              },
+              "location": {
+                "longitude": "-114.61",
+                "latitude": "35.135"
+              },
+              "timezone": "America/Los_Angeles"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Vegas Golden Knights vs. Utah Mammoth",
+        "type": "event",
+        "id": "vvG1IZ9KbB",
+        "test": false,
+        "url": "https://www.ticketmaster.com/event/vvG1IZ9KbB",
+        "locale": "en-us",
+        "images": [
+          {
+            "ratio": "3_2",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_3_2_305.jpg",
+            "width": 305,
+            "height": 203,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_640.jpg",
+            "width": 640,
+            "height": 360,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_1024.jpg",
+            "width": 1024,
+            "height": 576,
+            "fallback": false
+          },
+          {
+            "ratio": "16_9",
+            "url": "https://s1.ticketm.net/dam/a/vvG1IZ/vvG1IZ_RETINA_PORTRAIT_16_9_2048.jpg",
+            "width": 2048,
+            "height": 1152,
+            "fallback": false
+          }
+        ],
+        "dates": {
+          "start": {
+            "localDate": "2026-11-17",
+            "dateTBD": false,
+            "dateTBA": false,
+            "timeTBA": false,
+            "noSpecificTime": false,
+            "localTime": "19:00:00",
+            "dateTime": "2026-11-17T19:00:00Z"
+          },
+          "timezone": "America/Los_Angeles",
+          "status": {
+            "code": "onsale"
+          },
+          "spanMultipleDays": false
+        },
+        "classifications": [
+          {
+            "primary": true,
+            "segment": {
+              "id": "KZFzniwnSyZfZ7v7nS",
+              "name": "Sports"
+            },
+            "genre": {
+              "id": "g",
+              "name": "Hockey"
+            },
+            "subGenre": {
+              "id": "s",
+              "name": "NHL"
+            },
+            "family": false
+          }
+        ],
+        "_embedded": {
+          "venues": [
+            {
+              "name": "T-Mobile Arena",
+              "type": "venue",
+              "id": "KovZT-Mo",
+              "address": {
+                "line1": "3780 Las Vegas Blvd S"
+              },
+              "city": {
+                "name": "Las Vegas"
+              },
+              "state": {
+                "stateCode": "NV"
+              },
+              "location": {
+                "longitude": "-115.17845",
+                "latitude": "36.10279"
+              },
+              "timezone": "America/Los_Angeles"
+            }
+          ]
+        }
+      }
+    ],
+    "_links": {}
+  },
+  "page": {
+    "size": 5,
+    "totalElements": 11,
+    "totalPages": 2,
+    "number": 1
+  }
+}
