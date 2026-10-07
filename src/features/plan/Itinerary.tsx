@@ -1,12 +1,14 @@
 import { BottomSheetFlatList, type BottomSheetFlatListMethods } from '@gorhom/bottom-sheet';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { useDistanceUnit } from '@/features/settings';
 import { screenPadding, spacing } from '@/theme';
 import { Button, Text } from '@/ui';
 
 import type { ItineraryEntry } from './itinerary';
 import { ItineraryRow, ItinerarySkeletonRow, ROW_HEIGHT } from './ItineraryRow';
+import { LEG_HEIGHT, TravelLeg } from './TravelLeg';
 
 const SKELETON_ROWS = 4;
 /** Where a revealed row lands: a third of the way down the visible list. */
@@ -27,7 +29,13 @@ export interface ItineraryProps {
   bottomInset: number;
 }
 
-/** The day's timeline inside the Plan sheet, with a free-day state and skeleton rows. */
+/** A row plus, under it, the travel leg to the next stop when there is one. */
+const itemHeight = (entry: ItineraryEntry) => ROW_HEIGHT + (entry.leg ? LEG_HEIGHT : 0);
+
+/**
+ * The day's timeline inside the Plan sheet, with the estimated travel between stops, a free-day
+ * state and skeleton rows.
+ */
 export function Itinerary({
   entries,
   selectedId,
@@ -38,6 +46,7 @@ export function Itinerary({
   bottomInset,
 }: ItineraryProps) {
   const list = useRef<BottomSheetFlatListMethods>(null);
+  const unit = useDistanceUnit();
   const index = entries && selectedId ? entries.findIndex((e) => e.id === selectedId) : -1;
 
   const revealed = useRef(revealKey);
@@ -51,16 +60,28 @@ export function Itinerary({
 
   const renderItem = useCallback(
     ({ item, index: i }: { item: ItineraryEntry; index: number }) => (
-      <ItineraryRow
-        entry={item}
-        selected={item.id === selectedId}
-        first={i === 0}
-        last={entries !== undefined && i === entries.length - 1}
-        onPress={onSelect}
-      />
+      <>
+        <ItineraryRow
+          entry={item}
+          selected={item.id === selectedId}
+          first={i === 0}
+          last={entries !== undefined && i === entries.length - 1}
+          onPress={onSelect}
+        />
+        {item.leg ? (
+          <TravelLeg leg={item.leg} unit={unit} testID={`travel-leg-${item.id}`} />
+        ) : null}
+      </>
     ),
-    [selectedId, entries, onSelect],
+    [selectedId, entries, onSelect, unit],
   );
+
+  // Rows with a leg under them are taller: offsets add up the heights before each row.
+  const offsets = useMemo(() => {
+    const result = [0];
+    for (const entry of entries ?? []) result.push(result[result.length - 1] + itemHeight(entry));
+    return result;
+  }, [entries]);
 
   if (!entries) {
     return (
@@ -94,10 +115,10 @@ export function Itinerary({
       data={entries}
       keyExtractor={(e: ItineraryEntry) => e.id}
       renderItem={renderItem}
-      extraData={selectedId}
+      extraData={`${selectedId}:${unit}`}
       getItemLayout={(_: unknown, i: number) => ({
-        length: ROW_HEIGHT,
-        offset: ROW_HEIGHT * i,
+        length: offsets[i + 1] - offsets[i],
+        offset: offsets[i],
         index: i,
       })}
       contentContainerStyle={{ paddingBottom: bottomInset }}

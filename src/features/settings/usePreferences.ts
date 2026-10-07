@@ -11,6 +11,7 @@ import {
   defaultPreferences,
   deviceLocale,
   parsePreferences,
+  type DistanceUnit,
   type Preferences,
 } from './preferences';
 
@@ -109,6 +110,11 @@ export function usePreferences(): UsePreferences {
 /** °F or °C, for anything that shows a temperature. */
 export function useTemperatureUnit(): TemperatureUnit {
   return usePreferences().preferences.temperatureUnit;
+}
+
+/** Miles or km, for anything that shows a distance. */
+export function useDistanceUnit(): DistanceUnit {
+  return usePreferences().preferences.distanceUnit;
 }
 
 /** Forget this device's preference changes (sign-out). */

@@ -9,8 +9,9 @@ import type { ItineraryEntry } from './itinerary';
 
 /** Every row is the same height, so the list can scroll to a row without measuring it. */
 export const ROW_HEIGHT = 68;
-const TIME_WIDTH = 68;
-const RAIL_WIDTH = 20;
+/** The time column and the rail beside it; travel legs line up with them. */
+export const TIME_WIDTH = 68;
+export const RAIL_WIDTH = 20;
 const NODE = 9;
 const NODE_SELECTED = 13;
 const THUMB = 44;
