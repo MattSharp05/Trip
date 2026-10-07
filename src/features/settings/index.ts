@@ -12,6 +12,7 @@ export { SettingsScreen } from './SettingsScreen';
 export {
   clearPreferenceCache,
   usePreferences,
+  useDistanceUnit,
   useTemperatureUnit,
   type UsePreferences,
 } from './usePreferences';
