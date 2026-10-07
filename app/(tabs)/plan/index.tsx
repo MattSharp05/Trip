@@ -195,6 +195,18 @@ export default function PlanScreen() {
     },
     [placeSmart, setPlanMode, selectItem, dismissEditToast, dismissBucketToast],
   );
+  // Plan my bucket list (TR-32): when everything fit, the earliest new stop's day opens; when
+  // something didn't, the Bucket List stays, with a note on each item left.
+  const { planAll } = smart;
+  const planAllBucket = useCallback(() => {
+    dismissEditToast();
+    dismissBucketToast();
+    const first = planAll();
+    if (!first) return;
+    setPlanMode('itinerary');
+    setGlobeDay(null);
+    selectItem(first.itemId, 'map', first.day);
+  }, [planAll, setPlanMode, selectItem, dismissEditToast, dismissBucketToast]);
   // The newest toast wins: an edit or a bucket change replaces Smart Add's.
   useEffect(() => {
     if (editor.toast || actions.toast || links.toast) dismissSmartToast();
@@ -322,6 +334,8 @@ export default function PlanScreen() {
               onSelect={pickBucketRow}
               onDelete={actions.remove}
               onSmartAdd={smartAdd}
+              onPlanAll={planAllBucket}
+              notes={smart.notes}
               onAdd={actions.openSearch}
               bottomInset={insets.bottom + spacing.xl}
             />

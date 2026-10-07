@@ -20,6 +20,8 @@ export interface BucketRowProps {
   onDelete: (entry: BucketEntry) => void;
   /** Smart Add's button (TR-29). */
   action?: ReactNode;
+  /** Why Plan my bucket list left it here (TR-32); shown instead of where it came from. */
+  note?: string;
 }
 
 /**
@@ -32,8 +34,9 @@ export const BucketRow = memo(function BucketRow({
   onPress,
   onDelete,
   action,
+  note,
 }: BucketRowProps) {
-  const spoken = [entry.title, entry.subtitle, entry.source].filter(Boolean).join(', ');
+  const spoken = [entry.title, entry.subtitle, note ?? entry.source].filter(Boolean).join(', ');
   return (
     <ReanimatedSwipeable
       friction={2}
@@ -75,7 +78,16 @@ export const BucketRow = memo(function BucketRow({
               {entry.subtitle}
             </Text>
           ) : null}
-          {entry.source ? (
+          {note ? (
+            <Text
+              variant="caption"
+              tone="accent"
+              numberOfLines={1}
+              testID={`bucket-note-${entry.id}`}
+            >
+              {note}
+            </Text>
+          ) : entry.source ? (
             <Text variant="caption" tone="secondary" numberOfLines={1}>
               {entry.source}
             </Text>

@@ -14,9 +14,12 @@ export {
   type BucketEntry,
 } from './bucket';
 export { BucketList, type BucketListProps } from './BucketList';
+export { NO_ROOM_NOTE, OUTSIDE_TRIP_NOTE, planBucketAll, type PlanAllPlan } from './planAll';
+export { PLAN_ALL_HEIGHT, PlanAllButton, type PlanAllButtonProps } from './PlanAllButton';
 export { BUCKET_ROW_HEIGHT, BucketRow, type BucketRowProps } from './BucketRow';
 export {
   applyChange,
+  candidateFor,
   NO_SLOT_MESSAGE,
   planBucketSmartAdd,
   plannerItems,

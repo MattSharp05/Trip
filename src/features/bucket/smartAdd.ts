@@ -1,6 +1,11 @@
 import { dayOfMonth, timeLabel, weekdayShort, tripDays } from '@/core/dates';
 import { newId } from '@/core/ids';
-import { planSmartAdd, type PlannerItem, type SmartAddResult } from '@/core/smartAdd';
+import {
+  planSmartAdd,
+  type PlannerItem,
+  type SmartAddCandidate,
+  type SmartAddResult,
+} from '@/core/smartAdd';
 import { travelLabel, type LatLng } from '@/core/travel';
 import { itemTitle, kindForPlace } from '@/features/plan/edit/edits';
 import type { BucketItem, ItineraryItem, Place, TripData } from '@/services/data/types';
@@ -42,21 +47,29 @@ export function plannerItems(data: Pick<TripData, 'items' | 'places'>): PlannerI
   }));
 }
 
+/** A bucket item as the planner's candidate. */
+export function candidateFor(
+  data: Pick<TripData, 'places'>,
+  bucketItem: BucketItem,
+): SmartAddCandidate {
+  const place = data.places.find((p) => p.id === bucketItem.placeId);
+  return {
+    position: position(place),
+    durationMinutes: bucketItem.durationMinutes,
+    kind: place?.kind ?? null,
+    windowStart: bucketItem.windowStart,
+    windowEnd: bucketItem.windowEnd,
+    fixedDate: bucketItem.fixedDate,
+    fixedTime: bucketItem.fixedTime,
+  };
+}
+
 /** Run the planner for one bucket item of the trip. */
 export function smartAddResult(data: TripData, bucketItem: BucketItem): SmartAddResult {
-  const place = data.places.find((p) => p.id === bucketItem.placeId);
   return planSmartAdd({
     days: tripDays(data.trip.startDate, data.trip.endDate),
     items: plannerItems(data),
-    candidate: {
-      position: position(place),
-      durationMinutes: bucketItem.durationMinutes,
-      kind: place?.kind ?? null,
-      windowStart: bucketItem.windowStart,
-      windowEnd: bucketItem.windowEnd,
-      fixedDate: bucketItem.fixedDate,
-      fixedTime: bucketItem.fixedTime,
-    },
+    candidate: candidateFor(data, bucketItem),
   });
 }
 

@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { dataKeys, queryClient, useDataSource, type TripData } from '@/services/data';
 
 import type { BucketEntry } from './bucket';
+import { planBucketAll } from './planAll';
 import { applyChange, planBucketSmartAdd, type SmartAddChange } from './smartAdd';
 
 /** The toast after Smart Add: where it went, with Undo (the writes that put everything back). */
@@ -22,10 +23,13 @@ export interface SmartAddPlaced {
  * Smart Add for one trip (TR-29): places a bucket item with the planner (`core/smartAdd`), moves it
  * from the Bucket List to the itinerary in one optimistic write, and keeps one Undo record that
  * snapshots everything it changed (the new stop, the bucket item, any stop it moved).
+ * `planAll` (Plan my bucket list, TR-32) does the same for every item at once, with one Undo for
+ * the whole set, and keeps a note on each item that didn't fit.
  */
 export function useSmartAdd(tripId: string | null, data: TripData | null | undefined) {
   const source = useDataSource();
   const [toast, setToast] = useState<SmartAddToast | null>(null);
+  const [notes, setNotes] = useState<Record<string, string>>({});
   const key = dataKeys.trip(source, tripId ?? '');
 
   const { mutate } = useMutation(
@@ -70,12 +74,33 @@ export function useSmartAdd(tripId: string | null, data: TripData | null | undef
     [data, mutate],
   );
 
+  /**
+   * Place every bucket item that fits. Returns the earliest new stop when everything fit; null
+   * when something stayed in the list (its note says why) or nothing could be placed.
+   */
+  const planAll = useCallback((): SmartAddPlaced | null => {
+    if (!data || data.bucketItems.length === 0) return null;
+    const plan = planBucketAll(data);
+    setNotes(plan.notes);
+    if (!plan.change || !plan.undo) {
+      setToast({ message: plan.message });
+      return null;
+    }
+    mutate(plan.change);
+    setToast({ message: plan.message, undo: plan.undo });
+    return Object.keys(plan.notes).length === 0 ? plan.first : null;
+  }, [data, mutate]);
+
   const undo = useCallback(() => {
-    if (toast?.undo) mutate(toast.undo);
+    if (!toast?.undo) return;
+    mutate(toast.undo);
+    setNotes({});
   }, [toast, mutate]);
 
   return {
     add,
+    planAll,
+    notes,
     undo,
     toast,
     dismissToast: useCallback(() => setToast(null), []),

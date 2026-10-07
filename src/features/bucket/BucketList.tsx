@@ -7,6 +7,7 @@ import { Button, Skeleton, Text } from '@/ui';
 
 import type { BucketEntry } from './bucket';
 import { BUCKET_ROW_HEIGHT, BucketRow } from './BucketRow';
+import { PLAN_ALL_HEIGHT, PlanAllButton } from './PlanAllButton';
 import { SmartAddButton } from './SmartAddButton';
 
 const SKELETON_ROWS = 4;
@@ -18,6 +19,10 @@ export interface BucketListProps {
   onDelete: (entry: BucketEntry) => void;
   /** Smart Add: places the item in the best day and time. */
   onSmartAdd?: (entry: BucketEntry) => void;
+  /** Plan my bucket list: places every item that fits (TR-32). */
+  onPlanAll?: () => void;
+  /** Why an item stayed in the list after Plan my bucket list, by bucket item id. */
+  notes?: Record<string, string>;
   /** Opens the Add sheet (search, or drop a pin). */
   onAdd: () => void;
   /** Room under the last row for the tab bar. */
@@ -30,6 +35,8 @@ export function BucketList({
   onSelect,
   onDelete,
   onSmartAdd,
+  onPlanAll,
+  notes,
   onAdd,
   bottomInset,
 }: BucketListProps) {
@@ -39,10 +46,11 @@ export function BucketList({
         entry={item}
         onPress={onSelect}
         onDelete={onDelete}
+        note={notes?.[item.id]}
         action={onSmartAdd ? <SmartAddButton entry={item} onPress={onSmartAdd} /> : undefined}
       />
     ),
-    [onSelect, onDelete, onSmartAdd],
+    [onSelect, onDelete, onSmartAdd, notes],
   );
 
   const add = (
@@ -85,16 +93,19 @@ export function BucketList({
     );
   }
 
+  const headerHeight = onPlanAll ? PLAN_ALL_HEIGHT : 0;
   return (
     <BottomSheetFlatList
       data={entries}
+      extraData={notes}
       keyExtractor={(e: BucketEntry) => e.id}
       renderItem={renderItem}
       getItemLayout={(_: unknown, i: number) => ({
         length: BUCKET_ROW_HEIGHT,
-        offset: BUCKET_ROW_HEIGHT * i,
+        offset: headerHeight + BUCKET_ROW_HEIGHT * i,
         index: i,
       })}
+      ListHeaderComponent={onPlanAll ? <PlanAllButton onPress={onPlanAll} /> : null}
       ListFooterComponent={add}
       contentContainerStyle={{ paddingBottom: bottomInset }}
       testID="bucket-list"
