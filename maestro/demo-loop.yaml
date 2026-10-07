@@ -1,0 +1,116 @@
+# The demo loop (TR-35): PRD flows 2–7 in scenario mode, one screenshot per step. docs/demo.md is
+# the same loop by hand. Steps that need what a flow can't reach on iOS (map pins, the Plan sheet's
+# Itinerary / Bucket List switch: TR-39, TR-42) start from the scenario that opens there instead.
+appId: com.mattsharp05.trip
+---
+# 2. Create a trip: Trips → + → destination → dates (today + 4 days) → Save.
+- runFlow:
+    file: scenario.yaml
+    env:
+      SCENARIO: vegas-trips
+      READY_ID: trips-create
+- tapOn:
+    id: trips-create
+- tapOn:
+    id: destination-input
+- inputText: Lisbon
+# Results come from the `places` function (live search, no key).
+- extendedWaitUntil:
+    visible:
+      id: 'destination-(?!input|loading|picked).+'
+    timeout: 20000
+- tapOn:
+    id: 'destination-(?!input|loading|picked).+'
+    index: 0
+- tapOn:
+    id: create-trip-save
+- extendedWaitUntil:
+    notVisible:
+      id: create-trip
+    timeout: 20000
+- takeScreenshot: demo-2-trip-created
+
+# 3. Import a booking: the review screen for a sample flight → Save → in the wallet.
+- runFlow:
+    file: scenario.yaml
+    env:
+      SCENARIO: import-review-flight
+      READY_ID: import-review
+- tapOn:
+    id: import-save
+- extendedWaitUntil:
+    visible: 'Saved to your wallet.*'
+    timeout: 15000
+- takeScreenshot: demo-3-imported
+
+# 4. Day planning: a date pill re-frames the day; a row selects its pin.
+- runFlow:
+    file: scenario.yaml
+    env:
+      SCENARIO: vegas-plan-day-2
+      READY_ID: itinerary-list
+- tapOn:
+    id: pill-2026-11-14
+- assertVisible: '.*Gondola at The Venetian.*'
+- tapOn: '.*Gondola at The Venetian.*'
+- waitForAnimationToEnd
+- takeScreenshot: demo-4-day-planning
+
+# 5. Save and place: an event → Bucket List; then Smart Add puts a Bucket List place in a day.
+- runFlow:
+    file: scenario.yaml
+    env:
+      SCENARIO: vegas-discover
+      READY_ID: discover-events
+- tapOn:
+    id: 'discover-events-card-fx:o-bellagio-1112-add'
+- extendedWaitUntil:
+    visible: 'Added .* to your Bucket List'
+    timeout: 10000
+- takeScreenshot: demo-5a-saved-event
+- runFlow:
+    file: scenario.yaml
+    env:
+      SCENARIO: vegas-bucket
+      READY_ID: bucket-list
+- tapOn:
+    id: smart-add-bucket-golden-tiki
+- extendedWaitUntil:
+    visible: 'Added to Sun 15, 4:00.PM.*'
+    timeout: 10000
+- takeScreenshot: demo-5b-smart-add
+
+# 6. TikTok: a sample food video's places → Save → on the Bucket List.
+- runFlow:
+    file: scenario.yaml
+    env:
+      SCENARIO: link-results
+      READY_ID: link-save
+- tapOn:
+    id: link-save
+- extendedWaitUntil:
+    visible: 'Added 3 places to your Bucket List'
+    timeout: 10000
+- takeScreenshot: demo-6-tiktok
+
+# 7. Travel day: the flight's row → globe with the arc and the flight card → flight details.
+- runFlow:
+    file: scenario.yaml
+    env:
+      SCENARIO: vegas-flight-day
+      READY_ID: itinerary-list
+- tapOn:
+    id: itinerary-row-item-01
+- extendedWaitUntil:
+    visible:
+      id: flight-card
+    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 8000
+- takeScreenshot: demo-7a-globe
+- tapOn:
+    id: flight-card
+- extendedWaitUntil:
+    visible: 'View boarding pass'
+    timeout: 10000
+- takeScreenshot: demo-7b-flight

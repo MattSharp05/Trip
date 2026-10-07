@@ -116,7 +116,7 @@ jobs:
         run: |
           mkdir -p e2e-out
           maestro test --format junit --output e2e-out/report.xml --test-output-dir e2e-out \
-            maestro/smoke.yaml maestro/shots maestro/plan-linking.yaml
+            maestro/smoke.yaml maestro/shots maestro/plan-linking.yaml maestro/demo-loop.yaml
 
       - name: Collect screenshots
         if: always()
