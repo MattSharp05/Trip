@@ -1,0 +1,135 @@
+name: E2E
+
+# Maestro flows on an iOS simulator (TR-8, ADR 0005, ADR 0015). Runs on every push to main and on
+# demand, never on PRs, and doesn't gate CI or the EAS Update job (separate workflow).
+# - The simulator app comes from EAS Build (profile `e2e`) and is reused while the iOS fingerprint
+#   is unchanged: only the JS bundle is repacked onto it here (@expo/repack-app). A native change
+#   (new fingerprint) costs one EAS build from the free monthly quota.
+# - The flows run on GitHub's macOS runner (free for this public repo); EAS's own Maestro job needs
+#   a paid Expo plan.
+# - Screenshots: the `e2e-screenshots` artifact (scripts/qa-shots.mjs downloads the latest one).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  # One run at a time; a newer push waits instead of cancelling, so an EAS build started by the
+  # running job is finished and reused rather than paid for twice.
+  group: e2e
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: Maestro on iOS simulator
+    runs-on: macos-latest
+    timeout-minutes: 120
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      # Scenario links on, as on the main channel (TR-6). Used by the repacked JS bundle; the EAS
+      # build gets it from the e2e profile in eas.json.
+      EXPO_PUBLIC_SCENARIOS: '1'
+    steps:
+      - name: Require the EXPO_TOKEN secret
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error title=EXPO_TOKEN missing::Add the EXPO_TOKEN repository secret (GitHub → Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci --no-audit --no-fund
+
+      - name: Simulator app (reuse by fingerprint, or build)
+        id: app
+        run: |
+          set -euo pipefail
+          hash="$(eas fingerprint:generate --platform ios --build-profile e2e --json --non-interactive | jq -r .hash)"
+          echo "iOS fingerprint: $hash"
+          build="$(eas build:list --platform ios --build-profile e2e --simulator --status finished \
+            --fingerprint-hash "$hash" --limit 1 --json --non-interactive | jq -c '.[0] // empty')"
+          if [ -n "$build" ]; then
+            echo "reused=true" >> "$GITHUB_OUTPUT"
+            echo "::notice title=E2E build reused::Fingerprint $hash matches build $(jq -r .id <<<"$build"); repacking the JS."
+          else
+            echo "reused=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=E2E build::No e2e build for fingerprint $hash; building on EAS."
+            build="$(eas build --platform ios --profile e2e --non-interactive --wait --json | jq -c '.[0]')"
+          fi
+          url="$(jq -r '.artifacts.applicationArchiveUrl // .artifacts.buildUrl' <<<"$build")"
+          curl -fsSL "$url" -o "$RUNNER_TEMP/source.tar.gz"
+
+      - name: Repack the current JS onto the reused app
+        if: steps.app.outputs.reused == 'true'
+        run: |
+          npx --yes @expo/repack-app@0.10 --platform ios --source-app "$RUNNER_TEMP/source.tar.gz" \
+            --output "$RUNNER_TEMP/Trip.app" --working-directory "$RUNNER_TEMP/repack" .
+
+      - name: Unpack the fresh build
+        if: steps.app.outputs.reused != 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/build"
+          tar -xzf "$RUNNER_TEMP/source.tar.gz" -C "$RUNNER_TEMP/build"
+          mv "$(find "$RUNNER_TEMP/build" -maxdepth 2 -name '*.app' -type d | head -n 1)" "$RUNNER_TEMP/Trip.app"
+
+      - name: Boot an iPhone simulator and install the app
+        run: |
+          set -euo pipefail
+          udid="$(xcrun simctl list devices available --json | jq -r '
+            [.devices | to_entries | sort_by(.key)[] | select(.key | test("iOS")) | .value[] | select(.name | test("^iPhone"))]
+            | last | .udid')"
+          echo "Simulator: $(xcrun simctl list devices | grep "$udid")"
+          xcrun simctl boot "$udid"
+          xcrun simctl bootstatus "$udid"
+          xcrun simctl install "$udid" "$RUNNER_TEMP/Trip.app"
+          # Warm-up launch: the first launch on a fresh simulator is slow enough to time out a
+          # flow's first deep link.
+          xcrun simctl launch "$udid" com.mattsharp05.trip
+          sleep 30
+          xcrun simctl terminate "$udid" com.mattsharp05.trip || true
+
+      - name: Install Maestro
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Run the flows
+        run: |
+          mkdir -p e2e-out
+          maestro test --format junit --output e2e-out/report.xml --test-output-dir e2e-out \
+            maestro/smoke.yaml maestro/shots maestro/plan-linking.yaml
+
+      - name: Collect screenshots
+        if: always()
+        run: |
+          mkdir -p e2e-screenshots
+          # The flows' takeScreenshot pictures only; Maestro's debug captures stay in e2e-report.
+          find e2e-out -path '*/takeScreenshot/*.png' -exec cp {} e2e-screenshots/ \; || true
+          ls -1 e2e-screenshots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-screenshots
+          path: e2e-screenshots
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-report
+          path: e2e-out
+          if-no-files-found: ignore
