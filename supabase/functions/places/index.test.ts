@@ -1,4 +1,4 @@
-import { handle, toPlaces } from './index';
+import { handle, spotKind, toPlaces, toSpots } from './index';
 
 const photon = {
   features: [
@@ -92,5 +92,74 @@ describe('places function', () => {
     );
     expect(fetchImpl).not.toHaveBeenCalled();
     expect((await handle(post({ query: 'Lisbon' }), f)).status).toBe(502);
+  });
+
+  it('searches spots near the trip, without the city layer', async () => {
+    const eggslut = {
+      features: [
+        {
+          geometry: { coordinates: [-115.1745, 36.1092] },
+          properties: {
+            osm_type: 'N',
+            osm_id: 42,
+            name: 'Eggslut',
+            osm_key: 'amenity',
+            osm_value: 'fast_food',
+            housenumber: '3708',
+            street: 'Las Vegas Boulevard South',
+            district: 'Paradise',
+            city: 'Las Vegas',
+          },
+        },
+        // A road named like the query is not somewhere to go.
+        {
+          geometry: { coordinates: [-115.1, 36.1] },
+          properties: { osm_type: 'W', osm_id: 7, name: 'Eggslut Way', osm_key: 'highway' },
+        },
+      ],
+    };
+    const fetchImpl = jest.fn(async () => new Response(JSON.stringify(eggslut)));
+    const res = await handle(
+      post({ query: 'Eggslut', near: { lat: 36.17, lng: -115.14 } }),
+      fetchImpl as unknown as typeof fetch,
+    );
+    expect(await res.json()).toEqual({
+      spots: [
+        {
+          id: 'N42',
+          name: 'Eggslut',
+          kind: 'food',
+          area: 'Paradise',
+          address: '3708 Las Vegas Boulevard South, Las Vegas',
+          lat: 36.1092,
+          lng: -115.1745,
+        },
+      ],
+    });
+    const params = new URL((fetchImpl.mock.calls[0] as unknown as [string])[0]).searchParams;
+    expect(params.get('layer')).toBeNull();
+    expect(params.get('lat')).toBe('36.17');
+    expect(params.get('lon')).toBe('-115.14');
+    expect(params.get('bbox')).toBe('-115.64,35.67,-114.64,36.67');
+  });
+
+  it('maps OpenStreetMap tags to place kinds', () => {
+    expect(spotKind('amenity', 'bar')).toBe('bar');
+    expect(spotKind('amenity', 'nightclub')).toBe('nightlife');
+    expect(spotKind('tourism', 'museum')).toBe('attraction');
+    expect(spotKind('historic', 'monument')).toBe('landmark');
+    expect(spotKind('shop', 'clothes')).toBeNull();
+    expect(spotKind(undefined, undefined)).toBeNull();
+    expect(toSpots(null)).toEqual([]);
+  });
+
+  it('rejects a bad near', async () => {
+    const fetchImpl = jest.fn();
+    const res = await handle(
+      post({ query: 'Eggslut', near: { lat: 'x' } }),
+      fetchImpl as unknown as typeof fetch,
+    );
+    expect(res.status).toBe(400);
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 });
