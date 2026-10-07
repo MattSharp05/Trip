@@ -206,6 +206,39 @@ export type Database = {
           },
         ];
       };
+      flight_status_cache: {
+        Row: {
+          fetched_at: string;
+          key: string;
+          status: Json | null;
+        };
+        Insert: {
+          fetched_at?: string;
+          key: string;
+          status?: Json | null;
+        };
+        Update: {
+          fetched_at?: string;
+          key?: string;
+          status?: Json | null;
+        };
+        Relationships: [];
+      };
+      flight_status_usage: {
+        Row: {
+          month: string;
+          units: number;
+        };
+        Insert: {
+          month: string;
+          units?: number;
+        };
+        Update: {
+          month?: string;
+          units?: number;
+        };
+        Relationships: [];
+      };
       itinerary_items: {
         Row: {
           booking_id: string | null;
@@ -416,7 +449,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      reserve_flight_status_units: {
+        Args: { p_limit: number; p_month: string; p_units: number };
+        Returns: boolean;
+      };
     };
     Enums: {
       [_ in never]: never;

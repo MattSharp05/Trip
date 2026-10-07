@@ -121,6 +121,13 @@ export const SCENARIOS: readonly Scenario[] = [
     view: { day: '2026-11-12', itemId: 'item-01', planMode: 'itinerary' },
   }),
   vegas({
+    name: 'vegas-flight-delayed',
+    description: 'Thu Nov 12 at 7:30 AM in Tampa: AA 2410 is 25 min late, moved to gate E79.',
+    tab: 'plan',
+    today: '2026-11-12T07:30:00-05:00',
+    view: { day: '2026-11-12', itemId: 'item-01', planMode: 'itinerary' },
+  }),
+  vegas({
     name: 'vegas-flight-home',
     description: 'Mon Nov 16 at 9:00 AM in Las Vegas, the day AA 2411 flies home to Tampa.',
     tab: 'plan',
