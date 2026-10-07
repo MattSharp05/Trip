@@ -235,6 +235,26 @@ export const supabaseSource: DataSource = {
     const supabase = client();
     check(await supabase.from('itinerary_items').delete().eq('id', id));
   },
+  async savePlace(place) {
+    const supabase = client();
+    const row = checkRow(
+      await supabase
+        .from('places')
+        .upsert({
+          ...(place.id ? { id: place.id } : {}),
+          name: place.name,
+          address: place.address,
+          lat: place.lat,
+          lng: place.lng,
+          kind: place.kind,
+          photo_url: place.photoUrl,
+          source_url: place.sourceUrl,
+        })
+        .select()
+        .single(),
+    );
+    return toPlace(row);
+  },
   async saveBucketItem(item) {
     const supabase = client();
     const row = checkRow(

@@ -49,6 +49,9 @@ export interface Place {
   sourceUrl: string | null;
 }
 
+/** What "save a place" takes; without an id it adds a new one. */
+export type PlaceInput = Omit<Place, 'id'> & { id?: string };
+
 export type ItemKind = 'flight' | 'hotel' | 'car' | 'event' | 'food' | 'activity';
 
 export interface ItineraryItem {
@@ -183,6 +186,8 @@ export interface BucketItem {
   /** Events have a fixed date and time. */
   fixedDate: string | null;
   fixedTime: string | null;
+  /** Display title (an event's name); without one, screens show the place's name. Not in the database yet. */
+  title?: string;
 }
 
 export interface Expense {

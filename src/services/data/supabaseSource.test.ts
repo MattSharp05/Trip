@@ -212,6 +212,37 @@ describe('supabase source', () => {
     expect(saved).toMatchObject({ id: 'b1', type: 'flight', data });
   });
 
+  it('adds a place without an id, letting Postgres make one', async () => {
+    mockTables.places = {
+      data: {
+        id: 'p9',
+        user_id: 'u1',
+        name: 'Eggslut',
+        address: '3708 Las Vegas Blvd S, Las Vegas',
+        lat: 36.11,
+        lng: -115.17,
+        kind: 'food',
+        photo_url: null,
+        source_url: null,
+        created_at: '',
+        updated_at: '',
+      },
+      error: null,
+    };
+    const saved = await supabaseSource.savePlace({
+      name: 'Eggslut',
+      address: '3708 Las Vegas Blvd S, Las Vegas',
+      lat: 36.11,
+      lng: -115.17,
+      kind: 'food',
+      photoUrl: null,
+      sourceUrl: null,
+    });
+    expect(mockUpserts.at(-1)).not.toHaveProperty('id');
+    expect(mockUpserts.at(-1)).toMatchObject({ name: 'Eggslut', photo_url: null });
+    expect(saved).toMatchObject({ id: 'p9', name: 'Eggslut', kind: 'food' });
+  });
+
   it('throws the query error', async () => {
     mockTables.documents = { data: null, error: { message: 'JWT expired' } };
     await expect(supabaseSource.listDocuments()).rejects.toThrow('JWT expired');
