@@ -51,6 +51,8 @@ export interface DiscoverCard {
   /** Drawn on the card when there's no photo. */
   symbol: SFSymbol;
   state: CardState;
+  /** A small label on the photo: "Sample" for made-up demo events (TR-34). */
+  tag?: string;
 }
 
 type TripData = { places: Place[]; items: ItineraryItem[]; bucketItems: BucketItem[] };
@@ -60,6 +62,7 @@ const SYMBOLS: Record<EventCategory, SFSymbol> = {
   food: 'fork.knife',
   nightlife: 'music.note',
   sports: 'sportscourt',
+  networking: 'person.2',
 };
 
 /** The place kind a saved event's venue gets (its pin symbol). */
@@ -68,6 +71,7 @@ const VENUE_KINDS: Record<EventCategory, string> = {
   food: 'food',
   nightlife: 'nightlife',
   sports: 'arena',
+  networking: 'event',
 };
 
 /** Minutes an event usually lasts, for Smart Add's day. */
@@ -76,6 +80,7 @@ const EVENT_MINUTES: Record<EventCategory, number> = {
   food: 120,
   nightlife: 180,
   sports: 180,
+  networking: 120,
 };
 
 const norm = (s: string | null | undefined) => (s ?? '').trim().toLowerCase();
@@ -85,14 +90,19 @@ const matches = (query: string, ...fields: (string | null | undefined)[]) => {
   return !q || fields.some((f) => norm(f).includes(q));
 };
 
-/** Events for the selected chip, matching the search on the title or the venue's name. */
+/**
+ * Events for the selected chip, matching the search on the title or the venue's name. Made-up
+ * samples (TR-34's networking events) show under their own chip only, so All stays real.
+ */
 export function filterEvents(
   events: readonly TripEvent[],
   filter: DiscoverFilter,
   query: string,
 ): TripEvent[] {
   return events.filter(
-    (e) => (filter === 'all' || filter === e.category) && matches(query, e.title, e.venue?.name),
+    (e) =>
+      (filter === 'all' ? !e.sample : filter === e.category) &&
+      matches(query, e.title, e.venue?.name),
   );
 }
 
@@ -151,6 +161,7 @@ export function eventCard(event: TripEvent, data: TripData): DiscoverCard {
     imageUrl: event.imageUrl,
     symbol: SYMBOLS[event.category],
     state: eventState(event, data),
+    ...(event.sample ? { tag: 'Sample' } : {}),
   };
 }
 

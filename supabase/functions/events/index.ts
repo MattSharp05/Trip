@@ -1,7 +1,8 @@
 // Edge Function `events` (TR-31, ADR 0018): what's on near a trip during its dates, for Discover.
 //
 // Request: POST EventsRequest ({ lat, lng, startDate, endDate }; see _shared/events/schema.ts).
-// Response: { events: TripEvent[] } or { error: EventsErrorCode, message }.
+// Response: { events: TripEvent[] } or { error: EventsErrorCode, message }. Every answer also
+// carries the sample networking events near the trip on its dates (TR-34, `networking.ts`).
 //
 // The provider is chosen by EVENTS_PROVIDER: `ticketmaster` (default, the Discovery API, needs
 // TICKETMASTER_API_KEY) or `fixture` (deterministic Las Vegas demo events, no calls). Answers are
@@ -11,6 +12,7 @@
 // Deno runs the file (`Deno.serve` below); Jest imports `handle` with stand-in fetch, env and clock.
 
 import { fixtureEvents } from '../_shared/events/fixtures.ts';
+import { withNetworking } from '../_shared/events/networking.ts';
 import {
   eventsRequestSchema,
   type EventsErrorCode,
@@ -152,15 +154,17 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
   const key = cacheKey(provider.name, request);
   const now = deps.now().getTime();
   const cached = cache.get(key);
-  if (cached && now - cached.at < CACHE_MS) return json({ events: cached.events });
+  // Every answer carries the sample networking events for the trip (TR-34).
+  const answer = (events: TripEvent[]) => json({ events: withNetworking(events, request) });
+  if (cached && now - cached.at < CACHE_MS) return answer(cached.events);
 
   try {
     const events = (await provider.search(request)).slice(0, MAX_EVENTS);
     cache.set(key, { events, at: now });
-    return json({ events });
+    return answer(events);
   } catch (error) {
     // An older answer beats none.
-    if (cached) return json({ events: cached.events });
+    if (cached) return answer(cached.events);
     if (error instanceof EventsFailure) {
       if (error.code === 'failed') console.error('events:', error.message);
       return fail(error.code, error.code === 'failed' ? COPY.failed : error.message);

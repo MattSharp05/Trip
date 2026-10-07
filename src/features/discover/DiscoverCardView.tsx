@@ -36,6 +36,13 @@ export function DiscoverCardView({ card, onAdd, saving = false, testID }: Discov
         ) : (
           <Icon name={card.symbol} size="lg" tone="secondary" />
         )}
+        {card.tag ? (
+          <View style={styles.tag} testID={testID ? `${testID}-tag` : undefined}>
+            <Text variant="caption" style={styles.tagText}>
+              {card.tag}
+            </Text>
+          </View>
+        ) : null}
       </View>
       <View style={styles.body}>
         <View style={styles.text}>
@@ -106,6 +113,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  tag: {
+    position: 'absolute',
+    top: spacing.xs,
+    left: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    height: 20,
+    justifyContent: 'center',
+    borderRadius: radii.pill,
+    backgroundColor: colors.backdrop,
+  },
+  tagText: { fontWeight: '600' },
   body: {
     flexDirection: 'row',
     alignItems: 'flex-end',

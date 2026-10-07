@@ -9,6 +9,9 @@ import { eventCard, type DiscoverCard, type DiscoverFilter } from './discover';
 import { CARD_WIDTH, DiscoverCardSkeleton, DiscoverCardView } from './DiscoverCardView';
 import type { useDiscover } from './useDiscover';
 
+/** The saved-videos row's heading (TR-34). */
+export const REELS_TITLE = 'Saved from TikTok & Reels';
+
 export const EMPTY_LABEL: Record<DiscoverFilter, string> = {
   all: 'No events found on your dates.',
   events: 'No shows or concerts on your dates.',

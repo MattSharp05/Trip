@@ -476,6 +476,15 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      city_links: {
+        Args: { p_city: string };
+        Returns: {
+          place_count: number;
+          thumbnail_url: string;
+          title: string;
+          url: string;
+        }[];
+      };
       reserve_flight_status_units: {
         Args: { p_limit: number; p_month: string; p_units: number };
         Returns: boolean;

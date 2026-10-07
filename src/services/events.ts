@@ -5,6 +5,7 @@ import type { Trip } from '@/services/data/types';
 import { useScenarioStore } from '@/stores/scenario';
 
 import { fixtureEvents } from '../../supabase/functions/_shared/events/fixtures';
+import { withNetworking } from '../../supabase/functions/_shared/events/networking';
 import {
   readEvents,
   type EventCategory,
@@ -62,7 +63,8 @@ export async function fetchEvents(request: EventsRequest): Promise<TripEvent[]> 
 
 /**
  * Events near the trip on its dates, earliest first. A demo session (scenario) gets the
- * deterministic fixture events and never calls the function.
+ * deterministic fixture events plus the sample networking ones, as the function would answer in
+ * fixture mode, and never calls the function.
  */
 export function useTripEvents(
   trip: Pick<Trip, 'id' | 'lat' | 'lng' | 'startDate' | 'endDate'> | null | undefined,
@@ -81,7 +83,7 @@ export function useTripEvents(
       ],
       queryFn: (): Promise<TripEvent[]> => {
         if (!request) return Promise.resolve([]);
-        if (scenario) return Promise.resolve(fixtureEvents(request));
+        if (scenario) return Promise.resolve(withNetworking(fixtureEvents(request), request));
         return fetchEvents(request);
       },
       enabled: request !== null,
