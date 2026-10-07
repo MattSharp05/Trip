@@ -1,25 +1,29 @@
-import { useCallback, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { tabTitle } from '@/core/tabs';
+import { LinkResultsSheet, useLinkFlow } from '@/features/links';
 import { TripTitle } from '@/features/trips/TripTitle';
-import { useTripData } from '@/services/data';
+import type { CityReel } from '@/services/cityLinks';
+import { useTripData, type Trip } from '@/services/data';
 import { useTripStore } from '@/stores/trip';
 import { colors, continuous, radii, screenPadding, spacing, typography } from '@/theme';
 import { Chip, Icon, IconButton, Skeleton, Text, Toast } from '@/ui';
 
 import { AllTripsSections } from './AllTripsSections';
 import { FILTERS, placeCard, type DiscoverFilter } from './discover';
-import { CardRow, EMPTY_LABEL, EventsRow, Note, Section } from './DiscoverParts';
+import { CardRow, EventsRow, Note, REELS_TITLE, Section } from './DiscoverParts';
+import { ReelsRow } from './ReelsRow';
 import { useDiscover } from './useDiscover';
 
 /**
  * The Discover tab (TR-31): what's on during the selected trip. A large title over the trip line
  * (tap to switch trips, or pick "All upcoming trips"), a search field that filters what's loaded,
  * the category chips, then "Happening in <city>" (events on the trip's dates) and "Popular with
- * travellers" (curated places). With all upcoming trips (TR-33) there's one events section per
- * trip instead. Every card's `+` saves it to its trip's Bucket List.
+ * travellers" (curated places) and "Saved from TikTok & Reels" (TR-34: videos saved for the city;
+ * tapping one opens its places in the TR-30 results sheet). With all upcoming trips (TR-33)
+ * there's one section per trip instead. Every card's `+` saves it to its trip's Bucket List.
  */
 export function DiscoverScreen() {
   const insets = useSafeAreaInsets();
@@ -32,13 +36,42 @@ export function DiscoverScreen() {
   const [toast, setToast] = useState<string | null>(null);
   const notify = useCallback((message: string) => setToast(message), []);
 
+  // A tapped video's places save to the trip whose section it's in.
+  const [reelTrip, setReelTrip] = useState<Trip | null>(null);
+  const linkArea = useMemo(
+    () => ({
+      city: reelTrip?.city ?? null,
+      near:
+        reelTrip && reelTrip.lat !== null && reelTrip.lng !== null
+          ? { lat: reelTrip.lat, lng: reelTrip.lng }
+          : null,
+    }),
+    [reelTrip],
+  );
+  const links = useLinkFlow(reelTrip?.id ?? null, linkArea);
+  const { open: openLink, dismissToast: dismissLinkToast } = links;
+  const openReel = useCallback(
+    (forTrip: Trip, reel: CityReel) => {
+      setReelTrip(forTrip);
+      openLink(reel.url);
+    },
+    [openLink],
+  );
+  const message = links.toast?.message ?? toast;
+
   let body: ReactNode;
-  if (filter === 'networking') {
-    body = <Note testID="discover-networking-empty">{EMPTY_LABEL.networking}</Note>;
-  } else if (discoverAll) {
-    body = <AllTripsSections filter={filter} query={query} notify={notify} />;
+  if (discoverAll) {
+    body = <AllTripsSections filter={filter} query={query} notify={notify} openReel={openReel} />;
   } else {
-    body = <SelectedTrip tripId={tripId} filter={filter} query={query} notify={notify} />;
+    body = (
+      <SelectedTrip
+        tripId={tripId}
+        filter={filter}
+        query={query}
+        notify={notify}
+        openReel={openReel}
+      />
+    );
   }
 
   return (
@@ -91,11 +124,20 @@ export function DiscoverScreen() {
           </>
         )}
       </ScrollView>
-      {toast !== null ? (
+      {message !== null ? (
         <View style={styles.toast}>
-          <Toast visible message={toast} onDismiss={() => setToast(null)} testID="discover-toast" />
+          <Toast
+            visible
+            message={message}
+            onDismiss={() => {
+              setToast(null);
+              dismissLinkToast();
+            }}
+            testID="discover-toast"
+          />
         </View>
       ) : null}
+      <LinkResultsSheet flow={links} near={linkArea.near} />
     </View>
   );
 }
@@ -105,12 +147,16 @@ interface BodyProps {
   filter: DiscoverFilter;
   query: string;
   notify: (message: string) => void;
+  openReel: (trip: Trip, reel: CityReel) => void;
 }
 
-/** The selected trip: "Happening in <city>" and "Popular with travellers". */
-function SelectedTrip({ tripId, filter, query, notify }: BodyProps) {
+/**
+ * The selected trip: "Happening in <city>", "Popular with travellers" and "Saved from TikTok &
+ * Reels".
+ */
+function SelectedTrip({ tripId, filter, query, notify, openReel }: BodyProps) {
   const discover = useDiscover(tripId, filter, query, notify);
-  const { data, trip, popular, save } = discover;
+  const { data, trip, popular, reels, save } = discover;
   return (
     <>
       <Section title={trip ? `Happening in ${trip.city}` : 'Happening'}>
@@ -127,6 +173,11 @@ function SelectedTrip({ tripId, filter, query, notify }: BodyProps) {
             saving={save.saving}
             testID="discover-popular"
           />
+        </Section>
+      ) : null}
+      {trip && reels.length > 0 ? (
+        <Section title={REELS_TITLE}>
+          <ReelsRow reels={reels} onOpen={(reel) => openReel(trip, reel)} testID="discover-reels" />
         </Section>
       ) : null}
     </>

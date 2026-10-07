@@ -10,8 +10,11 @@ import { z } from 'zod';
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const hhmm = z.string().regex(/^\d{2}:\d{2}$/);
 
-/** Discover's chips, less "All" and "Networking" (no source has networking events yet; TR-34). */
-export const eventCategorySchema = z.enum(['events', 'food', 'nightlife', 'sports']);
+/**
+ * Discover's chips, less "All". No provider has networking events yet: those are samples
+ * (`networking.ts`, TR-34), marked `sample`.
+ */
+export const eventCategorySchema = z.enum(['events', 'food', 'nightlife', 'sports', 'networking']);
 export type EventCategory = z.infer<typeof eventCategorySchema>;
 
 export const eventVenueSchema = z.object({
@@ -34,6 +37,8 @@ export const tripEventSchema = z.object({
   imageUrl: z.string().url().nullable(),
   /** The provider's page for tickets. */
   url: z.string().url().nullable(),
+  /** A made-up sample for the demo (TR-34), tagged "Sample" on its card. */
+  sample: z.boolean().optional(),
 });
 export type TripEvent = z.infer<typeof tripEventSchema>;
 

@@ -132,6 +132,52 @@ try {
     .eq('id', rows.documents.id);
   check("documents: other user can't read number or photos", !passport.data?.length);
 
+  // TR-34: other travellers see A's saved Las Vegas video through city_links, and nothing about A.
+  const video = await insertOne(a.client, 'saved_links', {
+    trip_id: trip.id,
+    url: `https://www.tiktok.com/@rls.test/video/${Date.now()}`,
+    platform: 'tiktok',
+    title: 'RLS test video',
+    author: 'rls-secret-author',
+    thumbnail_url: 'https://example.com/rls-thumb.jpg',
+    place_ids: [place.id],
+  });
+  await insertOne(a.client, 'saved_links', {
+    trip_id: trip.id,
+    url: 'https://example.com/not-a-video',
+    title: 'Not a video',
+    place_ids: [place.id],
+  });
+  const pooled = await b.client.rpc('city_links', { p_city: ' las vegas ' });
+  const mine = pooled.data?.find((row) => row.url === video.url);
+  check('city_links: other user sees the saved video', Boolean(mine), pooled.error?.message);
+  check(
+    'city_links: answers only url, title, thumbnail_url and place_count',
+    !!mine &&
+      JSON.stringify(Object.keys(mine).sort()) ===
+        JSON.stringify(['place_count', 'thumbnail_url', 'title', 'url']) &&
+      mine.place_count === 1,
+    JSON.stringify(mine),
+  );
+  const leaked = JSON.stringify(pooled.data ?? []);
+  check(
+    'city_links: no user id, author, trip or link id',
+    ![a.id, b.id, 'rls-secret-author', trip.id, video.id].some((s) => leaked.includes(s)),
+  );
+  check(
+    'city_links: only TikTok and Instagram links',
+    !pooled.data?.some((row) => row.url === 'https://example.com/not-a-video'),
+  );
+  const elsewhere = await b.client.rpc('city_links', { p_city: 'Cape Town' });
+  check(
+    'city_links: other cities stay apart',
+    !elsewhere.error && !elsewhere.data.some((row) => row.url === video.url),
+  );
+  const anonLinks = await anonymous.rpc('city_links', { p_city: 'Las Vegas' });
+  check("city_links: anonymous can't call it", Boolean(anonLinks.error));
+  const direct = await b.client.from('saved_links').select('id').eq('id', video.id);
+  check("saved_links: still can't be read directly", !direct.error && direct.data.length === 0);
+
   const still = await a.client.from('trips').select('id').eq('id', trip.id);
   check('trips: row survives the other user', still.data?.length === 1);
 

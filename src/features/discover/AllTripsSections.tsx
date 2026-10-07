@@ -3,23 +3,28 @@ import { StyleSheet, View } from 'react-native';
 import { now } from '@/core/clock';
 import type { Trip } from '@/services/data';
 import { spacing } from '@/theme';
-import { Skeleton } from '@/ui';
+import type { CityReel } from '@/services/cityLinks';
+import { Skeleton, Text } from '@/ui';
 
 import { tripSectionTitle, type DiscoverFilter } from './discover';
-import { EventsRow, Note, Section } from './DiscoverParts';
+import { EventsRow, Note, REELS_TITLE, Section } from './DiscoverParts';
+import { ReelsRow } from './ReelsRow';
 import { useDiscover, useUpcomingTrips } from './useDiscover';
 
 interface Props {
   filter: DiscoverFilter;
   query: string;
   notify: (message: string) => void;
+  /** Opens a saved video's places, to save to that trip. */
+  openReel: (trip: Trip, reel: CityReel) => void;
 }
 
 /**
  * Discover's "All upcoming trips" (TR-33): one section per trip that hasn't ended, soonest first,
- * each with the events on its own dates. A card's `+` saves to that section's trip.
+ * each with the events on its own dates and the saved videos for its city (TR-34). A card's `+`
+ * and a video's places save to that section's trip.
  */
-export function AllTripsSections({ filter, query, notify }: Props) {
+export function AllTripsSections({ filter, query, notify, openReel }: Props) {
   const { trips, isPending } = useUpcomingTrips();
 
   if (isPending) {
@@ -38,13 +43,20 @@ export function AllTripsSections({ filter, query, notify }: Props) {
   return (
     <View style={styles.sections} testID="discover-all">
       {trips.map((trip) => (
-        <TripSection key={trip.id} trip={trip} filter={filter} query={query} notify={notify} />
+        <TripSection
+          key={trip.id}
+          trip={trip}
+          filter={filter}
+          query={query}
+          notify={notify}
+          openReel={openReel}
+        />
       ))}
     </View>
   );
 }
 
-function TripSection({ trip, filter, query, notify }: Props & { trip: Trip }) {
+function TripSection({ trip, filter, query, notify, openReel }: Props & { trip: Trip }) {
   const discover = useDiscover(trip.id, filter, query, notify);
   return (
     <Section title={tripSectionTitle(trip, now())} testID={`discover-trip-${trip.id}`}>
@@ -54,6 +66,18 @@ function TripSection({ trip, filter, query, notify }: Props & { trip: Trip }) {
         query={query}
         testID={`discover-trip-${trip.id}-events`}
       />
+      {discover.reels.length > 0 ? (
+        <View style={styles.reels}>
+          <Text variant="subhead" tone="secondary">
+            {REELS_TITLE}
+          </Text>
+          <ReelsRow
+            reels={discover.reels}
+            onOpen={(reel) => openReel(trip, reel)}
+            testID={`discover-trip-${trip.id}-reels`}
+          />
+        </View>
+      ) : null}
     </Section>
   );
 }
@@ -61,4 +85,5 @@ function TripSection({ trip, filter, query, notify }: Props & { trip: Trip }) {
 const styles = StyleSheet.create({
   sections: { gap: spacing.xl },
   loading: { gap: spacing.md },
+  reels: { gap: spacing.sm, marginTop: spacing.xs },
 });

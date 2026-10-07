@@ -1,5 +1,6 @@
 import { LINK_SAMPLES } from '../../../supabase/functions/_shared/parse/linkFixtures';
 import { newBucketItem } from '@/features/bucket/bucket';
+import { curatedReels } from '@/services/cityLinks';
 import { createDemoSource, supabaseSource } from '@/services/data';
 import { parseLink } from '@/services/parseLink';
 
@@ -74,6 +75,13 @@ describe('readLink', () => {
     const read = readLink(createDemoSource(EMPTY), `Watch this ${sample.url} !`, AREA);
     jest.advanceTimersByTime(DEMO_READ_MS);
     await expect(read).resolves.toEqual(sample);
+    expect(parseLink).not.toHaveBeenCalled();
+  });
+
+  it('answers Discover’s handpicked videos from their places, signed in too (TR-34)', async () => {
+    const [reel] = curatedReels('Las Vegas');
+    const result = await readLink(supabaseSource, reel.url, AREA);
+    expect(result.places).toHaveLength(reel.placeCount);
     expect(parseLink).not.toHaveBeenCalled();
   });
 

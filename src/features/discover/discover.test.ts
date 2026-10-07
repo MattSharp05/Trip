@@ -4,6 +4,7 @@ import type { Place, TripData } from '@/services/data/types';
 import type { TripEvent } from '@/services/events';
 
 import { FIXTURE_EVENTS, fixtureEvents } from '../../../supabase/functions/_shared/events/fixtures';
+import { withNetworking } from '../../../supabase/functions/_shared/events/networking';
 import {
   eventBucketItem,
   eventCard,
@@ -27,6 +28,41 @@ const data = {
 };
 const byId = (id: string) => FIXTURE_EVENTS.find((e) => e.id === id) as TripEvent;
 const titles = (list: { title: string }[]) => list.map((e) => e.title);
+
+describe('sample networking events (TR-34)', () => {
+  const withSamples = withNetworking(events, VEGAS);
+
+  it('show under Networking only, tagged Sample; All keeps the real events', () => {
+    expect(titles(filterEvents(withSamples, 'networking', ''))).toEqual([
+      'Founders & Funders Breakfast',
+      'Vegas Tech Mixer',
+      'Women in Travel Meetup',
+      'Downtown Startup Coffee',
+    ]);
+    expect(filterEvents(withSamples, 'all', '')).toEqual(filterEvents(events, 'all', ''));
+    const card = eventCard(filterEvents(withSamples, 'networking', '')[0], data);
+    expect(card).toMatchObject({
+      title: 'Founders & Funders Breakfast',
+      line1: 'Nov 12 · 8:00 AM',
+      line2: 'The Venetian Expo',
+      symbol: 'person.2',
+      tag: 'Sample',
+      state: 'new',
+    });
+    expect(eventCard(byId('fx:ufc-310-1115'), data).tag).toBeUndefined();
+  });
+
+  it('save like any event, at their time and venue', () => {
+    const meetup = filterEvents(withSamples, 'networking', 'women')[0];
+    expect(eventBucketItem('trip-vegas', meetup, 'place-1', 'b1')).toMatchObject({
+      title: 'Women in Travel Meetup',
+      fixedDate: '2026-11-14',
+      fixedTime: '17:30',
+      durationMinutes: 120,
+    });
+    expect(venuePlace(meetup)).toMatchObject({ name: 'ARIA Resort & Casino', kind: 'event' });
+  });
+});
 
 describe('filterEvents', () => {
   it('keeps everything for All, one category per chip, and nothing for Networking', () => {

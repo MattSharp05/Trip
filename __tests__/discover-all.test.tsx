@@ -32,8 +32,9 @@ const CAPE_ROW = 'discover-trip-trip-cape-town-events';
 const titles = (row: string) =>
   within(screen.getByTestId(row))
     .getAllByTestId(new RegExp(`^${row}-card-`))
-    .filter((card) => !/-(add|saved|planned)$/.test(card.props.testID))
-    .map((card) => within(card).queryAllByText(/./)[0]?.props.children);
+    .filter((card) => !/-(add|saved|planned|tag)$/.test(card.props.testID))
+    // The title: the first text after the "Sample" tag, if any.
+    .map((card) => within(card).queryAllByText(/^(?!Sample$)./)[0]?.props.children);
 
 /** Section headings in screen order. */
 const sectionTitles = () =>
@@ -76,6 +77,35 @@ describe('Discover across all upcoming trips (vegas-discover-all)', () => {
     ]);
     // Sections carry events only; curated places stay with a single trip.
     expect(screen.queryByText('Popular with travellers')).toBeNull();
+    // Saved videos follow each trip's city: Las Vegas has some, Cape Town none (TR-34).
+    expect(screen.getByTestId('discover-trip-trip-vegas-reels')).toBeTruthy();
+    expect(screen.queryByTestId('discover-trip-trip-cape-town-reels')).toBeNull();
+  });
+
+  it('Networking shows the samples in Las Vegas and stays empty in Cape Town', async () => {
+    await open('vegas-discover-all', CAPE_ROW);
+    fireEvent.press(screen.getByTestId('discover-filter-networking'));
+    expect(titles(VEGAS_ROW)).toEqual([
+      'Founders & Funders Breakfast',
+      'Vegas Tech Mixer',
+      'Women in Travel Meetup',
+      'Downtown Startup Coffee',
+    ]);
+    expect(screen.getByTestId(`${CAPE_ROW}-empty`)).toHaveTextContent(
+      'No networking events on your dates yet.',
+    );
+  });
+
+  it('a saved video in the Las Vegas section saves to Las Vegas', async () => {
+    await open('vegas-discover-all', CAPE_ROW);
+    fireEvent.press(screen.getByTestId('discover-trip-trip-vegas-reels-reel-2'));
+    expect(await screen.findByText('High Roller')).toBeTruthy();
+    await act(async () => fireEvent.press(screen.getByTestId('link-save')));
+    await waitFor(() =>
+      expect(screen.getByText('Added 4 places to your Bucket List')).toBeTruthy(),
+    );
+    const vegas = await useActiveSource.getState().source.getTripData('trip-vegas');
+    expect(vegas?.bucketItems.at(-1)).toMatchObject({ tripId: 'trip-vegas', source: 'tiktok' });
   });
 
   it('+ in the Cape Town section saves to Cape Town’s Bucket List, not Las Vegas’s', async () => {

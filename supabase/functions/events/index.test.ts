@@ -1,4 +1,5 @@
 import { FIXTURE_EVENTS } from '../_shared/events/fixtures';
+import { NETWORKING_EVENTS, networkingEvents, withNetworking } from '../_shared/events/networking';
 import { readEvents, type TripEvent } from '../_shared/events/schema';
 import {
   categoryOf,
@@ -197,6 +198,41 @@ describe('ticketmasterUrl', () => {
   });
 });
 
+describe('sample networking events (TR-34)', () => {
+  it('has three or four Las Vegas samples on Nov 12–16, tagged as samples', () => {
+    expect(NETWORKING_EVENTS.length).toBeGreaterThanOrEqual(3);
+    expect(NETWORKING_EVENTS.length).toBeLessThanOrEqual(4);
+    expect(readEvents(NETWORKING_EVENTS)).toEqual(NETWORKING_EVENTS);
+    for (const e of NETWORKING_EVENTS) {
+      expect(e).toMatchObject({ category: 'networking', sample: true });
+      expect(e.date >= '2026-11-12' && e.date <= '2026-11-16').toBe(true);
+    }
+    expect(networkingEvents(VEGAS)).toHaveLength(NETWORKING_EVENTS.length);
+  });
+
+  it('shows none in other cities or on other dates', () => {
+    const capeTown = { lat: -33.92, lng: 18.42, startDate: '2026-12-18', endDate: '2027-01-06' };
+    expect(networkingEvents(capeTown)).toEqual([]);
+    expect(networkingEvents({ ...VEGAS, startDate: '2026-12-01', endDate: '2026-12-05' })).toEqual(
+      [],
+    );
+    expect(networkingEvents({ ...VEGAS, startDate: '2026-11-15', endDate: '2026-11-15' })).toEqual(
+      [],
+    );
+  });
+
+  it('merges them into an answer once, earliest first', () => {
+    const merged = withNetworking(withNetworking([FIXTURE_EVENTS[0]], VEGAS), VEGAS);
+    expect(merged.map((e) => e.id)).toEqual([
+      'sample:founders-breakfast-1112',
+      'fx:o-bellagio-1112',
+      'sample:tech-mixer-1113',
+      'sample:women-in-travel-1114',
+      'sample:downtown-founders-1116',
+    ]);
+  });
+});
+
 describe('handle', () => {
   const deps = (env: Env, fetchImpl: typeof fetch, now = NOON) => ({
     env,
@@ -236,7 +272,8 @@ describe('handle', () => {
     const f = fetchImpl as unknown as typeof fetch;
     const first = await (await handle(post(VEGAS), deps(env, f))).json();
     expect(fetchImpl).toHaveBeenCalledTimes(2);
-    expect(readEvents(first.events)).toHaveLength(6);
+    // Ticketmaster's six, plus the four sample networking events (TR-34).
+    expect(readEvents(first.events)).toHaveLength(10);
 
     // A few hundred metres away: same area.
     const nearby = { ...VEGAS, lat: 36.1149 };
@@ -254,7 +291,8 @@ describe('handle', () => {
       post(VEGAS),
       deps(envOf({ TICKETMASTER_API_KEY: 'k' }), fetchImpl as unknown as typeof fetch),
     );
-    expect(await res.json()).toEqual({ events: [] });
+    // Nothing from Ticketmaster: only the sample networking events (TR-34).
+    expect(await res.json()).toEqual({ events: networkingEvents(VEGAS) });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 
@@ -283,14 +321,18 @@ describe('handle', () => {
     const { events } = (await res.json()) as { events: TripEvent[] };
     expect(fetchImpl).not.toHaveBeenCalled();
     expect(readEvents(events)).toEqual(events);
-    expect(events.map((e) => e.id)).toEqual(
+    expect(events.filter((e) => !e.sample).map((e) => e.id)).toEqual(
       FIXTURE_EVENTS.filter((e) => e.date <= '2026-11-16' && !e.id.includes('msg')).map(
         (e) => e.id,
       ),
     );
-    expect(titles(events).slice(0, 2)).toEqual([
+    expect(events.filter((e) => e.sample).map((e) => e.id)).toEqual(
+      NETWORKING_EVENTS.map((e) => e.id),
+    );
+    expect(titles(events).slice(0, 3)).toEqual([
+      '2026-11-12 08:00 Founders & Funders Breakfast',
       '2026-11-12 19:00 O by Cirque du Soleil',
-      '2026-11-13 19:00 Vegas Golden Knights vs. Seattle Kraken',
+      '2026-11-13 18:00 Vegas Tech Mixer',
     ]);
   });
 });

@@ -4,6 +4,7 @@ import {
   linkPlatform,
   type LinkResult,
 } from '../../../supabase/functions/_shared/parse/links';
+import { curatedLinkFor } from '@/services/cityLinks';
 import type { DataSource } from '@/services/data';
 import { LINK_COPY, LinkError, parseLink, type LinkTripArea } from '@/services/parseLink';
 
@@ -14,8 +15,9 @@ export const DEMO_READ_MS = 600;
 export const linkIn = (text: string) => findLink(text) ?? text.trim();
 
 /**
- * Finds the places in a pasted or copied link. A demo session answers the sample videos itself
- * (no network); any other link goes to the `parse-link` function, which works signed out too.
+ * Finds the places in a pasted or copied link. Discover's handpicked videos (TR-34) carry their
+ * places already; a demo session also answers the sample videos itself (no network); any other
+ * link goes to the `parse-link` function, which works signed out too.
  */
 export async function readLink(
   source: DataSource,
@@ -24,6 +26,8 @@ export async function readLink(
 ): Promise<LinkResult> {
   const url = linkIn(text);
   if (!linkPlatform(url)) throw new LinkError('unsupported', LINK_COPY.unsupported);
+  const curated = curatedLinkFor(url);
+  if (curated) return curated;
   const sample = source.kind === 'demo' ? linkSampleFor(url) : null;
   if (sample) {
     await new Promise((resolve) => setTimeout(resolve, DEMO_READ_MS));

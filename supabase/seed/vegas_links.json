@@ -1,0 +1,174 @@
+{
+  "_comment": "TR-34: handpicked sample videos (made-up links) for Discover's 'Saved from TikTok & Reels' row in Las Vegas. Each carries the places it names, so tapping one opens the results sheet without reading the video. viewCount is null when unknown.",
+  "city": "Las Vegas",
+  "reels": [
+    {
+      "viewCount": 1200000,
+      "result": {
+        "url": "https://www.tiktok.com/@trip.sample/video/7400000000000000011",
+        "platform": "tiktok",
+        "title": "5 best restaurants in Vegas",
+        "author": "trip.sample",
+        "thumbnailUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Fremont%20Street%20Experience.jpg?width=480",
+        "places": [
+          {
+            "name": "Esther's Kitchen",
+            "kind": "food",
+            "area": "Downtown",
+            "address": "1131 South Main Street, Las Vegas",
+            "lat": 36.16,
+            "lng": -115.153
+          },
+          {
+            "name": "Eggslut",
+            "kind": "food",
+            "area": "The Strip",
+            "address": "3708 South Las Vegas Boulevard, Las Vegas",
+            "lat": 36.1098,
+            "lng": -115.174
+          },
+          {
+            "name": "Tacos El Gordo",
+            "kind": "food",
+            "area": "The Strip",
+            "address": "3049 South Las Vegas Boulevard, Las Vegas",
+            "lat": 36.1335,
+            "lng": -115.1647
+          },
+          {
+            "name": "Lotus of Siam",
+            "kind": "food",
+            "area": "Paradise",
+            "address": "620 East Flamingo Road, Las Vegas",
+            "lat": 36.1146,
+            "lng": -115.149
+          },
+          {
+            "name": "Bacchanal Buffet",
+            "kind": "food",
+            "area": "The Strip",
+            "address": "3570 South Las Vegas Boulevard, Las Vegas",
+            "lat": 36.1162,
+            "lng": -115.1745
+          }
+        ]
+      }
+    },
+    {
+      "viewCount": 845000,
+      "result": {
+        "url": "https://www.instagram.com/reel/TRIPSAMPLE3/",
+        "platform": "instagram",
+        "title": "Hidden gems in Vegas",
+        "author": "trip.sample",
+        "thumbnailUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Neon%20Museum.jpg?width=480",
+        "places": [
+          {
+            "name": "The Neon Museum",
+            "kind": "attraction",
+            "area": "Downtown",
+            "address": "770 Las Vegas Boulevard North, Las Vegas",
+            "lat": 36.1771,
+            "lng": -115.1353
+          },
+          {
+            "name": "The Laundry Room",
+            "kind": "nightlife",
+            "area": "Downtown",
+            "address": "525 Fremont Street, Las Vegas",
+            "lat": 36.1695,
+            "lng": -115.141
+          },
+          {
+            "name": "Seven Magic Mountains",
+            "kind": "landmark",
+            "area": "Jean",
+            "address": "South Las Vegas Boulevard, Jean",
+            "lat": 35.8384,
+            "lng": -115.2702
+          }
+        ]
+      }
+    },
+    {
+      "viewCount": 630000,
+      "result": {
+        "url": "https://www.tiktok.com/@trip.sample/video/7400000000000000012",
+        "platform": "tiktok",
+        "title": "Weekend guide to Las Vegas",
+        "author": "trip.sample",
+        "thumbnailUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Las%20Vegas%20Strip.png?width=480",
+        "places": [
+          {
+            "name": "Bellagio Fountains",
+            "kind": "landmark",
+            "area": "The Strip",
+            "address": "3600 South Las Vegas Boulevard, Las Vegas",
+            "lat": 36.1126,
+            "lng": -115.1767
+          },
+          {
+            "name": "High Roller",
+            "kind": "landmark",
+            "area": "The Strip",
+            "address": "3545 South Las Vegas Boulevard, Las Vegas",
+            "lat": 36.1176,
+            "lng": -115.1683
+          },
+          {
+            "name": "Fremont Street Experience",
+            "kind": "landmark",
+            "area": "Downtown",
+            "address": "Fremont Street, Las Vegas",
+            "lat": 36.1707,
+            "lng": -115.144
+          },
+          {
+            "name": "Sphere",
+            "kind": "landmark",
+            "area": "The Strip",
+            "address": "255 Sands Avenue, Las Vegas",
+            "lat": 36.1208,
+            "lng": -115.1621
+          }
+        ]
+      }
+    },
+    {
+      "viewCount": null,
+      "result": {
+        "url": "https://www.tiktok.com/@trip.sample/video/7400000000000000013",
+        "platform": "tiktok",
+        "title": "Free things to do on the Strip",
+        "author": "trip.sample",
+        "thumbnailUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Wynn%20Las%20Vegas.jpg?width=480",
+        "places": [
+          {
+            "name": "Bellagio Conservatory",
+            "kind": "landmark",
+            "area": "The Strip",
+            "address": "3600 South Las Vegas Boulevard, Las Vegas",
+            "lat": 36.1129,
+            "lng": -115.176
+          },
+          {
+            "name": "Flamingo Wildlife Habitat",
+            "kind": "attraction",
+            "area": "The Strip",
+            "address": "3555 South Las Vegas Boulevard, Las Vegas",
+            "lat": 36.1162,
+            "lng": -115.1702
+          },
+          {
+            "name": "Lake of Dreams at Wynn",
+            "kind": "landmark",
+            "area": "The Strip",
+            "address": "3131 South Las Vegas Boulevard, Las Vegas",
+            "lat": 36.1272,
+            "lng": -115.1653
+          }
+        ]
+      }
+    }
+  ]
+}

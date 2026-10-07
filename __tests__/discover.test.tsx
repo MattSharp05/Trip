@@ -33,7 +33,7 @@ async function openDiscover() {
 const cards = (row: string) =>
   within(screen.getByTestId(row))
     .getAllByTestId(new RegExp(`^${row}-card-`))
-    .filter((card) => !/-(add|saved|planned)$/.test(card.props.testID))
+    .filter((card) => !/-(add|saved|planned|tag)$/.test(card.props.testID))
     .map((card) =>
       within(card)
         .queryAllByText(/./)
@@ -77,7 +77,7 @@ describe('Discover on vegas-discover', () => {
     expect(screen.queryByTestId('discover-events-card-fx:ufc-310-1115-add')).toBeNull();
   });
 
-  it('filters by chip, and Networking is empty for now', async () => {
+  it('filters by chip; Networking shows the sample events, tagged Sample', async () => {
     await openDiscover();
     fireEvent.press(screen.getByTestId('discover-filter-sports'));
     expect(screen.getByTestId('discover-filter-sports')).toBeSelected();
@@ -96,8 +96,15 @@ describe('Discover on vegas-discover', () => {
     expect(cards('discover-popular').every((c) => c.includes('| Food'))).toBe(true);
 
     fireEvent.press(screen.getByTestId('discover-filter-networking'));
-    expect(screen.getByText('No networking events on your dates yet.')).toBeTruthy();
-    expect(screen.queryByTestId('discover-events')).toBeNull();
+    expect(cards('discover-events')).toEqual([
+      'Sample | Founders & Funders Breakfast | Nov 12 · 8:00 AM | The Venetian Expo',
+      'Sample | Vegas Tech Mixer | Nov 13 · 6:00 PM | Resorts World Las Vegas',
+      'Sample | Women in Travel Meetup | Nov 14 · 5:30 PM | ARIA Resort & Casino',
+      'Sample | Downtown Startup Coffee | Nov 16 · 9:30 AM | Downtown Container Park',
+    ]);
+    expect(screen.queryByText('No networking events on your dates yet.')).toBeNull();
+    expect(screen.queryByText('Popular with travellers')).toBeNull();
+    expect(screen.queryByTestId('discover-reels')).toBeNull();
   });
 
   it('searches loaded events by title and venue', async () => {
@@ -151,5 +158,50 @@ describe('Discover on vegas-discover', () => {
     const place = data?.places.find((p) => p.name === "Hell's Kitchen");
     expect(place).toMatchObject({ kind: 'food', lat: 36.1162 });
     expect(data?.bucketItems.at(-1)).toMatchObject({ placeId: place?.id, fixedDate: null });
+  });
+
+  it('shows the saved videos for Las Vegas under All, view counts only when known', async () => {
+    await openDiscover();
+    expect(screen.getByText('Saved from TikTok & Reels')).toBeTruthy();
+    const reels = within(screen.getByTestId('discover-reels'))
+      .getAllByTestId(/^discover-reels-reel-\d+$/)
+      .map((r) =>
+        within(r)
+          .queryAllByText(/./)
+          .map((t) => t.props.children)
+          .join(' | '),
+      );
+    expect(reels).toEqual([
+      '1.2M | 5 best restaurants in Vegas | 5 places',
+      '845K | Hidden gems in Vegas | 3 places',
+      '630K | Weekend guide to Las Vegas | 4 places',
+      'Free things to do on the Strip | 3 places',
+    ]);
+    expect(screen.queryByText(/tiktok\.com|instagram\.com/)).toBeNull();
+
+    fireEvent.changeText(screen.getByTestId('discover-search'), 'gems');
+    expect(screen.getByTestId('discover-reels-reel-0')).toHaveTextContent(/Hidden gems in Vegas/);
+    expect(screen.queryByTestId('discover-reels-reel-1')).toBeNull();
+    fireEvent.press(screen.getByTestId('discover-filter-sports'));
+    expect(screen.queryByTestId('discover-reels')).toBeNull();
+  });
+
+  it('tapping a video opens its places; saving adds them to the trip’s Bucket List', async () => {
+    await openDiscover();
+    fireEvent.press(screen.getByTestId('discover-reels-reel-1'));
+    expect(await screen.findByText('From Instagram')).toBeTruthy();
+    expect(screen.getByText('The Neon Museum')).toBeTruthy();
+    expect(screen.getByText('Seven Magic Mountains')).toBeTruthy();
+
+    await act(async () => fireEvent.press(screen.getByTestId('link-save')));
+    await waitFor(() =>
+      expect(screen.getByText('Added 3 places to your Bucket List')).toBeTruthy(),
+    );
+    const data = await useActiveSource.getState().source.getTripData('trip-vegas');
+    const names = data?.bucketItems
+      .slice(-3)
+      .map((b) => data.places.find((p) => p.id === b.placeId)?.name);
+    expect(names).toEqual(['The Neon Museum', 'The Laundry Room', 'Seven Magic Mountains']);
+    expect(data?.bucketItems.at(-1)).toMatchObject({ source: 'instagram' });
   });
 });
