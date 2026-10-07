@@ -13,7 +13,7 @@ tags:
     id: plan-trip-title
 - extendedWaitUntil:
     visible:
-      id: trip-switcher
+      id: plan-trip-title-switcher
     timeout: 15000
 - waitForAnimationToEnd:
     timeout: 5000
