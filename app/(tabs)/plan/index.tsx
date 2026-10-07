@@ -135,22 +135,22 @@ export default function PlanScreen() {
   // Smart Add (TR-29): the new stop's day opens with it selected, so the map flies to it.
   const smart = useSmartAdd(tripId, trip.data);
   const { setPlanMode } = selection;
+  const { add: placeSmart, dismissToast: dismissSmartToast } = smart;
   const { dismissToast: dismissEditToast } = editor;
   const { dismissToast: dismissBucketToast } = actions;
   const smartAdd = useCallback(
     (entry: BucketEntry) => {
       dismissEditToast();
       dismissBucketToast();
-      const placed = smart.add(entry);
+      const placed = placeSmart(entry);
       if (!placed) return;
       setPlanMode('itinerary');
       setGlobeDay(null);
       selectItem(placed.itemId, 'map', placed.day);
     },
-    [smart, setPlanMode, selectItem, dismissEditToast, dismissBucketToast],
+    [placeSmart, setPlanMode, selectItem, dismissEditToast, dismissBucketToast],
   );
   // The newest toast wins: an edit or a bucket change replaces Smart Add's.
-  const { dismissToast: dismissSmartToast } = smart;
   useEffect(() => {
     if (editor.toast || actions.toast) dismissSmartToast();
   }, [editor.toast, actions.toast, dismissSmartToast]);
