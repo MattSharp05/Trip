@@ -76,6 +76,28 @@ const vegasTightFriday: DataSnapshot = {
   ),
 };
 
+/** Golden Tiki saved from a TikTok (TR-30): its Bucket List row has a play button. */
+const vegasSavedTikTok: DataSnapshot = {
+  ...vegasSnapshot,
+  bucketItems: vegasSnapshot.bucketItems.map((b) =>
+    b.id === 'bucket-golden-tiki'
+      ? {
+          ...b,
+          link: {
+            id: 'link-golden-tiki',
+            tripId: VEGAS_TRIP_ID,
+            url: 'https://www.tiktok.com/@trip.sample/video/7400000000000000002',
+            platform: 'tiktok',
+            title: 'The tiki bar Vegas locals keep to themselves #vegas',
+            author: 'trip.sample',
+            thumbnailUrl: null,
+            placeIds: ['place-golden-tiki'],
+          },
+        }
+      : b,
+  ),
+};
+
 const vegas = (
   s: Omit<Scenario, 'data' | 'tripId' | 'today'> & { today?: string; data?: DataSnapshot },
 ): Scenario => ({
@@ -153,6 +175,20 @@ export const SCENARIOS: readonly Scenario[] = [
       'Discover tab, Las Vegas Nov 12–16: demo events, Fred again.. saved, UFC 310 planned.',
     tab: 'discover',
     view: {},
+  }),
+  vegas({
+    name: 'link-results',
+    data: vegasSavedTikTok,
+    description: 'Plan, Bucket List: places found in a Vegas food TikTok, ready to save.',
+    tab: 'plan',
+    view: { day: '2026-11-13', planMode: 'bucket', linkSample: 'vegas-food' },
+  }),
+  vegas({
+    name: 'link-nothing-found',
+    data: vegasSavedTikTok,
+    description: 'Plan, Bucket List: an Instagram Reel that names no place.',
+    tab: 'plan',
+    view: { day: '2026-11-13', planMode: 'bucket', linkSample: 'instagram-sunset' },
   }),
   vegas({
     name: 'vegas-wallet',

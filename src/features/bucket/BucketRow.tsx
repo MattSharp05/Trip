@@ -3,6 +3,7 @@ import { memo, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 
+import { watchLink } from '@/features/links/watch';
 import { colors, continuous, radii, screenPadding, spacing } from '@/theme';
 import { Icon, Text } from '@/ui';
 
@@ -81,13 +82,32 @@ export const BucketRow = memo(function BucketRow({
           ) : null}
         </View>
         {action}
-        <View style={styles.thumb}>
-          {entry.photo ? (
-            <Image source={{ uri: entry.photo }} style={styles.photo} recyclingKey={entry.id} />
-          ) : (
-            <Icon name={entry.symbol} size="md" tone="secondary" />
-          )}
-        </View>
+        {entry.watch ? (
+          // Saved from a video (TR-30): the thumbnail is a play button that opens it.
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={entry.watch.label}
+            onPress={() => entry.watch && watchLink(entry.watch.url)}
+            hitSlop={spacing.md}
+            style={({ pressed }) => [styles.thumb, pressed && styles.thumbPressed]}
+            testID={`bucket-watch-${entry.id}`}
+          >
+            {entry.photo ? (
+              <Image source={{ uri: entry.photo }} style={styles.photo} recyclingKey={entry.id} />
+            ) : null}
+            <View style={entry.photo ? styles.playOnPhoto : undefined}>
+              <Icon name="play.fill" size="sm" />
+            </View>
+          </Pressable>
+        ) : (
+          <View style={styles.thumb}>
+            {entry.photo ? (
+              <Image source={{ uri: entry.photo }} style={styles.photo} recyclingKey={entry.id} />
+            ) : (
+              <Icon name={entry.symbol} size="md" tone="secondary" />
+            )}
+          </View>
+        )}
       </Pressable>
     </ReanimatedSwipeable>
   );
@@ -116,7 +136,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  thumbPressed: { opacity: 0.7 },
   photo: { width: '100%', height: '100%' },
+  playOnPhoto: {
+    position: 'absolute',
+    width: 26,
+    height: 26,
+    borderRadius: radii.pill,
+    backgroundColor: colors.backdrop,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   text: { flex: 1, gap: spacing.xxs },
   title: { fontWeight: '600' },
   delete: {

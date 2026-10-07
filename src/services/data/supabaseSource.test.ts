@@ -288,6 +288,82 @@ describe('supabase source', () => {
     expect(saved).toMatchObject({ fixedTime: '20:00', title: 'Fred again..' });
   });
 
+  it('saves a TikTok link and points its bucket items at it', async () => {
+    const linkRow = {
+      id: 'l1',
+      user_id: 'u1',
+      trip_id: 't1',
+      url: 'https://www.tiktok.com/@a/video/1',
+      platform: 'tiktok',
+      title: 'Eggslut!',
+      author: 'a',
+      thumbnail_url: null,
+      place_ids: ['p9'],
+      created_at: '',
+      updated_at: '',
+    };
+    mockTables.saved_links = { data: linkRow, error: null };
+    const link = await supabaseSource.saveLink({
+      tripId: 't1',
+      url: linkRow.url,
+      platform: 'tiktok',
+      title: 'Eggslut!',
+      author: 'a',
+      thumbnailUrl: null,
+      placeIds: ['p9'],
+    });
+    expect(mockUpserts.at(-1)).not.toHaveProperty('id');
+    expect(mockUpserts.at(-1)).toMatchObject({ trip_id: 't1', place_ids: ['p9'] });
+    expect(link).toMatchObject({ id: 'l1', platform: 'tiktok', placeIds: ['p9'] });
+
+    const bucketRow = {
+      id: 'k2',
+      user_id: 'u1',
+      trip_id: 't1',
+      place_id: 'p9',
+      duration_minutes: 75,
+      window_start: '09:00:00',
+      window_end: '22:00:00',
+      source: 'tiktok',
+      fixed_date: null,
+      fixed_time: null,
+      title: null,
+      saved_link_id: 'l1',
+      created_at: '',
+      updated_at: '',
+    };
+    mockTables.bucket_items = { data: bucketRow, error: null };
+    const item = {
+      id: 'k2',
+      tripId: 't1',
+      placeId: 'p9',
+      durationMinutes: 75,
+      windowStart: '09:00',
+      windowEnd: '22:00',
+      source: 'tiktok',
+      fixedDate: null,
+      fixedTime: null,
+      link,
+    };
+    expect(await supabaseSource.saveBucketItem(item)).toMatchObject({ link: { id: 'l1' } });
+    expect(mockUpserts.at(-1)).toMatchObject({ saved_link_id: 'l1' });
+
+    // Reading the trip back joins each item to its link.
+    mockTables.trips = { data: tripRow, error: null };
+    mockTables.itinerary_items = { data: [], error: null };
+    mockTables.bookings = { data: [], error: null };
+    mockTables.expenses = { data: [], error: null };
+    mockTables.bucket_items = {
+      data: [bucketRow, { ...bucketRow, id: 'k3', saved_link_id: null }],
+      error: null,
+    };
+    mockTables.saved_links = { data: [linkRow], error: null };
+    mockTables.places = { data: [], error: null };
+    const trip = await supabaseSource.getTripData('t1');
+    expect(trip?.bucketItems[0].link).toMatchObject({ id: 'l1', url: linkRow.url });
+    expect(trip?.bucketItems[1]).not.toHaveProperty('link');
+  });
+
   it('inserts imported bookings with the id the app chose', async () => {
     const data = { event: 'La Colombe', placeId: 'p9' };
     mockTables.bookings = {

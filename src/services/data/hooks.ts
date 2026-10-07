@@ -11,6 +11,7 @@ import type {
   Money,
   NewTrip,
   PlaceInput,
+  SavedLinkInput,
 } from './types';
 
 /**
@@ -73,6 +74,7 @@ export const useSaveItineraryItem = () =>
   useWrite((s, item: ItineraryItem) => s.saveItineraryItem(item));
 export const useDeleteItineraryItem = () => useWrite((s, id: string) => s.deleteItineraryItem(id));
 export const useSavePlace = () => useWrite((s, place: PlaceInput) => s.savePlace(place));
+export const useSaveLink = () => useWrite((s, link: SavedLinkInput) => s.saveLink(link));
 export const useSaveBucketItem = () => useWrite((s, item: BucketItem) => s.saveBucketItem(item));
 export const useDeleteBucketItem = () => useWrite((s, id: string) => s.deleteBucketItem(id));
 export const useSaveExpense = () => useWrite((s, expense: Expense) => s.saveExpense(expense));

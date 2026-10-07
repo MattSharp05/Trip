@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { findLink } from '../../../supabase/functions/_shared/parse/links';
 import { kindLabel } from '@/core/bucket';
 import { pinSymbol, type LngLat } from '@/features/map';
 import { queryClient } from '@/services/data';
@@ -23,6 +24,10 @@ export interface AddPlaceSheetProps {
   /** "Drop a pin": closes the sheet so the user can touch and hold the map. */
   onDropPin: () => void;
   onSavePin: (name: string) => void;
+  /** A TikTok or Reel link was pasted or typed (TR-30): find the places in it. */
+  onLink?: (text: string) => void;
+  /** Reads the clipboard (only on tap). */
+  readClipboard?: () => Promise<string>;
   /** A save is running: buttons wait. */
   saving: boolean;
 }
@@ -45,6 +50,8 @@ export function AddPlaceSheet({
   onPickSpot,
   onDropPin,
   onSavePin,
+  onLink,
+  readClipboard,
   saving,
 }: AddPlaceSheetProps) {
   // Keep the last content while the sheet slides away; each opening starts fresh (its own key).
@@ -65,6 +72,8 @@ export function AddPlaceSheet({
           near={near}
           onPick={onPickSpot}
           onDropPin={onDropPin}
+          onLink={onLink}
+          readClipboard={readClipboard}
           saving={saving}
         />
       ) : content?.kind === 'pin' ? (
@@ -79,13 +88,28 @@ export interface SpotSearchProps {
   onPick: (spot: SpotResult) => void;
   /** Shows the "Drop a pin" row (Bucket List). */
   onDropPin?: () => void;
+  /** Shows "Paste a TikTok or Reel link" and takes a link typed in the field (Bucket List). */
+  onLink?: (text: string) => void;
+  readClipboard?: () => Promise<string>;
+  /** What the field starts with ("Find it" from a video's results). */
+  initialQuery?: string;
   saving: boolean;
 }
 
 /** Search for places near the trip (the `places` function); also used by the itinerary's Add. */
-export function SpotSearch({ near, onPick, onDropPin, saving }: SpotSearchProps) {
-  const [text, setText] = useState('');
-  const query = useDebounced(text.trim(), 300);
+export function SpotSearch({
+  near,
+  onPick,
+  onDropPin,
+  onLink,
+  readClipboard,
+  initialQuery = '',
+  saving,
+}: SpotSearchProps) {
+  const [text, setText] = useState(initialQuery);
+  // A link typed or pasted into the field is a video to read, not a place name.
+  const typedLink = onLink ? findLink(text) : null;
+  const query = useDebounced(typedLink ? '' : text.trim(), 300);
   const results = useQuery(
     {
       queryKey: ['spots', near?.lat, near?.lng, query.toLowerCase()],
@@ -97,7 +121,19 @@ export function SpotSearch({ near, onPick, onDropPin, saving }: SpotSearchProps)
   );
 
   let list = null;
-  if (!near) {
+  if (typedLink && onLink) {
+    list = (
+      <View style={styles.group}>
+        <ListRow
+          icon="play.rectangle"
+          title="Find the places in this video"
+          subtitle={typedLink}
+          onPress={() => onLink(typedLink)}
+          testID="spot-link"
+        />
+      </View>
+    );
+  } else if (!near) {
     list = (
       <Text variant="subhead" tone="secondary" style={styles.note}>
         This trip has no map location, so search can&apos;t look nearby.
@@ -163,15 +199,27 @@ export function SpotSearch({ near, onPick, onDropPin, saving }: SpotSearchProps)
         />
       </View>
       {list}
-      {onDropPin ? (
+      {onDropPin || (onLink && readClipboard) ? (
         <View style={styles.group}>
-          <ListRow
-            icon="mappin.and.ellipse"
-            title="Drop a pin"
-            subtitle="Touch and hold the map where it is"
-            onPress={onDropPin}
-            testID="bucket-drop-pin"
-          />
+          {onLink && readClipboard ? (
+            <ListRow
+              icon="doc.on.clipboard"
+              title="Paste a TikTok or Reel link"
+              subtitle="Finds the places in the video"
+              onPress={() => readClipboard().then((pasted) => onLink(pasted))}
+              separator={onDropPin !== undefined}
+              testID="bucket-paste-link"
+            />
+          ) : null}
+          {onDropPin ? (
+            <ListRow
+              icon="mappin.and.ellipse"
+              title="Drop a pin"
+              subtitle="Touch and hold the map where it is"
+              onPress={onDropPin}
+              testID="bucket-drop-pin"
+            />
+          ) : null}
         </View>
       ) : null}
     </View>

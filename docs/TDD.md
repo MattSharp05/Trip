@@ -58,6 +58,9 @@ visa images never go to AI**.
   typed JSON (Zod-validated) → review screen → save creates the `booking`, its `itinerary_item`(s), a
   geocoded `place`, and an `expense` if there's a price. One write path, so wallet, plan, map and
   budget never disagree.
+- TikTok and Reel links (ADR 0019): copied link (read only after a tap) → `parse-link` (oEmbed
+  caption → `ParseProvider` → Photon near the trip) → results sheet → save creates the `place`s, a
+  `saved_links` row and `bucket_items` pointing at it.
 
 ## Project structure
 ```

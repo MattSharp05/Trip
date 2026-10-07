@@ -15,6 +15,11 @@ export interface ScenarioView {
    * supabase/functions/_shared/parse/fixtures.ts), or `not-configured` for the no-key state.
    */
   importSample?: 'flight' | 'hotel' | 'car' | 'restaurant' | 'lisbon-hotel' | 'not-configured';
+  /**
+   * Plan: open the results sheet on a sample video (supabase/functions/_shared/parse/linkFixtures.ts),
+   * as if its link had been pasted.
+   */
+  linkSample?: 'vegas-food' | 'instagram-sunset';
 }
 
 interface ScenarioState {

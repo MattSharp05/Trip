@@ -4,7 +4,7 @@ import { DEFAULT_WINDOW, durationForKind, kindLabel, sourceLabel } from '@/core/
 import { dayLabel, timeLabel } from '@/core/dates';
 import { newId } from '@/core/ids';
 import { pinSymbol, type MapPin } from '@/features/map';
-import type { BucketItem, Place, PlaceInput } from '@/services/data/types';
+import type { BucketItem, Place, PlaceInput, SavedLink } from '@/services/data/types';
 import type { SpotResult } from '@/services/places';
 
 /** One Bucket List row, ready to draw. */
@@ -18,6 +18,8 @@ export interface BucketEntry {
   source: string | null;
   photo: string | null;
   symbol: SFSymbol;
+  /** The video it was saved from: the row shows a play button that opens it. */
+  watch: { url: string; label: string } | null;
 }
 
 type BucketData = { places: Place[]; bucketItems: BucketItem[] };
@@ -43,8 +45,14 @@ export function bucketEntries({ places, bucketItems }: BucketData): BucketEntry[
           .filter(Boolean)
           .join(' · ') || null,
       source: [sourceLabel(item.source), when].filter(Boolean).join(' · ') || null,
-      photo: place?.photoUrl ?? null,
+      photo: place?.photoUrl ?? item.link?.thumbnailUrl ?? null,
       symbol: pinSymbol(place?.kind ?? 'bucket'),
+      watch: item.link
+        ? {
+            url: item.link.url,
+            label: `Watch on ${item.link.platform === 'tiktok' ? 'TikTok' : 'Instagram'}`,
+          }
+        : null,
     };
   });
 }
@@ -94,14 +102,19 @@ export function placeFromPin(name: string, coordinate: { lat: number; lng: numbe
   };
 }
 
-/** A new bucket item for a saved place: default opening window and a visit length by kind. */
+/**
+ * A new bucket item for a saved place: default opening window and a visit length by kind. Places
+ * saved from a video (source `tiktok` / `instagram`) carry it, for "Watch".
+ */
 export function newBucketItem(
   tripId: string,
   place: Pick<Place, 'id' | 'kind'>,
-  source: 'search' | 'pin',
+  source: 'search' | 'pin' | SavedLink['platform'],
   id: string = newId(),
+  link?: SavedLink,
 ): BucketItem {
   return {
+    ...(link ? { link } : {}),
     id,
     tripId,
     placeId: place.id,
