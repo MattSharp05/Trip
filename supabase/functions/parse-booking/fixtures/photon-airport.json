@@ -1,0 +1,16 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [18.6021, -33.9715]
+      },
+      "properties": {
+        "name": "Cape Town International Airport",
+        "country": "South Africa"
+      }
+    }
+  ]
+}

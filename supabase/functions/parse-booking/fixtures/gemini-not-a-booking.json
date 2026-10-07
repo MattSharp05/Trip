@@ -1,0 +1,16 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "{\n \"booking\": {\n  \"type\": \"menu\",\n  \"items\": [\n   \"soup\"\n  ]\n },\n \"uncertain\": []\n}"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "modelVersion": "gemini-flash-latest"
+}
