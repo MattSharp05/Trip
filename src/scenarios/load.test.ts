@@ -27,6 +27,12 @@ describe('loadScenario', () => {
       'trip-vegas',
       { day: '2026-11-12', itemId: 'item-01', planMode: 'itinerary' },
     ],
+    [
+      'vegas-flight-home',
+      'plan',
+      'trip-vegas',
+      { day: '2026-11-16', itemId: 'item-15', planMode: 'itinerary' },
+    ],
     ['vegas-bucket', 'plan', 'trip-vegas', { planMode: 'bucket' }],
     ['vegas-wallet', 'organize', 'trip-vegas', { organizeView: 'wallet' }],
     ['vegas-budget-eur', 'organize', 'trip-vegas', { organizeView: 'budget', currency: 'EUR' }],
