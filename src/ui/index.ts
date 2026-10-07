@@ -3,6 +3,7 @@ export { Chip, type ChipProps } from './Chip';
 export { Icon, iconSizes, type IconProps, type IconSize, type IconTone } from './Icon';
 export { IconButton, type IconButtonProps } from './IconButton';
 export { ListRow, type ListRowProps } from './ListRow';
+export { LoadError, type LoadErrorProps } from './LoadError';
 export { PhotoCard, type PhotoCardProps } from './PhotoCard';
 export { PlaceholderScreen } from './PlaceholderScreen';
 export { Segmented, type SegmentedProps } from './Segmented';

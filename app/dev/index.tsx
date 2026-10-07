@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { now } from '@/core/clock';
+import { DeveloperAccount } from '@/features/settings';
 import { exitScenario, loadScenario, SCENARIOS, scenariosEnabled, TAB_HREF } from '@/scenarios';
 import { useTripData, useTrips } from '@/services/data';
 import { useScenarioStore } from '@/stores/scenario';
@@ -39,6 +40,7 @@ function DevIndex() {
       </Text>
 
       <Session />
+      <DeveloperAccount />
 
       <Text variant="subhead" tone="secondary" style={styles.sectionTitle}>
         SCENARIOS

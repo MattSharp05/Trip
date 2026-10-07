@@ -47,6 +47,9 @@ export function useDiscover(
 
   return {
     data,
+    /** The trip itself couldn't load (offline): an error with Try again, not a skeleton. */
+    tripError: tripData.isError && !data,
+    retryTrip: tripData.refetch,
     trip,
     events,
     eventList,
@@ -59,8 +62,13 @@ export function useDiscover(
 }
 
 /** Trips that haven't ended yet ("today" from the scenario's clock), soonest first. */
-export function useUpcomingTrips(): { trips: Trip[] | undefined; isPending: boolean } {
-  const { data, isPending } = useTrips();
+export function useUpcomingTrips(): {
+  trips: Trip[] | undefined;
+  isPending: boolean;
+  isError: boolean;
+  retry: () => void;
+} {
+  const { data, isPending, isError, refetch } = useTrips();
   const trips = useMemo(() => (data ? filterTrips(data, 'upcoming', now()) : undefined), [data]);
-  return { trips, isPending };
+  return { trips, isPending, isError: isError && !data, retry: () => void refetch() };
 }

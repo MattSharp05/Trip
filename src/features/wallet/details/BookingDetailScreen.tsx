@@ -3,7 +3,9 @@ import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { colors, screenPadding, spacing } from '@/theme';
-import { Skeleton, Text, Toast } from '@/ui';
+import { LoadError, Skeleton, Text, Toast } from '@/ui';
+
+import { useWallet } from '../useWallet';
 
 /**
  * The frame every booking detail shares: navigation bar title, a skeleton while the trip loads,
@@ -25,6 +27,7 @@ export function BookingDetailScreen({
   onDismissToast: () => void;
   children: ReactNode;
 }) {
+  const { loadError, retry } = useWallet();
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -35,6 +38,8 @@ export function BookingDetailScreen({
             <Skeleton height={56} radius="card" />
             <Skeleton height={120} radius="card" />
           </>
+        ) : missing && loadError ? (
+          <LoadError message="Couldn't load this booking. Check your connection." onRetry={retry} />
         ) : missing ? (
           <View style={styles.missing}>
             <Text variant="headline">{missing}</Text>
