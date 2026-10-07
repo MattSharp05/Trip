@@ -8,13 +8,17 @@ import type { PopularPlace } from './popular';
 
 /**
  * Discover's `+`: saves an event (fixed date and time, at its venue) or a curated place to the
- * trip's Bucket List. A venue the trip already knows is reused rather than added twice.
+ * trip's Bucket List. A venue the trip already knows is reused rather than added twice. `notify`
+ * shows the outcome; the screen owns the toast, so every trip section shares one (TR-33).
  */
-export function useDiscoverSave(tripId: string | null, places: readonly Place[] | undefined) {
+export function useDiscoverSave(
+  tripId: string | null,
+  places: readonly Place[] | undefined,
+  notify: (message: string) => void,
+) {
   const { mutateAsync: savePlace } = useSavePlace();
   const { mutateAsync: saveItem } = useSaveBucketItem();
   const [saving, setSaving] = useState<ReadonlySet<string>>(new Set());
-  const [toast, setToast] = useState<string | null>(null);
 
   const run = useCallback(
     async (id: string, name: string, place: PlaceInput, item: (p: Place) => Promise<unknown>) => {
@@ -23,9 +27,9 @@ export function useDiscoverSave(tripId: string | null, places: readonly Place[] 
       try {
         const saved = findPlace(places ?? [], place) ?? (await savePlace(place));
         await item(saved);
-        setToast(`Added ${name} to your Bucket List`);
+        notify(`Added ${name} to your Bucket List`);
       } catch {
-        setToast(`Couldn't save ${name}. Try again.`);
+        notify(`Couldn't save ${name}. Try again.`);
       } finally {
         setSaving((s) => {
           const next = new Set(s);
@@ -34,7 +38,7 @@ export function useDiscoverSave(tripId: string | null, places: readonly Place[] 
         });
       }
     },
-    [tripId, places, savePlace],
+    [tripId, places, savePlace, notify],
   );
 
   const saveEvent = useCallback(
@@ -53,11 +57,5 @@ export function useDiscoverSave(tripId: string | null, places: readonly Place[] 
     [run, saveItem, tripId],
   );
 
-  return {
-    saving,
-    saveEvent,
-    savePopular,
-    toast,
-    dismissToast: useCallback(() => setToast(null), []),
-  };
+  return { saving, saveEvent, savePopular };
 }

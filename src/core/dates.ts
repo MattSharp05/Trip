@@ -63,6 +63,16 @@ export const timeAsDate = (time: string) => parse(time, 'HH:mm', new Date(2000, 
 /** The wall-clock `HH:MM` a time picker shows. */
 export const timeOfDate = (date: Date) => format(date, 'HH:mm');
 
+/** "Nov 12 – 16" within a month, "Dec 18 – Jan 6" across months: no year, for section titles. */
+export function shortRangeLabel(startDate: string, endDate: string): string {
+  const start = parseISO(startDate);
+  const end = parseISO(endDate);
+  if (startDate === endDate) return format(start, 'MMM d');
+  return startDate.slice(0, 7) === endDate.slice(0, 7)
+    ? `${format(start, 'MMM d')} – ${format(end, 'd')}`
+    : `${format(start, 'MMM d')} – ${format(end, 'MMM d')}`;
+}
+
 /** "Nov 12 – Nov 16, 2026", or "Dec 18, 2026 – Jan 6, 2027" across a new year. */
 export function dateRangeLabel(startDate: string, endDate: string): string {
   const start = parseISO(startDate);

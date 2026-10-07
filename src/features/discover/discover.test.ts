@@ -13,6 +13,7 @@ import {
   findPlace,
   placeBucketItem,
   placeCard,
+  tripSectionTitle,
   venuePlace,
 } from './discover';
 import { popularPlaces } from './popular';
@@ -209,5 +210,53 @@ describe('Smart Add places a saved event (TR-29)', () => {
     expect(planBucketSmartAdd(tripData, item)).toEqual({
       message: 'Overlaps Dinner at Carbone at 8:00 PM.',
     });
+  });
+});
+
+describe('tripSectionTitle', () => {
+  const vegas = {
+    city: 'Las Vegas',
+    startDate: '2026-11-12',
+    endDate: '2026-11-16',
+    timezone: 'America/Los_Angeles',
+  };
+  const capeTown = {
+    city: 'Cape Town',
+    startDate: '2026-12-18',
+    endDate: '2027-01-06',
+    timezone: 'Africa/Johannesburg',
+  };
+
+  it('says "Because you\'re going to" before the trip and "While you\'re in" during it', () => {
+    const friday = new Date('2026-11-13T09:00:00-08:00');
+    expect(tripSectionTitle(vegas, friday)).toBe("While you're in Las Vegas · Nov 12 – 16");
+    expect(tripSectionTitle(capeTown, friday)).toBe(
+      "Because you're going to Cape Town · Dec 18 – Jan 6",
+    );
+  });
+
+  it('starts on the trip’s own calendar', () => {
+    // 11 PM in Tampa on Nov 11 is still Nov 11 in Las Vegas, and Nov 12 already in Cape Town.
+    const lateNov11 = new Date('2026-11-11T23:00:00-05:00');
+    expect(tripSectionTitle(vegas, lateNov11)).toMatch(/^Because/);
+    expect(tripSectionTitle({ ...capeTown, startDate: '2026-11-12' }, lateNov11)).toMatch(/^While/);
+  });
+});
+
+describe('Cape Town fixture events', () => {
+  it('are on the Cape Town trip’s dates and nowhere near Las Vegas', () => {
+    const capeTown = {
+      lat: -33.9249,
+      lng: 18.4241,
+      startDate: '2026-12-18',
+      endDate: '2027-01-06',
+    };
+    expect(titles(fixtureEvents(capeTown))).toEqual([
+      'Neighbourgoods Market',
+      'Kirstenbosch Summer Sunset Concert',
+      "New Year's Eve at the V&A Waterfront",
+      'Proteas New Year Test, Day 1',
+    ]);
+    expect(titles(events).some((t) => t.includes('Kirstenbosch'))).toBe(false);
   });
 });

@@ -7,6 +7,7 @@ import {
   daysBetween,
   instantIn,
   monthDayLabel,
+  shortRangeLabel,
   shiftDay,
   timeAsDate,
   timeLabel,
@@ -58,6 +59,10 @@ describe('dates', () => {
     expect(monthDayLabel('2026-11-14')).toBe('Nov 14');
     expect(dateRangeLabel('2026-11-12', '2026-11-16')).toBe('Nov 12 – Nov 16, 2026');
     expect(dateRangeLabel('2026-12-18', '2027-01-06')).toBe('Dec 18, 2026 – Jan 6, 2027');
+    expect(shortRangeLabel('2026-11-12', '2026-11-16')).toBe('Nov 12 – 16');
+    expect(shortRangeLabel('2026-12-18', '2027-01-06')).toBe('Dec 18 – Jan 6');
+    expect(shortRangeLabel('2026-11-30', '2026-12-02')).toBe('Nov 30 – Dec 2');
+    expect(shortRangeLabel('2026-11-14', '2026-11-14')).toBe('Nov 14');
   });
 
   it('formats wall-clock times as "9:00 AM"', () => {

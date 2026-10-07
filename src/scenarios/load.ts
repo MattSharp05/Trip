@@ -21,6 +21,7 @@ export function loadScenario(name: string): TabName | null {
   queryClient.clear();
   useActiveSource.getState().setSource(createDemoSource(scenario.data, scenario.name));
   useTripStore.getState().selectTrip(scenario.tripId);
+  useTripStore.getState().setDiscoverAll(scenario.view.discoverAll ?? false);
   useScenarioStore.getState().start(scenario.name, scenario.view);
   return scenario.tab;
 }
@@ -31,5 +32,6 @@ export function exitScenario(): void {
   queryClient.clear();
   useActiveSource.getState().setSource(supabaseSource);
   useTripStore.getState().selectTrip(null);
+  useTripStore.getState().setDiscoverAll(false);
   useScenarioStore.getState().clear();
 }

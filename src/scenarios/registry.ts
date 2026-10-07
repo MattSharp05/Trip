@@ -76,6 +76,12 @@ const vegasTightFriday: DataSnapshot = {
   ),
 };
 
+/** Two upcoming trips (TR-33): Las Vegas (underway) and Cape Town; Tokyo left out. */
+const vegasTwoUpcoming: DataSnapshot = {
+  ...vegasSnapshot,
+  trips: vegasSnapshot.trips.filter((t) => t.id !== 'trip-tokyo'),
+};
+
 /** Golden Tiki saved from a TikTok (TR-30): its Bucket List row has a play button. */
 const vegasSavedTikTok: DataSnapshot = {
   ...vegasSnapshot,
@@ -175,6 +181,14 @@ export const SCENARIOS: readonly Scenario[] = [
       'Discover tab, Las Vegas Nov 12–16: demo events, Fred again.. saved, UFC 310 planned.',
     tab: 'discover',
     view: {},
+  }),
+  vegas({
+    name: 'vegas-discover-all',
+    data: vegasTwoUpcoming,
+    description:
+      'Discover, all upcoming trips: Las Vegas (now) and Cape Town, each with its events.',
+    tab: 'discover',
+    view: { discoverAll: true },
   }),
   vegas({
     name: 'link-results',
