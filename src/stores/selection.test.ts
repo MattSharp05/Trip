@@ -60,6 +60,18 @@ describe('useTripSelection', () => {
     expect(result.current.selectedDay).toBe('2026-11-14');
   });
 
+  it('initForTrip with an empty view ignores the scenario (the trip switcher)', () => {
+    setNow('2026-11-14T10:00:00-08:00');
+    act(() => useScenarioStore.getState().start('a', { day: '2026-11-15', itemId: 'item-01' }));
+    act(() => useSelectionStore.getState().initForTrip(trip, {}));
+    expect(useSelectionStore.getState()).toMatchObject({
+      tripId: 'trip-vegas',
+      selectedDay: '2026-11-14',
+      selectedItemId: null,
+      planMode: 'itinerary',
+    });
+  });
+
   it('keeps the item when only the item changes', () => {
     const { result } = renderHook(() => useTripSelection(trip));
     act(() => result.current.selectItem('item-07'));
