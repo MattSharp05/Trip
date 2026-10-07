@@ -8,6 +8,7 @@ export {
   type DistanceUnit,
   type Preferences,
 } from './preferences';
+export { DeveloperAccount } from './DeveloperAccount';
 export { SettingsScreen } from './SettingsScreen';
 export {
   clearPreferenceCache,
