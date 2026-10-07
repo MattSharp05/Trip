@@ -74,6 +74,24 @@ describe('useFlightStatus (real account)', () => {
     expect(result.current).toBeNull();
   });
 
+  it('drops the status on an open screen when the window closes, and stops asking', async () => {
+    jest.useFakeTimers();
+    try {
+      setNow('2026-11-12T21:01:00Z'); // a minute before the window closes
+      invoke.mockResolvedValue({ status: ON_TIME });
+      const { result } = renderHook(() => useFlightStatus(flight));
+      await waitFor(() => expect(result.current).toEqual(ON_TIME));
+      setNow('2026-11-12T21:03:00Z');
+      act(() => jest.advanceTimersByTime(60_001));
+      expect(result.current).toBeNull();
+      const calls = invoke.mock.calls.length;
+      act(() => jest.advanceTimersByTime(30 * 60_000));
+      expect(invoke).toHaveBeenCalledTimes(calls);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('ignores a malformed answer', async () => {
     setNow('2026-11-12T07:30:00-05:00');
     invoke.mockResolvedValue({ status: { state: 'late' } });

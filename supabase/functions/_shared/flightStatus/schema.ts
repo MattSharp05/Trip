@@ -56,7 +56,7 @@ export const flightStatusRequestSchema = z.object({
 export type FlightStatusRequest = z.infer<typeof flightStatusRequestSchema>;
 
 export type FlightStatusErrorCode =
-  'not_configured' | 'outside_window' | 'limit_reached' | 'invalid' | 'failed';
+  'not_configured' | 'outside_window' | 'limit_reached' | 'signed_out' | 'invalid' | 'failed';
 
 /** The function's answer: a status (null when the provider doesn't know the flight) or an error. */
 export type FlightStatusResponse =

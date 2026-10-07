@@ -15,6 +15,7 @@ const ENV: Record<string, string> = {
   FLIGHT_STATUS_API_KEY: 'test-key',
   SUPABASE_URL: 'https://project.supabase.co',
   SUPABASE_SERVICE_ROLE_KEY: 'service',
+  SUPABASE_ANON_KEY: 'anon',
 };
 
 const envOf =
@@ -44,6 +45,8 @@ const respond = (body: unknown, status = 200) =>
 interface Db {
   cache: Map<string, { status: unknown; fetched_at: string }>;
   units: Map<string, number>;
+  /** Make cache writes fail, like a PostgREST hiccup. */
+  failWrites?: boolean;
 }
 
 /** A fetch serving AeroDataBox (one recorded answer) and PostgREST (the cache and counter). */
@@ -53,12 +56,17 @@ function fakeFetch(provider: { body: unknown; status?: number }, db: Db = newDb(
     const url = String(input);
     calls.push({ url, init });
     if (url.includes('aerodatabox')) return respond(provider.body, provider.status);
+    if (url.endsWith('/auth/v1/user')) {
+      const auth = (init?.headers as Record<string, string>).Authorization;
+      return auth === 'Bearer user-token' ? respond({ id: 'user-1' }) : respond({}, 401);
+    }
     if (url.includes('/rest/v1/flight_status_cache?')) {
       const key = decodeURIComponent(new URL(url).searchParams.get('key')!.replace(/^eq\./, ''));
       const row = db.cache.get(key);
       return respond(row ? [row] : []);
     }
     if (url.endsWith('/rest/v1/flight_status_cache')) {
+      if (db.failWrites) throw new TypeError('network down');
       const { key, status, fetched_at } = JSON.parse(String(init?.body));
       db.cache.set(key, { status, fetched_at });
       return respond(null, 204);
@@ -80,17 +88,17 @@ function newDb(): Db {
   return { cache: new Map(), units: new Map() };
 }
 
-const request = (body: unknown) =>
+const request = (body: unknown, auth: string) =>
   new Request('http://localhost/flight-status', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer anon' },
+    headers: { 'Content-Type': 'application/json', Authorization: auth },
     body: JSON.stringify(body),
   });
 
 const ask = (
   fetchImpl: typeof fetch,
-  { at = MORNING, env = envOf(), body = AA2410 as unknown } = {},
-) => handle(request(body), { env, fetch: fetchImpl, now: () => at });
+  { at = MORNING, env = envOf(), body = AA2410 as unknown, auth = 'Bearer user-token' } = {},
+) => handle(request(body, auth), { env, fetch: fetchImpl, now: () => at });
 
 describe('AeroDataBox mapping', () => {
   const map = (body: unknown) => mapAeroDataBox((body as AdbFlight[])[0], MORNING);
@@ -135,6 +143,17 @@ describe('AeroDataBox mapping', () => {
   it('uses the arrival delay once the plane is in the air', () => {
     const [flight] = adbDelayed as AdbFlight[];
     expect(mapAeroDataBox({ ...flight, status: 'EnRoute' }, MORNING)?.delayMinutes).toBe(22);
+    // Without an arrival estimate, the departure delay still counts.
+    const noEstimate = { ...flight, status: 'Departed', arrival: { ...flight.arrival } };
+    delete noEstimate.arrival.revisedTime;
+    expect(mapAeroDataBox(noEstimate, MORNING)?.delayMinutes).toBe(25);
+  });
+
+  it('keeps an uncertain cancellation active instead of reading Cancelled', () => {
+    const [flight] = adbCancelled as AdbFlight[];
+    expect(mapAeroDataBox({ ...flight, status: 'CanceledUncertain' }, MORNING)?.state).toBe(
+      'active',
+    );
   });
 
   it('gives no status when the provider has no live data', () => {
@@ -265,11 +284,36 @@ describe('flight-status', () => {
     expect((await res.json()).error).toBe('failed');
   });
 
-  it('rejects malformed requests and stretched windows', async () => {
+  it('rejects malformed requests, stretched windows and times from another date', async () => {
     const f = fakeFetch({ body: adbOnTime });
     expect((await ask(f.impl, { body: { flightNumber: 'AA 2410' } })).status).toBe(400);
     const stretched = { ...AA2410, arrivesAt: '2026-11-20T19:02:00.000Z' };
     expect((await ask(f.impl, { body: stretched })).status).toBe(400);
+    // Today's times sent for a flight next month: the window can't be borrowed.
+    expect((await ask(f.impl, { body: { ...AA2410, date: '2026-12-12' } })).status).toBe(400);
     expect(f.calls).toHaveLength(0);
+  });
+
+  it('only spends the allowance for signed-in users; the anon key gets cached answers', async () => {
+    const f = fakeFetch({ body: adbOnTime });
+    const res = await ask(f.impl, { auth: 'Bearer anon' });
+    expect(res.status).toBe(401);
+    expect((await res.json()).error).toBe('signed_out');
+    expect(f.providerCalls()).toHaveLength(0);
+    expect(f.db.units.size).toBe(0);
+
+    await ask(f.impl);
+    const cached = await ask(f.impl, { auth: 'Bearer anon' });
+    expect(cached.status).toBe(200);
+    expect(f.providerCalls()).toHaveLength(1);
+  });
+
+  it('still answers when the cache write fails', async () => {
+    const db = newDb();
+    db.failWrites = true;
+    const f = fakeFetch({ body: adbDelayed }, db);
+    const res = await ask(f.impl);
+    expect(res.status).toBe(200);
+    expect((await res.json()).status.delayMinutes).toBe(25);
   });
 });
