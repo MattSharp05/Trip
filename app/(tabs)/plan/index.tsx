@@ -59,6 +59,12 @@ const TOAST_BOTTOM = 49 + spacing.md;
 /** Demo sessions whose sample video has been opened: once per scenario load. */
 const openedSamples = new WeakSet<DataSource>();
 
+/**
+ * The native tab bar floats over the bottom of the screen (iOS 26): the itinerary and Bucket List
+ * scroll their last row (and "Add a place") clear of it (TR-35).
+ */
+const FLOATING_TAB_BAR = 64;
+
 /** Until Settings has a units preference, temperatures follow the phone's region. */
 const UNIT = temperatureUnitForLocale(Intl.DateTimeFormat().resolvedOptions().locale);
 
@@ -357,7 +363,7 @@ export default function PlanScreen() {
               reveal={selectedBy === 'map'}
               onSelect={pickRow}
               onOpenBucketList={() => selection.setPlanMode('bucket')}
-              bottomInset={insets.bottom + spacing.xl}
+              bottomInset={insets.bottom + FLOATING_TAB_BAR + spacing.lg}
               editing={editor.editing}
             />
           }
@@ -370,7 +376,7 @@ export default function PlanScreen() {
               onPlanAll={planAllBucket}
               notes={smart.notes}
               onAdd={actions.openSearch}
-              bottomInset={insets.bottom + spacing.xl}
+              bottomInset={insets.bottom + FLOATING_TAB_BAR + spacing.lg}
             />
           }
         />
