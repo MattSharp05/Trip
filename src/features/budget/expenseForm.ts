@@ -1,5 +1,6 @@
 import { currencyForCountry } from '@/core/countryCurrency';
 import { instantIn } from '@/core/dates';
+import { newId } from '@/core/ids';
 import { currencyDecimals, parseAmount } from '@/core/money';
 import type { Expense, Trip } from '@/services/data/types';
 
@@ -27,13 +28,8 @@ export interface ExpenseDraft {
   day: string;
 }
 
-/** A random RFC 4122 v4 id (the expenses table's primary key is a uuid). Not for secrets. */
-export function newExpenseId(random: () => number = Math.random): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = Math.floor(random() * 16);
-    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
-  });
-}
+/** A random RFC 4122 v4 id (the expenses table's primary key is a uuid). */
+export const newExpenseId = newId;
 
 /** The expense to save, or the message to show under the amount. Noon local time on its day. */
 export function buildExpense(

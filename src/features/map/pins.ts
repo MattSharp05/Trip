@@ -61,9 +61,10 @@ export function dayPins(
 }
 
 /** How a pin is drawn. */
-export type PinStyle = 'photo' | 'symbol' | 'dot';
+export type PinStyle = 'photo' | 'symbol' | 'dot' | 'outline';
 
 export function pinStyle(pin: MapPin, dimmed: boolean): PinStyle {
+  if (pin.outlined) return 'outline';
   if (dimmed) return 'dot';
   return pin.photo ? 'photo' : 'symbol';
 }

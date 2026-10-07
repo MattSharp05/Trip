@@ -6,3 +6,18 @@ jest.mock('@gorhom/bottom-sheet', () => ({
   __esModule: true,
   ...require('@gorhom/bottom-sheet/mock'),
 }));
+
+// Swipeable rows run their gestures as worklets, which Jest can't: draw the row and its actions.
+jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
+  const { createElement, Fragment } = require('react');
+  return {
+    __esModule: true,
+    default: ({
+      children,
+      renderRightActions,
+    }: {
+      children: unknown;
+      renderRightActions?: () => unknown;
+    }) => createElement(Fragment, null, children, renderRightActions?.()),
+  };
+});

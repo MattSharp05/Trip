@@ -8,6 +8,7 @@ import type {
   Money,
   NewTrip,
   Place,
+  PlaceInput,
   TravelDocument,
   Trip,
   TripData,
@@ -29,6 +30,8 @@ export interface DataSource {
   deleteDocument(id: string): Promise<void>;
   saveItineraryItem(item: ItineraryItem): Promise<ItineraryItem>;
   deleteItineraryItem(id: string): Promise<void>;
+  /** Adds a place (no id) or updates one; returns it with its id. */
+  savePlace(place: PlaceInput): Promise<Place>;
   saveBucketItem(item: BucketItem): Promise<BucketItem>;
   deleteBucketItem(id: string): Promise<void>;
   saveExpense(expense: Expense): Promise<Expense>;
@@ -39,8 +42,6 @@ export interface DataSource {
   /** Adds a new booking (an import); the caller picks its id. */
   createBooking(booking: Booking): Promise<Booking>;
   deleteBooking(id: string): Promise<void>;
-  /** Adds or updates a place (a pin on the map). */
-  savePlace(place: Place): Promise<Place>;
 }
 
 const byStart = (a: Trip, b: Trip) => a.startDate.localeCompare(b.startDate);
@@ -113,6 +114,14 @@ export function createDemoSource(snapshot: DataSnapshot, name = 'demo'): DataSou
     async deleteItineraryItem(id) {
       db = { ...db, items: db.items.filter((i) => i.id !== id) };
     },
+    async savePlace(input) {
+      const place: Place = {
+        ...copy(input),
+        id: input.id ?? `place-${Date.now().toString(36)}-${db.places.length}`,
+      };
+      db = { ...db, places: upsert(db.places, place) };
+      return copy(place);
+    },
     async saveBucketItem(item) {
       db = { ...db, bucketItems: upsert(db.bucketItems, copy(item)) };
       return copy(item);
@@ -143,10 +152,6 @@ export function createDemoSource(snapshot: DataSnapshot, name = 'demo'): DataSou
     },
     async deleteBooking(id) {
       db = { ...db, bookings: db.bookings.filter((b) => b.id !== id) };
-    },
-    async savePlace(place) {
-      db = { ...db, places: upsert(db.places, copy(place)) };
-      return copy(place);
     },
   };
 }

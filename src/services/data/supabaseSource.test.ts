@@ -212,7 +212,38 @@ describe('supabase source', () => {
     expect(saved).toMatchObject({ id: 'b1', type: 'flight', data });
   });
 
-  it('inserts imported bookings and upserts their places', async () => {
+  it('adds a place without an id, letting Postgres make one', async () => {
+    mockTables.places = {
+      data: {
+        id: 'p9',
+        user_id: 'u1',
+        name: 'Eggslut',
+        address: '3708 Las Vegas Blvd S, Las Vegas',
+        lat: 36.11,
+        lng: -115.17,
+        kind: 'food',
+        photo_url: null,
+        source_url: null,
+        created_at: '',
+        updated_at: '',
+      },
+      error: null,
+    };
+    const saved = await supabaseSource.savePlace({
+      name: 'Eggslut',
+      address: '3708 Las Vegas Blvd S, Las Vegas',
+      lat: 36.11,
+      lng: -115.17,
+      kind: 'food',
+      photoUrl: null,
+      sourceUrl: null,
+    });
+    expect(mockUpserts.at(-1)).not.toHaveProperty('id');
+    expect(mockUpserts.at(-1)).toMatchObject({ name: 'Eggslut', photo_url: null });
+    expect(saved).toMatchObject({ id: 'p9', name: 'Eggslut', kind: 'food' });
+  });
+
+  it('inserts imported bookings with the id the app chose', async () => {
     const data = { event: 'La Colombe', placeId: 'p9' };
     mockTables.bookings = {
       data: { id: 'b9', trip_id: 't1', type: 'ticket', data, original_path: 'u1/imports/a.pdf' },
@@ -233,30 +264,6 @@ describe('supabase source', () => {
       original_path: 'u1/imports/a.pdf',
     });
     expect(saved).toMatchObject({ id: 'b9', tripId: 't1', type: 'ticket' });
-
-    const placeRow = {
-      id: 'p9',
-      name: 'La Colombe',
-      address: null,
-      lat: -34,
-      lng: 18.4,
-      kind: 'food',
-      photo_url: null,
-      source_url: null,
-    };
-    mockTables.places = { data: placeRow, error: null };
-    const place = await supabaseSource.savePlace({
-      id: 'p9',
-      name: 'La Colombe',
-      address: null,
-      lat: -34,
-      lng: 18.4,
-      kind: 'food',
-      photoUrl: null,
-      sourceUrl: null,
-    });
-    expect(mockUpserts.at(-1)).toEqual(placeRow);
-    expect(place).toMatchObject({ id: 'p9', photoUrl: null });
   });
 
   it('throws the query error', async () => {
