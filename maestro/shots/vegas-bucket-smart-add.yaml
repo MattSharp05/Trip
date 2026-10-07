@@ -16,9 +16,6 @@ tags:
     visible: 'Added to Sun 15, 4:00.PM.*'
     timeout: 10000
 - takeScreenshot: vegas-bucket-smart-add
-- tapOn: 'Undo'
-- tapOn: 'Bucket List.*'
-- extendedWaitUntil:
-    visible:
-      id: smart-add-bucket-golden-tiki
-    timeout: 10000
+# Undo isn't driven here: the toast goes after 4 s, which a slow simulator can miss, and the Plan
+# sheet's Itinerary / Bucket List segments aren't in the iOS accessibility hierarchy, so the flow
+# can't switch back (TR-41). Jest covers Undo (__tests__/smart-add.test.tsx, plan-all.test.tsx).
