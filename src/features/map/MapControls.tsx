@@ -9,11 +9,16 @@ interface MapControlsProps {
   is3D: boolean;
   onToggle3D: () => void;
   onFitDay: () => void;
+  /** On a travel day: the plane button, which shows the flight on the globe (TR-23). */
+  onShowFlight?: () => void;
   top: number;
 }
 
-/** The round buttons at the map's top right, as in the reference mockup: 3D and fit the day. */
-export function MapControls({ is3D, onToggle3D, onFitDay, top }: MapControlsProps) {
+/**
+ * The round buttons at the map's top right, as in the reference mockup: 3D, fit the day and, on a
+ * travel day, the flight on the globe.
+ */
+export function MapControls({ is3D, onToggle3D, onFitDay, onShowFlight, top }: MapControlsProps) {
   return (
     <View style={[styles.column, { top }]} pointerEvents="box-none">
       <Pressable
@@ -37,6 +42,17 @@ export function MapControls({ is3D, onToggle3D, onFitDay, top }: MapControlsProp
       >
         <Icon name="location.viewfinder" />
       </Pressable>
+      {onShowFlight ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Show the flight"
+          hitSlop={4}
+          onPress={onShowFlight}
+          style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+        >
+          <Icon name="airplane" />
+        </Pressable>
+      ) : null}
     </View>
   );
 }

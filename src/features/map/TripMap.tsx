@@ -30,6 +30,7 @@ export function TripMap({
   fitIds,
   onPinPress,
   onLongPress,
+  onShowFlight,
   ref,
   testID = 'trip-map',
 }: TripMapProps) {
@@ -145,6 +146,7 @@ export function TripMap({
         is3D={is3D}
         onToggle3D={toggle3D}
         onFitDay={() => fitTo(frameIds)}
+        onShowFlight={onShowFlight}
       />
     </View>
   );
