@@ -173,8 +173,13 @@ export default function PlanScreen() {
   useEffect(() => {
     const sample = useScenarioStore.getState().view.linkSample;
     if (!sample || source.kind !== 'demo' || openedSamples.has(source)) return;
-    openedSamples.add(source);
-    openLink(LINK_SAMPLES[sample].result.url);
+    // On the next tick, and only marked as opened then: if this first Plan screen is torn down at
+    // once (the scenario link's redirect), the one that stays still opens the sheet (TR-41).
+    const timer = setTimeout(() => {
+      openedSamples.add(source);
+      openLink(LINK_SAMPLES[sample].result.url);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [openLink, source]);
 
   // Smart Add (TR-29): the new stop's day opens with it selected, so the map flies to it.
