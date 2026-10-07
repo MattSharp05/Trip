@@ -1,0 +1,29 @@
+{
+  "booking": {
+    "type": "hotel",
+    "hotel": {
+      "name": "Sunny loft near Zilker Park",
+      "address": "Zilker Park",
+      "city": "Austin, TX",
+      "country": "United States"
+    },
+    "checkIn": {
+      "date": "2026-09-04",
+      "time": "16:00"
+    },
+    "checkOut": {
+      "date": "2026-09-07",
+      "time": "11:00"
+    },
+    "confirmation": "HMX4QZ8PL2",
+    "room": null,
+    "phone": null,
+    "website": null,
+    "email": null,
+    "price": {
+      "amount": 486.2,
+      "currency": "USD"
+    }
+  },
+  "uncertain": []
+}

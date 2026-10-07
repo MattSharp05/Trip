@@ -1,0 +1,29 @@
+{
+  "booking": {
+    "type": "hotel",
+    "hotel": {
+      "name": "Harbor Light Hotel",
+      "address": "410 Example Street, San Diego, CA 92101",
+      "city": "San Diego",
+      "country": "United States"
+    },
+    "checkIn": {
+      "date": "2026-06-14",
+      "time": "15:00"
+    },
+    "checkOut": {
+      "date": "2026-06-17",
+      "time": "11:00"
+    },
+    "confirmation": "HL-558201",
+    "room": "Deluxe King",
+    "phone": "+1 (619) 555-0142",
+    "website": "https://www.harborlighthotel.example/",
+    "email": "stay@harborlighthotel.example",
+    "price": {
+      "amount": 612.75,
+      "currency": "USD"
+    }
+  },
+  "uncertain": []
+}

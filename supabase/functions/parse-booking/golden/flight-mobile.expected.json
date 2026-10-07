@@ -1,0 +1,35 @@
+{
+  "type": "flight",
+  "confirmation": "HX93LM",
+  "passenger": "Jordan Demo",
+  "legs": [
+    {
+      "airline": "Northwind Airlines",
+      "airlineCode": "NW",
+      "flightNumber": "NW 1207",
+      "from": {
+        "code": "SEA",
+        "city": "Seattle",
+        "country": "United States"
+      },
+      "to": {
+        "code": "SFO",
+        "city": "San Francisco",
+        "country": "United States"
+      },
+      "departs": {
+        "date": "2026-08-21",
+        "time": "06:10"
+      },
+      "arrives": {
+        "date": "2026-08-21",
+        "time": "08:15"
+      },
+      "terminal": null,
+      "gate": "C14",
+      "seat": "3B",
+      "cabin": "First"
+    }
+  ],
+  "price": null
+}

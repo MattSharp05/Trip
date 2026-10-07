@@ -1,0 +1,38 @@
+{
+  "type": "flight",
+  "confirmation": "KXJ4PL",
+  "passenger": "Matthew Sample",
+  "legs": [
+    {
+      "airline": "Bluejay Airways",
+      "airlineCode": "BJ",
+      "flightNumber": "BJ 512",
+      "from": {
+        "code": "TPA",
+        "city": "Tampa",
+        "country": "United States"
+      },
+      "to": {
+        "code": "LAS",
+        "city": "Las Vegas",
+        "country": "United States"
+      },
+      "departs": {
+        "date": "2026-11-12",
+        "time": "08:25"
+      },
+      "arrives": {
+        "date": "2026-11-12",
+        "time": "10:05"
+      },
+      "terminal": null,
+      "gate": null,
+      "seat": "14A",
+      "cabin": "Economy"
+    }
+  ],
+  "price": {
+    "amount": 289.4,
+    "currency": "USD"
+  }
+}

@@ -117,6 +117,9 @@ Client: TanStack Query caches per trip; Zustand holds selection and UI state. On
 - **On-device (Maestro, iOS simulator build from EAS; ADR 0015):** key flows per scenario, screenshots for QA media.
   Simulator builds need no paid Apple account. Runs on `main` only (build minutes are limited on the
   free plan); tagged flows can be run for a PR on demand.
+- **Import accuracy (golden set; ADR 0020):** 12 made-up bookings scored field by field by
+  `scripts/parse-accuracy.mjs` (`docs/parse-accuracy.md`). Live through `parse-booking` on demand
+  (GitHub → Actions → Parse accuracy); the scorer on canned answers in Jest on every PR.
 - **Real phone:** Matthew's iPhone in Expo Go is the QA of record (Kart Racer lesson).
 - **Visual:** none automated at first; Maestro screenshots attached to tickets.
 - **CI pipeline (GitHub Actions), two levels:**

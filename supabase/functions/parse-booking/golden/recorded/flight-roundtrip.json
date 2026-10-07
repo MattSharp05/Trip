@@ -1,0 +1,68 @@
+{
+  "booking": {
+    "type": "flight",
+    "confirmation": "7QW2ZR",
+    "passenger": "Alex Example",
+    "legs": [
+      {
+        "airline": "Coastline Air",
+        "airlineCode": "CL",
+        "flightNumber": "CL 88",
+        "from": {
+          "code": "JFK",
+          "city": "New York",
+          "country": "United States"
+        },
+        "to": {
+          "code": "LIS",
+          "city": "Lisbon",
+          "country": "Portugal"
+        },
+        "departs": {
+          "date": "2026-05-03",
+          "time": "19:40"
+        },
+        "arrives": {
+          "date": "2026-05-04",
+          "time": "07:55"
+        },
+        "terminal": "4",
+        "gate": null,
+        "seat": "22C",
+        "cabin": "Economy"
+      },
+      {
+        "airline": "Coastline Air",
+        "airlineCode": "CL",
+        "flightNumber": "CL 89",
+        "from": {
+          "code": "LIS",
+          "city": "Lisbon",
+          "country": "Portugal"
+        },
+        "to": {
+          "code": "JFK",
+          "city": "New York",
+          "country": "United States"
+        },
+        "departs": {
+          "date": "2026-05-10",
+          "time": "11:30"
+        },
+        "arrives": {
+          "date": "2026-05-10",
+          "time": "14:20"
+        },
+        "terminal": "1",
+        "gate": null,
+        "seat": null,
+        "cabin": "Economy"
+      }
+    ],
+    "price": {
+      "amount": 742.18,
+      "currency": "USD"
+    }
+  },
+  "uncertain": []
+}

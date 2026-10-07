@@ -1,0 +1,19 @@
+{
+  "booking": {
+    "type": "reservation",
+    "venue": {
+      "name": "Ember & Oak",
+      "address": "221 Sample St",
+      "city": "San Diego",
+      "country": "United States"
+    },
+    "starts": {
+      "date": "2026-06-15",
+      "time": "19:30"
+    },
+    "partySize": 4,
+    "confirmation": "R-55102",
+    "price": null
+  },
+  "uncertain": []
+}
