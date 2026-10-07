@@ -1,1 +1,87 @@
-{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"osm_type":"N","osm_id":13707125304,"osm_key":"amenity","osm_value":"fast_food","type":"house","housenumber":"8500","name":"Eggslut","street":"Beverly Boulevard","locality":"Beverly Grove","city":"Los Angeles","county":"Los Angeles","state":"California","country":"United States","postcode":"90048","countrycode":"US"},"geometry":{"type":"Point","coordinates":[-118.3776198,34.0736619]}},{"type":"Feature","properties":{"osm_type":"N","osm_id":11390831919,"osm_key":"amenity","osm_value":"fast_food","type":"house","name":"Eggslut","street":"Windward Court","district":"Venice","city":"Los Angeles","county":"Los Angeles","state":"California","country":"United States","postcode":"90291","countrycode":"US"},"geometry":{"type":"Point","coordinates":[-118.4722193,33.9873655]}},{"type":"Feature","properties":{"osm_type":"N","osm_id":5860077085,"osm_key":"amenity","osm_value":"fast_food","type":"house","housenumber":"317","name":"Eggslut","street":"South Broadway","locality":"Gallery Row","district":"Downtown","city":"Los Angeles","county":"Los Angeles","state":"California","country":"United States","postcode":"90013","countrycode":"US"},"geometry":{"type":"Point","coordinates":[-118.2485745,34.0506567]}},{"type":"Feature","properties":{"osm_type":"N","osm_id":5397504018,"osm_key":"amenity","osm_value":"fast_food","type":"house","name":"Eggslut","street":"South Brand Boulevard","city":"Glendale","county":"Los Angeles","state":"California","country":"United States","postcode":"91210","countrycode":"US"},"geometry":{"type":"Point","coordinates":[-118.2547437,34.1428629]}}]}
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "N",
+        "osm_id": 13707125304,
+        "osm_key": "amenity",
+        "osm_value": "fast_food",
+        "type": "house",
+        "housenumber": "8500",
+        "name": "Eggslut",
+        "street": "Beverly Boulevard",
+        "locality": "Beverly Grove",
+        "city": "Los Angeles",
+        "county": "Los Angeles",
+        "state": "California",
+        "country": "United States",
+        "postcode": "90048",
+        "countrycode": "US"
+      },
+      "geometry": { "type": "Point", "coordinates": [-118.3776198, 34.0736619] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "N",
+        "osm_id": 11390831919,
+        "osm_key": "amenity",
+        "osm_value": "fast_food",
+        "type": "house",
+        "name": "Eggslut",
+        "street": "Windward Court",
+        "district": "Venice",
+        "city": "Los Angeles",
+        "county": "Los Angeles",
+        "state": "California",
+        "country": "United States",
+        "postcode": "90291",
+        "countrycode": "US"
+      },
+      "geometry": { "type": "Point", "coordinates": [-118.4722193, 33.9873655] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "N",
+        "osm_id": 5860077085,
+        "osm_key": "amenity",
+        "osm_value": "fast_food",
+        "type": "house",
+        "housenumber": "317",
+        "name": "Eggslut",
+        "street": "South Broadway",
+        "locality": "Gallery Row",
+        "district": "Downtown",
+        "city": "Los Angeles",
+        "county": "Los Angeles",
+        "state": "California",
+        "country": "United States",
+        "postcode": "90013",
+        "countrycode": "US"
+      },
+      "geometry": { "type": "Point", "coordinates": [-118.2485745, 34.0506567] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "N",
+        "osm_id": 5397504018,
+        "osm_key": "amenity",
+        "osm_value": "fast_food",
+        "type": "house",
+        "name": "Eggslut",
+        "street": "South Brand Boulevard",
+        "city": "Glendale",
+        "county": "Los Angeles",
+        "state": "California",
+        "country": "United States",
+        "postcode": "91210",
+        "countrycode": "US"
+      },
+      "geometry": { "type": "Point", "coordinates": [-118.2547437, 34.1428629] }
+    }
+  ]
+}

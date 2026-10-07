@@ -19,7 +19,8 @@ export function distanceKm(a: LngLat, b: LngLat): number {
   const dLat = (b.lat - a.lat) * rad;
   const dLng = (b.lng - a.lng) * rad;
   const h =
-    Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
   return 2 * 6371 * Math.asin(Math.sqrt(h));
 }
 
@@ -91,7 +92,14 @@ export async function locatePlace(
     spot = found.find((s) => !near || distanceKm(near, s) <= MAX_DISTANCE_KM);
   }
   if (!spot) {
-    return { name: place.name, kind: place.kind, area: place.city, address: null, lat: null, lng: null };
+    return {
+      name: place.name,
+      kind: place.kind,
+      area: place.city,
+      address: null,
+      lat: null,
+      lng: null,
+    };
   }
   return {
     name: spot.name,

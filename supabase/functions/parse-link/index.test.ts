@@ -115,8 +115,9 @@ describe('link metadata', () => {
       thumbnailUrl: oembed.thumbnail_url,
     });
     expect(readTikTokOembed(oembedError)).toBeNull();
-    expect(readTikTokOembed({ ...oembed, thumbnail_url: 'http://insecure/x.jpg' })?.thumbnailUrl)
-      .toBeNull();
+    expect(
+      readTikTokOembed({ ...oembed, thumbnail_url: 'http://insecure/x.jpg' })?.thumbnailUrl,
+    ).toBeNull();
   });
 
   it("reads an Instagram post's Open Graph tags, attribute order and entities included", () => {
@@ -124,7 +125,8 @@ describe('link metadata', () => {
       title:
         'Lotus of Siam has the best khao soi in town. Get the garlic prawns too & thank me later #vegasfood',
       author: 'vegas.eats',
-      thumbnailUrl: 'https://scontent.cdninstagram.com/v/sample-reel.jpg?stp=dst-jpg&_nc_ht=scontent',
+      thumbnailUrl:
+        'https://scontent.cdninstagram.com/v/sample-reel.jpg?stp=dst-jpg&_nc_ht=scontent',
     });
     expect(readInstagramMeta(html('instagram-login.html'))).toBeNull();
     expect(readOpenGraph(`<meta content='a &amp; b' property='og:title'>`)).toEqual({
@@ -155,9 +157,10 @@ describe('locating places', () => {
 
   it('falls back to "name, city" but keeps only matches near the trip', async () => {
     const near = fakeFetch({ photon: { 'Lotus of Siam, Las Vegas': photonLotus } });
-    expect(await locatePlace(place('Lotus of Siam'), VEGAS, 'Las Vegas', near.impl)).toMatchObject(
-      { name: 'Lotus of Siam', lat: 36.1151943 },
-    );
+    expect(await locatePlace(place('Lotus of Siam'), VEGAS, 'Las Vegas', near.impl)).toMatchObject({
+      name: 'Lotus of Siam',
+      lat: 36.1151943,
+    });
     expect(near.calls).toHaveLength(2);
 
     // A video naming the LA branch: Photon finds it, but 370 km away is not this trip's.
@@ -169,7 +172,10 @@ describe('locating places', () => {
 
   it('never takes a different place with a similar name', async () => {
     const { impl } = fakeFetch({
-      photon: { "Esther's Kitchen, Las Vegas": photonEstherWrong, 'Bestia, Las Vegas': photonBestiaFar },
+      photon: {
+        "Esther's Kitchen, Las Vegas": photonEstherWrong,
+        'Bestia, Las Vegas': photonBestiaFar,
+      },
     });
     expect(await locatePlace(place("Esther's Kitchen"), VEGAS, null, impl)).toMatchObject({
       name: "Esther's Kitchen",
@@ -196,7 +202,7 @@ describe('locating places', () => {
 describe('prompts', () => {
   it('fills the caption and city in literally', () => {
     const prompt = linkPrompt('Tacos for $5 at $& {city}', 'Las Vegas');
-    expect(prompt).toContain('The traveller\'s trip is in: Las Vegas');
+    expect(prompt).toContain("The traveller's trip is in: Las Vegas");
     expect(prompt).toContain('Tacos for $5 at $& {city}');
     expect(BOOKING_PROMPT).toContain('"type":"flight"');
   });
@@ -312,6 +318,10 @@ describe('parse-link handle', () => {
       fetch: fakeFetch({}).impl,
     });
     expect(get.status).toBe(405);
-    expect(readRequest({ url: TIKTOK, city: '  ' })).toEqual({ url: TIKTOK, near: null, city: null });
+    expect(readRequest({ url: TIKTOK, city: '  ' })).toEqual({
+      url: TIKTOK,
+      near: null,
+      city: null,
+    });
   });
 });

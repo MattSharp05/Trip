@@ -104,4 +104,3 @@ export function toSpots(json: unknown): SpotResult[] {
   }
   return spots;
 }
-

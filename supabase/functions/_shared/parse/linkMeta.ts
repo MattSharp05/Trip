@@ -48,7 +48,8 @@ const ENTITIES: Record<string, string> = {
 export function decodeEntities(value: string): string {
   return value.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (all, code: string) => {
     if (code[0] === '#') {
-      const n = code[1].toLowerCase() === 'x' ? parseInt(code.slice(2), 16) : parseInt(code.slice(1));
+      const n =
+        code[1].toLowerCase() === 'x' ? parseInt(code.slice(2), 16) : parseInt(code.slice(1));
       return Number.isFinite(n) && n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : all;
     }
     return ENTITIES[code.toLowerCase()] ?? all;

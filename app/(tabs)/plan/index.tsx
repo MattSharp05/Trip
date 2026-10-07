@@ -16,6 +16,13 @@ import {
   useSmartAdd,
   type BucketEntry,
 } from '@/features/bucket';
+import {
+  LinkBanner,
+  LinkResultsSheet,
+  readClipboard,
+  useClipboardOfferStore,
+  useLinkFlow,
+} from '@/features/links';
 import { TripDayMap, type TripMapHandle } from '@/features/map';
 import { FlightGlobe } from '@/features/map/globe';
 import {
@@ -30,8 +37,10 @@ import {
   useItineraryEditor,
 } from '@/features/plan';
 import { FlightStatusPill } from '@/features/wallet/flight';
-import { useTripData } from '@/services/data';
+import { LINK_SAMPLES } from '../../../supabase/functions/_shared/parse/linkFixtures';
+import { useDataSource, useTripData, type DataSource } from '@/services/data';
 import { useTripForecast } from '@/services/weather';
+import { useScenarioStore } from '@/stores/scenario';
 import { useTripSelection } from '@/stores/selection';
 import { useTripStore } from '@/stores/trip';
 import { colors, radii, screenPadding, spacing } from '@/theme';
@@ -46,6 +55,9 @@ const TOP_ESTIMATE = 140;
 
 /** The toast floats above the tab bar (49 pt on iPhone) over the sheet. */
 const TOAST_BOTTOM = 49 + spacing.md;
+
+/** Demo sessions whose sample video has been opened: once per scenario load. */
+const openedSamples = new WeakSet<DataSource>();
 
 /** Until Settings has a units preference, temperatures follow the phone's region. */
 const UNIT = temperatureUnitForLocale(Intl.DateTimeFormat().resolvedOptions().locale);
@@ -128,9 +140,42 @@ export default function PlanScreen() {
     map.current?.flyTo(entry.placeId);
   }, []);
 
-  const near =
-    info && info.lat !== null && info.lng !== null ? { lat: info.lat, lng: info.lng } : null;
+  const near = useMemo(
+    () =>
+      info && info.lat !== null && info.lng !== null ? { lat: info.lat, lng: info.lng } : null,
+    [info],
+  );
   const editor = useItineraryEditor({ data: trip.data, day: selectedDay, days, near });
+
+  // TikTok and Reel links (TR-30): the clipboard banner and the Add sheet's paste row open the
+  // results sheet; saved places land on the Bucket List.
+  const offered = useClipboardOfferStore((s) => s.offered);
+  const dismissOffer = useClipboardOfferStore((s) => s.dismiss);
+  const linkArea = useMemo(() => ({ city: info?.city ?? null, near }), [info?.city, near]);
+  const { setPlanMode: setMode } = selection;
+  const showBucket = useCallback(() => setMode('bucket'), [setMode]);
+  const links = useLinkFlow(tripId, linkArea, showBucket);
+  const { open: openLink } = links;
+  const addFromClipboard = useCallback(async () => {
+    dismissOffer();
+    openLink(await readClipboard());
+  }, [dismissOffer, openLink]);
+  const { closeSheet: closeAddSheet } = actions;
+  const addLink = useCallback(
+    (text: string) => {
+      closeAddSheet();
+      openLink(text);
+    },
+    [closeAddSheet, openLink],
+  );
+  // A scenario can open straight on the results for a sample video.
+  const source = useDataSource();
+  useEffect(() => {
+    const sample = useScenarioStore.getState().view.linkSample;
+    if (!sample || source.kind !== 'demo' || openedSamples.has(source)) return;
+    openedSamples.add(source);
+    openLink(LINK_SAMPLES[sample].result.url);
+  }, [openLink, source]);
 
   // Smart Add (TR-29): the new stop's day opens with it selected, so the map flies to it.
   const smart = useSmartAdd(tripId, trip.data);
@@ -152,15 +197,17 @@ export default function PlanScreen() {
   );
   // The newest toast wins: an edit or a bucket change replaces Smart Add's.
   useEffect(() => {
-    if (editor.toast || actions.toast) dismissSmartToast();
-  }, [editor.toast, actions.toast, dismissSmartToast]);
-  const toast = smart.toast ?? editor.toast ?? actions.toast;
+    if (editor.toast || actions.toast || links.toast) dismissSmartToast();
+  }, [editor.toast, actions.toast, links.toast, dismissSmartToast]);
+  const toast = smart.toast ?? editor.toast ?? actions.toast ?? links.toast;
   const toastUndo = smart.toast ? smart.undo : editor.toast ? editor.undo : actions.undo;
   const toastDismiss = smart.toast
     ? smart.dismissToast
     : editor.toast
       ? editor.dismissToast
-      : actions.dismissToast;
+      : actions.toast
+        ? actions.dismissToast
+        : links.dismissToast;
 
   const [bodyHeight, setBodyHeight] = useState(() => height - insets.top - TOP_ESTIMATE);
   const mapHeight = Math.round(height * MAP_SHARE);
@@ -228,6 +275,11 @@ export default function PlanScreen() {
             <Skeleton height={mapHeight} radius="sm" testID="map-loading" />
           )}
         </View>
+        {offered && !links.isOpen ? (
+          <View style={styles.banner}>
+            <LinkBanner onAdd={addFromClipboard} onDismiss={dismissOffer} />
+          </View>
+        ) : null}
         <PlanSheet
           halfHeight={sheetHalf}
           collapseKey={picks}
@@ -296,8 +348,11 @@ export default function PlanScreen() {
         onPickSpot={actions.pickSpot}
         onDropPin={actions.startDropPin}
         onSavePin={actions.savePin}
+        onLink={addLink}
+        readClipboard={readClipboard}
         saving={actions.saving}
       />
+      <LinkResultsSheet flow={links} near={near} />
       {editor.sheets}
     </View>
   );
@@ -309,6 +364,7 @@ const styles = StyleSheet.create({
   pills: { paddingBottom: spacing.md },
   pillsLoading: { paddingHorizontal: screenPadding },
   body: { flex: 1 },
+  banner: { position: 'absolute', top: spacing.sm, left: screenPadding, right: screenPadding },
   toast: { position: 'absolute', left: screenPadding, right: screenPadding },
   dayLoading: { paddingHorizontal: screenPadding, paddingVertical: spacing.md },
 });

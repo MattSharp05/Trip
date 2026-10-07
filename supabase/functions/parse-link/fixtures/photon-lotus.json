@@ -1,1 +1,26 @@
-{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"osm_type":"W","osm_id":445000149,"osm_key":"amenity","osm_value":"restaurant","type":"house","housenumber":"620","name":"Lotus of Siam","street":"East Flamingo Road","city":"Paradise","county":"Clark","state":"Nevada","country":"United States","postcode":"89119","countrycode":"US","extent":[-115.1499567,36.1152364,-115.1494537,36.1150851]},"geometry":{"type":"Point","coordinates":[-115.1497046,36.1151943]}}]}
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "osm_type": "W",
+        "osm_id": 445000149,
+        "osm_key": "amenity",
+        "osm_value": "restaurant",
+        "type": "house",
+        "housenumber": "620",
+        "name": "Lotus of Siam",
+        "street": "East Flamingo Road",
+        "city": "Paradise",
+        "county": "Clark",
+        "state": "Nevada",
+        "country": "United States",
+        "postcode": "89119",
+        "countrycode": "US",
+        "extent": [-115.1499567, 36.1152364, -115.1494537, 36.1150851]
+      },
+      "geometry": { "type": "Point", "coordinates": [-115.1497046, 36.1151943] }
+    }
+  ]
+}

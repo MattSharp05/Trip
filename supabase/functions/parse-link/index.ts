@@ -22,7 +22,12 @@ import {
   type LinkResult,
 } from '../_shared/parse/links.ts';
 import { locatePlaces, type LngLat } from '../_shared/parse/locate.ts';
-import { chooseProvider, ParseFailure, type Env, type ParseProvider } from '../_shared/parse/provider.ts';
+import {
+  chooseProvider,
+  ParseFailure,
+  type Env,
+  type ParseProvider,
+} from '../_shared/parse/provider.ts';
 import type { ParseErrorCode } from '../_shared/parse/schema.ts';
 
 export type { Env };
@@ -63,7 +68,11 @@ interface LinkRequest {
 /** The request body, or null when it isn't one. */
 export function readRequest(body: unknown): LinkRequest | null {
   if (!body || typeof body !== 'object') return null;
-  const b = body as { url?: unknown; near?: { lat?: unknown; lng?: unknown } | null; city?: unknown };
+  const b = body as {
+    url?: unknown;
+    near?: { lat?: unknown; lng?: unknown } | null;
+    city?: unknown;
+  };
   const url = typeof b.url === 'string' ? b.url.trim() : '';
   if (!url || url.length > 2048) return null;
   let near: LngLat | null = null;
