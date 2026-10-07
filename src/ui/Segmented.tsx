@@ -19,13 +19,17 @@ export function Segmented<T extends string>({
   testID,
 }: SegmentedProps<T>) {
   return (
-    <View accessibilityRole="tablist" style={styles.track} testID={testID}>
+    // Not an accessibility element itself: on iOS a grouped track (or a "tablist" role) hides its
+    // segments from VoiceOver and Maestro (TR-42). Each segment is its own tab.
+    <View accessible={false} style={styles.track} testID={testID}>
       {segments.map((segment) => {
         const selected = segment.value === value;
         return (
           <Pressable
             key={segment.value}
+            accessible
             accessibilityRole="tab"
+            accessibilityLabel={segment.label}
             accessibilityState={{ selected }}
             onPress={() => onChange(segment.value)}
             style={[styles.segment, selected && styles.selected]}
