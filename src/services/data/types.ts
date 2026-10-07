@@ -65,8 +65,10 @@ export interface ItineraryItem {
   bookingId: string | null;
   /** Fixed items (bookings, tickets) never move when Smart Add reshuffles a day. */
   fixed: boolean;
-  /** Display title; without one, screens show the place's name. Not in the database yet. */
+  /** Display title; without one, screens show the place's name. */
   title?: string;
+  /** The traveller's own notes (detail sheet); absent in fixtures. */
+  notes?: string | null;
 }
 
 export interface LocalDateTime {

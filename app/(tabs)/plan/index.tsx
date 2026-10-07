@@ -22,6 +22,7 @@ import {
   itineraryEntries,
   PlanHeader,
   PlanSheet,
+  useItineraryEditor,
 } from '@/features/plan';
 import { useTripData } from '@/services/data';
 import { useTripForecast } from '@/services/weather';
@@ -103,6 +104,11 @@ export default function PlanScreen() {
     map.current?.flyTo(entry.placeId);
   }, []);
 
+  const near =
+    info && info.lat !== null && info.lng !== null ? { lat: info.lat, lng: info.lng } : null;
+  const editor = useItineraryEditor({ data: trip.data, day: selectedDay, days, near });
+  const toast = editor.toast ?? actions.toast;
+
   const [bodyHeight, setBodyHeight] = useState(() => height - insets.top - TOP_ESTIMATE);
   const mapHeight = Math.round(height * MAP_SHARE);
   const sheetHalf = Math.max(bodyHeight - mapHeight + SHEET_OVERLAP, 0);
@@ -111,8 +117,6 @@ export default function PlanScreen() {
 
   const weather = forecast.data ?? {};
   const bucketCount = trip.data?.bucketItems.length;
-  const near =
-    info && info.lat !== null && info.lng !== null ? { lat: info.lat, lng: info.lng } : null;
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -163,7 +167,12 @@ export default function PlanScreen() {
           bucketCount={bucketCount}
           header={
             selectedDay ? (
-              <DayHeader day={selectedDay} weather={weather[selectedDay]} unit={UNIT} />
+              <DayHeader
+                day={selectedDay}
+                weather={weather[selectedDay]}
+                unit={UNIT}
+                onAdd={inBucket ? undefined : editor.add}
+              />
             ) : (
               <View style={styles.dayLoading}>
                 <Skeleton width={140} height={28} />
@@ -179,6 +188,7 @@ export default function PlanScreen() {
               onSelect={pickRow}
               onOpenBucketList={() => selection.setPlanMode('bucket')}
               bottomInset={insets.bottom + spacing.xl}
+              editing={editor.editing}
             />
           }
           bucketList={
@@ -197,11 +207,11 @@ export default function PlanScreen() {
         pointerEvents="box-none"
       >
         <Toast
-          visible={actions.toast !== null}
-          message={actions.toast?.message ?? ''}
-          actionLabel={actions.toast?.undo ? 'Undo' : undefined}
-          onAction={actions.undo}
-          onDismiss={actions.dismissToast}
+          visible={toast !== null}
+          message={toast?.message ?? ''}
+          actionLabel={toast?.undo ? 'Undo' : undefined}
+          onAction={editor.toast ? editor.undo : actions.undo}
+          onDismiss={editor.toast ? editor.dismissToast : actions.dismissToast}
           testID="plan-toast"
         />
       </View>
@@ -214,6 +224,7 @@ export default function PlanScreen() {
         onSavePin={actions.savePin}
         saving={actions.saving}
       />
+      {editor.sheets}
     </View>
   );
 }

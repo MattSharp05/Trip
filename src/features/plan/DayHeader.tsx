@@ -9,35 +9,49 @@ import {
   type TemperatureUnit,
 } from '@/core/weather';
 import { screenPadding, spacing } from '@/theme';
-import { Icon, Text } from '@/ui';
+import { Icon, IconButton, Text } from '@/ui';
 
 export interface DayHeaderProps {
   day: string;
   weather: DailyWeather | undefined;
   unit: TemperatureUnit;
+  /** Shows the Add button (a stop on this day). */
+  onAdd?: () => void;
 }
 
 /** "Fri, Nov 13" over the itinerary, with the day's weather, high and low when there is a forecast. */
-export function DayHeader({ day, weather, unit }: DayHeaderProps) {
+export function DayHeader({ day, weather, unit, onAdd }: DayHeaderProps) {
   return (
     <View style={styles.row} testID="day-header">
       <Text variant="title" accessibilityRole="header" testID="day-header-title">
         {dayLabel(day)}
       </Text>
-      {weather ? (
-        <View
-          style={styles.weather}
-          accessible
-          accessibilityLabel={`${weatherLabel(weather.code)}, high ${formatTemperature(weather.highC, unit)}, low ${formatTemperature(weather.lowC, unit)}`}
-          testID="day-header-weather"
-        >
-          <Icon name={weatherSymbol(weather.code)} size="md" />
-          <Text variant="headline">{formatTemperature(weather.highC, unit)}</Text>
-          <Text variant="headline" tone="secondary">
-            {formatTemperature(weather.lowC, unit)}
-          </Text>
-        </View>
-      ) : null}
+      <View style={styles.trailing}>
+        {weather ? (
+          <View
+            style={styles.weather}
+            accessible
+            accessibilityLabel={`${weatherLabel(weather.code)}, high ${formatTemperature(weather.highC, unit)}, low ${formatTemperature(weather.lowC, unit)}`}
+            testID="day-header-weather"
+          >
+            <Icon name={weatherSymbol(weather.code)} size="md" />
+            <Text variant="headline">{formatTemperature(weather.highC, unit)}</Text>
+            <Text variant="headline" tone="secondary">
+              {formatTemperature(weather.lowC, unit)}
+            </Text>
+          </View>
+        ) : null}
+        {onAdd ? (
+          <IconButton
+            icon="plus"
+            label="Add a stop"
+            variant="filled"
+            size="sm"
+            onPress={onAdd}
+            testID="day-header-add"
+          />
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -50,5 +64,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: screenPadding,
     paddingVertical: spacing.md,
   },
+  trailing: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   weather: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
 });

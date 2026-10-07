@@ -7,7 +7,9 @@ import {
   daysBetween,
   instantIn,
   shiftDay,
+  timeAsDate,
   timeLabel,
+  timeOfDate,
   tripDays,
   weekdayShort,
 } from './dates';
@@ -61,6 +63,12 @@ describe('dates', () => {
     expect(timeLabel('15:00')).toBe('3:00 PM');
     expect(timeLabel('00:05')).toBe('12:05 AM');
     expect(timeLabel('12:00')).toBe('12:00 PM');
+  });
+
+  it('round-trips a wall-clock time through a time picker value', () => {
+    expect(timeAsDate('15:05').getHours()).toBe(15);
+    expect(timeOfDate(timeAsDate('15:05'))).toBe('15:05');
+    expect(timeOfDate(new Date(2026, 10, 13, 9, 30))).toBe('09:30');
   });
 
   it('turns a wall-clock time in a timezone into an instant', () => {

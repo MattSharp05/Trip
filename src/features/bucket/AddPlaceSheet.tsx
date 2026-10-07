@@ -74,17 +74,16 @@ export function AddPlaceSheet({
   );
 }
 
-function SpotSearch({
-  near,
-  onPick,
-  onDropPin,
-  saving,
-}: {
+export interface SpotSearchProps {
   near: LngLat | null;
   onPick: (spot: SpotResult) => void;
-  onDropPin: () => void;
+  /** Shows the "Drop a pin" row (Bucket List). */
+  onDropPin?: () => void;
   saving: boolean;
-}) {
+}
+
+/** Search for places near the trip (the `places` function); also used by the itinerary's Add. */
+export function SpotSearch({ near, onPick, onDropPin, saving }: SpotSearchProps) {
   const [text, setText] = useState('');
   const query = useDebounced(text.trim(), 300);
   const results = useQuery(
@@ -101,7 +100,8 @@ function SpotSearch({
   if (!near) {
     list = (
       <Text variant="subhead" tone="secondary" style={styles.note}>
-        This trip has no map location, so search can&apos;t look nearby. Drop a pin instead.
+        This trip has no map location, so search can&apos;t look nearby.
+        {onDropPin ? ' Drop a pin instead.' : ''}
       </Text>
     );
   } else if (query.length >= 2) {
@@ -163,15 +163,17 @@ function SpotSearch({
         />
       </View>
       {list}
-      <View style={styles.group}>
-        <ListRow
-          icon="mappin.and.ellipse"
-          title="Drop a pin"
-          subtitle="Touch and hold the map where it is"
-          onPress={onDropPin}
-          testID="bucket-drop-pin"
-        />
-      </View>
+      {onDropPin ? (
+        <View style={styles.group}>
+          <ListRow
+            icon="mappin.and.ellipse"
+            title="Drop a pin"
+            subtitle="Touch and hold the map where it is"
+            onPress={onDropPin}
+            testID="bucket-drop-pin"
+          />
+        </View>
+      ) : null}
     </View>
   );
 }

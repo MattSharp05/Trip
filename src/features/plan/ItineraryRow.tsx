@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { memo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, type AccessibilityActionEvent } from 'react-native';
 
 import { colors, continuous, radii, screenPadding, spacing } from '@/theme';
 import { Icon, Skeleton, Text } from '@/ui';
@@ -25,6 +25,11 @@ export interface ItineraryRowProps {
   first: boolean;
   last: boolean;
   onPress: (id: string) => void;
+  /** Editing: tapping the time opens the time picker. */
+  onTimePress?: (id: string) => void;
+  /** Editing: VoiceOver's actions (move, edit, delete), the swipe and drag equivalents. */
+  accessibilityActions?: { name: string; label: string }[];
+  onAccessibilityAction?: (event: AccessibilityActionEvent) => void;
 }
 
 /**
@@ -37,6 +42,9 @@ export const ItineraryRow = memo(function ItineraryRow({
   first,
   last,
   onPress,
+  onTimePress,
+  accessibilityActions,
+  onAccessibilityAction,
 }: ItineraryRowProps) {
   const spoken = [entry.time, entry.title, entry.subtitle].filter(Boolean).join(', ');
   const node = selected ? NODE_SELECTED : NODE;
@@ -46,18 +54,35 @@ export const ItineraryRow = memo(function ItineraryRow({
       accessibilityLabel={spoken}
       accessibilityHint="Shows it on the map"
       accessibilityState={{ selected }}
+      accessibilityActions={accessibilityActions}
+      onAccessibilityAction={onAccessibilityAction}
       onPress={() => onPress(entry.id)}
       testID={`itinerary-row-${entry.id}`}
       style={({ pressed }) => [styles.row, (selected || pressed) && styles.highlight]}
     >
-      <Text
-        variant="caption"
-        tone={selected ? 'accent' : 'secondary'}
-        numberOfLines={1}
-        style={styles.time}
-      >
-        {entry.time ?? ''}
-      </Text>
+      {onTimePress ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={entry.time ? `Change time, ${entry.time}` : 'Set a time'}
+          hitSlop={spacing.sm}
+          onPress={() => onTimePress(entry.id)}
+          style={styles.time}
+          testID={`itinerary-time-${entry.id}`}
+        >
+          <Text variant="caption" tone={selected ? 'accent' : 'secondary'} numberOfLines={1}>
+            {entry.time ?? 'Add time'}
+          </Text>
+        </Pressable>
+      ) : (
+        <Text
+          variant="caption"
+          tone={selected ? 'accent' : 'secondary'}
+          numberOfLines={1}
+          style={styles.time}
+        >
+          {entry.time ?? ''}
+        </Text>
+      )}
       <View style={styles.rail}>
         <View
           style={[styles.line, first && { top: NODE_TOP + NODE / 2 }, last && styles.lineEnd]}

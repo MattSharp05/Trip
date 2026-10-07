@@ -215,8 +215,10 @@ export type Database = {
           fixed: boolean;
           id: string;
           kind: string;
+          notes: string | null;
           place_id: string | null;
           start_time: string | null;
+          title: string | null;
           trip_id: string;
           updated_at: string;
           user_id: string;
@@ -229,8 +231,10 @@ export type Database = {
           fixed?: boolean;
           id?: string;
           kind: string;
+          notes?: string | null;
           place_id?: string | null;
           start_time?: string | null;
+          title?: string | null;
           trip_id: string;
           updated_at?: string;
           user_id?: string;
@@ -243,8 +247,10 @@ export type Database = {
           fixed?: boolean;
           id?: string;
           kind?: string;
+          notes?: string | null;
           place_id?: string | null;
           start_time?: string | null;
+          title?: string | null;
           trip_id?: string;
           updated_at?: string;
           user_id?: string;

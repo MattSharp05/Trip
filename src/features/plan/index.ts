@@ -1,7 +1,9 @@
 export { DatePills, pillOffset, PILL_WIDTH, type DatePillsProps } from './DatePills';
 export { DayHeader, type DayHeaderProps } from './DayHeader';
+export { useItineraryEditor, type ItineraryEditing } from './edit';
 export { Itinerary, type ItineraryProps } from './Itinerary';
 export {
+  dayItems,
   itemForPin,
   itineraryEntries,
   legCaption,
