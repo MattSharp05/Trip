@@ -7,6 +7,7 @@ import type {
   ItineraryItem,
   Money,
   NewTrip,
+  Place,
   TravelDocument,
   Trip,
   TripData,
@@ -35,6 +36,11 @@ export interface DataSource {
   saveTripBudget(tripId: string, budget: Money | null): Promise<Trip>;
   /** Updates an existing booking's JSON data and original file (e.g. a boarding pass crop). */
   saveBooking(booking: Booking): Promise<Booking>;
+  /** Adds a new booking (an import); the caller picks its id. */
+  createBooking(booking: Booking): Promise<Booking>;
+  deleteBooking(id: string): Promise<void>;
+  /** Adds or updates a place (a pin on the map). */
+  savePlace(place: Place): Promise<Place>;
 }
 
 const byStart = (a: Trip, b: Trip) => a.startDate.localeCompare(b.startDate);
@@ -129,6 +135,18 @@ export function createDemoSource(snapshot: DataSnapshot, name = 'demo'): DataSou
       if (!db.bookings.some((b) => b.id === booking.id)) throw new Error('Booking not found');
       db = { ...db, bookings: upsert(db.bookings, copy(booking)) };
       return copy(booking);
+    },
+    async createBooking(booking) {
+      if (db.bookings.some((b) => b.id === booking.id)) throw new Error('Booking exists');
+      db = { ...db, bookings: [...db.bookings, copy(booking)] };
+      return copy(booking);
+    },
+    async deleteBooking(id) {
+      db = { ...db, bookings: db.bookings.filter((b) => b.id !== id) };
+    },
+    async savePlace(place) {
+      db = { ...db, places: upsert(db.places, copy(place)) };
+      return copy(place);
     },
   };
 }

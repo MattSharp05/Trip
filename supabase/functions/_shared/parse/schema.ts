@@ -160,6 +160,13 @@ export type ParseResult = z.infer<typeof parseResultSchema>;
  * (no booking found in the file), `failed` (anything else).
  */
 export type ParseErrorCode = 'not_configured' | 'rate_limited' | 'unreadable' | 'failed';
+export const PARSE_ERROR_COPY: Record<ParseErrorCode, string> = {
+  not_configured: "Booking import isn't set up yet. Add the booking by hand for now.",
+  rate_limited: 'Too many bookings at once. Try again in a minute.',
+  unreadable: "We couldn't find a booking in that file. Try a clearer PDF or screenshot.",
+  failed: 'Something went wrong reading that booking. Check your connection and try again.',
+};
+
 export interface ParseError {
   error: ParseErrorCode;
   message: string;

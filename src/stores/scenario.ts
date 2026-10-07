@@ -10,6 +10,11 @@ export interface ScenarioView {
   /** Organize: Wallet or Budget, and the currency budgets display in. */
   organizeView?: 'wallet' | 'budget';
   currency?: string;
+  /**
+   * Organize: open the import review screen on a sample booking (a fixture parse; see
+   * supabase/functions/_shared/parse/fixtures.ts), or `not-configured` for the no-key state.
+   */
+  importSample?: 'flight' | 'hotel' | 'car' | 'restaurant' | 'lisbon-hotel' | 'not-configured';
 }
 
 interface ScenarioState {

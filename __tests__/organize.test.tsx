@@ -93,9 +93,9 @@ describe('Organize → Wallet', () => {
     expect(screen.getByText('No flights on this trip')).toBeOnTheScreen();
   });
 
-  it('hides the + button until import exists (TR-25)', async () => {
+  it('shows the + that imports a booking (TR-25)', async () => {
     await openWallet();
-    expect(screen.queryByLabelText(/add/i)).toBeNull();
+    expect(screen.getByLabelText('Add a booking')).toBeOnTheScreen();
   });
 
   it("opens a card's own detail screen", async () => {

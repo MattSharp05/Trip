@@ -12,6 +12,7 @@
 
 import { sampleFor, SAMPLE_PARSES } from '../_shared/parse/fixtures.ts';
 import {
+  PARSE_ERROR_COPY,
   readParseResult,
   type ParseErrorCode,
   type ParseResult,
@@ -49,12 +50,7 @@ export class ParseFailure extends Error {
 
 export type Env = (name: string) => string | undefined;
 
-const COPY: Record<ParseErrorCode, string> = {
-  not_configured: "Booking import isn't set up yet. Add the booking by hand for now.",
-  rate_limited: 'Too many bookings at once. Try again in a minute.',
-  unreadable: "We couldn't find a booking in that file. Try a clearer PDF or screenshot.",
-  failed: 'Something went wrong reading that booking. Try again in a minute.',
-};
+const COPY = PARSE_ERROR_COPY;
 
 const STATUS: Record<ParseErrorCode, number> = {
   not_configured: 503,
