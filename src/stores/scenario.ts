@@ -20,6 +20,8 @@ export interface ScenarioView {
    * as if its link had been pasted.
    */
   linkSample?: 'vegas-food' | 'instagram-sunset';
+  /** Discover: every upcoming trip instead of the selected one. */
+  discoverAll?: boolean;
 }
 
 interface ScenarioState {

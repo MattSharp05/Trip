@@ -6,7 +6,7 @@ import type { Trip } from '@/services/data/types';
 import { spacing } from '@/theme';
 import { Icon, Text } from '@/ui';
 
-import { TripSwitcherSheet } from './TripSwitcherSheet';
+import { TripSwitcherSheet, type AllUpcomingOption } from './TripSwitcherSheet';
 
 export interface TripTitleProps {
   trip: Pick<Trip, 'id' | 'city' | 'startDate' | 'endDate'>;
@@ -15,6 +15,11 @@ export interface TripTitleProps {
    * line under a large title, "Las Vegas · Nov 12 – Nov 16, 2026" (Organize, Discover).
    */
   variant?: 'center' | 'inline';
+  /**
+   * Discover (TR-33): the switcher also offers "All upcoming trips", and while it's chosen the
+   * line reads "All upcoming trips" instead of the trip.
+   */
+  allUpcoming?: AllUpcomingOption;
   testID?: string;
 }
 
@@ -22,17 +27,24 @@ export interface TripTitleProps {
  * The trip a tab shows, as its title dropdown (TR-15). Tapping it opens the trip switcher. Shared
  * by the Plan, Organize and Discover headers.
  */
-export function TripTitle({ trip, variant = 'center', testID = 'trip-title' }: TripTitleProps) {
+export function TripTitle({
+  trip,
+  variant = 'center',
+  allUpcoming,
+  testID = 'trip-title',
+}: TripTitleProps) {
   const [open, setOpen] = useState(false);
   // The sheet mounts on the first tap and stays, so closing it still animates.
   const [used, setUsed] = useState(false);
   const dates = dateRangeLabel(trip.startDate, trip.endDate);
+  const all = allUpcoming?.selected === true;
+  const label = all ? ALL_UPCOMING : `${trip.city} · ${dates}`;
 
   return (
     <>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${trip.city}, ${dates}`}
+        accessibilityLabel={all ? ALL_UPCOMING : `${trip.city}, ${dates}`}
         accessibilityHint="Switch trips"
         onPress={() => {
           setUsed(true);
@@ -48,17 +60,19 @@ export function TripTitle({ trip, variant = 'center', testID = 'trip-title' }: T
         {variant === 'center' ? (
           <>
             <View style={styles.row}>
-              <Text variant="headline">{trip.city}</Text>
+              <Text variant="headline">{all ? ALL_UPCOMING : trip.city}</Text>
               <Icon name="chevron.down" size="sm" weight="semibold" />
             </View>
-            <Text variant="caption" tone="secondary">
-              {dates}
-            </Text>
+            {all ? null : (
+              <Text variant="caption" tone="secondary">
+                {dates}
+              </Text>
+            )}
           </>
         ) : (
           <>
             <Text variant="subhead" tone="secondary" numberOfLines={1} style={styles.shrink}>
-              {`${trip.city} · ${dates}`}
+              {label}
             </Text>
             <Icon name="chevron.down" size="sm" tone="secondary" weight="semibold" />
           </>
@@ -69,12 +83,15 @@ export function TripTitle({ trip, variant = 'center', testID = 'trip-title' }: T
           open={open}
           onClose={() => setOpen(false)}
           currentTripId={trip.id}
+          allUpcoming={allUpcoming}
           testID={`${testID}-switcher`}
         />
       ) : null}
     </>
   );
 }
+
+const ALL_UPCOMING = 'All upcoming trips';
 
 const styles = StyleSheet.create({
   center: { alignItems: 'center' },

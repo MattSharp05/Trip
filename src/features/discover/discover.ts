@@ -1,9 +1,10 @@
 import type { SFSymbol } from 'expo-symbols';
 
 import { DEFAULT_WINDOW, durationForKind } from '@/core/bucket';
-import { monthDayLabel, timeLabel } from '@/core/dates';
+import { monthDayLabel, shortRangeLabel, timeLabel } from '@/core/dates';
 import { newId } from '@/core/ids';
-import type { BucketItem, ItineraryItem, Place, PlaceInput } from '@/services/data/types';
+import { todayIn } from '@/core/trips';
+import type { BucketItem, ItineraryItem, Place, PlaceInput, Trip } from '@/services/data/types';
 import type { EventCategory, TripEvent } from '@/services/events';
 
 import type { PopularPlace } from './popular';
@@ -19,6 +20,21 @@ export const FILTERS = [
 ] as const;
 
 export type DiscoverFilter = (typeof FILTERS)[number]['value'];
+
+/**
+ * A trip's section title in "All upcoming trips" (TR-33): "While you're in Las Vegas · Nov 12 – 16"
+ * once the trip has started (on its own calendar), "Because you're going to Cape Town ·
+ * Dec 18 – Jan 6" before.
+ */
+export function tripSectionTitle(
+  trip: Pick<Trip, 'city' | 'startDate' | 'endDate' | 'timezone'>,
+  at: Date,
+): string {
+  const dates = shortRangeLabel(trip.startDate, trip.endDate);
+  return trip.startDate <= todayIn(trip.timezone, at)
+    ? `While you're in ${trip.city} · ${dates}`
+    : `Because you're going to ${trip.city} · ${dates}`;
+}
 
 /** Whether a card's `+` still saves it, or it's already on the Bucket List or the itinerary. */
 export type CardState = 'new' | 'saved' | 'planned';

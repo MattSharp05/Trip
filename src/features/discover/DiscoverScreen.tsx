@@ -1,102 +1,45 @@
-import { useMemo, useState, type ReactNode } from 'react';
-import { FlatList, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useCallback, useState, type ReactNode } from 'react';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { tabTitle } from '@/core/tabs';
 import { TripTitle } from '@/features/trips/TripTitle';
 import { useTripData } from '@/services/data';
-import { EventsError, eventsRequest, useTripEvents } from '@/services/events';
 import { useTripStore } from '@/stores/trip';
 import { colors, continuous, radii, screenPadding, spacing, typography } from '@/theme';
-import { Button, Chip, Icon, IconButton, Skeleton, Text, Toast } from '@/ui';
+import { Chip, Icon, IconButton, Skeleton, Text, Toast } from '@/ui';
 
-import {
-  eventCard,
-  filterEvents,
-  filterPopular,
-  FILTERS,
-  placeCard,
-  type DiscoverCard,
-  type DiscoverFilter,
-} from './discover';
-import { CARD_WIDTH, DiscoverCardSkeleton, DiscoverCardView } from './DiscoverCardView';
-import { popularPlaces } from './popular';
-import { useDiscoverSave } from './useDiscoverSave';
-
-const EMPTY_LABEL: Record<DiscoverFilter, string> = {
-  all: 'No events found on your dates.',
-  events: 'No shows or concerts on your dates.',
-  food: 'No food events on your dates.',
-  nightlife: 'No nightlife events on your dates.',
-  sports: 'No sports on your dates.',
-  networking: 'No networking events on your dates yet.',
-};
+import { AllTripsSections } from './AllTripsSections';
+import { FILTERS, placeCard, type DiscoverFilter } from './discover';
+import { CardRow, EMPTY_LABEL, EventsRow, Note, Section } from './DiscoverParts';
+import { useDiscover } from './useDiscover';
 
 /**
  * The Discover tab (TR-31): what's on during the selected trip. A large title over the trip line
- * (tap to switch trips), a search field that filters what's loaded, the category chips, then
- * "Happening in <city>" (events on the trip's dates) and "Popular with travellers" (curated places).
- * Every card's `+` saves it to the trip's Bucket List.
+ * (tap to switch trips, or pick "All upcoming trips"), a search field that filters what's loaded,
+ * the category chips, then "Happening in <city>" (events on the trip's dates) and "Popular with
+ * travellers" (curated places). With all upcoming trips (TR-33) there's one events section per
+ * trip instead. Every card's `+` saves it to its trip's Bucket List.
  */
 export function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const tripId = useTripStore((s) => s.selectedTripId);
-  const tripData = useTripData(tripId);
-  const data = tripData.data;
-  const trip = data?.trip;
-  const events = useTripEvents(trip);
-  const save = useDiscoverSave(tripId, data?.places);
+  const discoverAll = useTripStore((s) => s.discoverAll);
+  const setDiscoverAll = useTripStore((s) => s.setDiscoverAll);
+  const trip = useTripData(tripId).data?.trip;
   const [filter, setFilter] = useState<DiscoverFilter>('all');
   const [query, setQuery] = useState('');
+  const [toast, setToast] = useState<string | null>(null);
+  const notify = useCallback((message: string) => setToast(message), []);
 
-  const eventCards = useMemo(
-    () => (data ? filterEvents(events.data ?? [], filter, query) : []),
-    [data, events.data, filter, query],
-  );
-  const popular = useMemo(
-    () =>
-      trip && filter !== 'events' && filter !== 'sports' && filter !== 'networking'
-        ? filterPopular(popularPlaces(trip.city), filter, query)
-        : [],
-    [trip, filter, query],
-  );
-
-  let happening: ReactNode;
-  if (!data || !trip || events.isPending) {
-    happening = <SkeletonRow />;
-  } else if (events.isError) {
-    happening =
-      events.error instanceof EventsError && events.error.code === 'not_configured' ? (
-        <Note testID="discover-not-configured">
-          {"Event listings aren't set up yet. Popular places still work."}
-        </Note>
-      ) : (
-        <View style={styles.retry}>
-          <Note testID="discover-events-error">{"Couldn't load events right now."}</Note>
-          <Button label="Try again" variant="secondary" onPress={() => void events.refetch()} />
-        </View>
-      );
-  } else if (eventCards.length === 0) {
-    happening = (
-      <Note testID="discover-events-empty">
-        {query.trim() ? `No events match "${query.trim()}".` : EMPTY_LABEL[filter]}
-      </Note>
-    );
+  let body: ReactNode;
+  if (filter === 'networking') {
+    body = <Note testID="discover-networking-empty">{EMPTY_LABEL.networking}</Note>;
+  } else if (discoverAll) {
+    body = <AllTripsSections filter={filter} query={query} notify={notify} />;
   } else {
-    happening = (
-      <CardRow
-        cards={eventCards.map((e) => eventCard(e, data))}
-        onAdd={(card) => {
-          const event = eventCards.find((e) => e.id === card.id);
-          if (event) void save.saveEvent(event);
-        }}
-        saving={save.saving}
-        testID="discover-events"
-      />
-    );
+    body = <SelectedTrip tripId={tripId} filter={filter} query={query} notify={notify} />;
   }
-
-  const noPlace = trip && !eventsRequest(trip);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + spacing.sm }]}>
@@ -111,7 +54,12 @@ export function DiscoverScreen() {
             {tabTitle('discover')}
           </Text>
           {trip ? (
-            <TripTitle trip={trip} variant="inline" testID="discover-trip-title" />
+            <TripTitle
+              trip={trip}
+              variant="inline"
+              allUpcoming={{ selected: discoverAll, onChange: setDiscoverAll }}
+              testID="discover-trip-title"
+            />
           ) : tripId ? (
             <Skeleton width={200} height={18} testID="discover-trip-title-loading" />
           ) : null}
@@ -139,46 +87,49 @@ export function DiscoverScreen() {
                 />
               ))}
             </ScrollView>
-
-            {filter === 'networking' ? (
-              <Note testID="discover-networking-empty">{EMPTY_LABEL.networking}</Note>
-            ) : (
-              <Section title={trip ? `Happening in ${trip.city}` : 'Happening'}>
-                {noPlace ? (
-                  <Note>{"Add the trip's city and dates to see events."}</Note>
-                ) : (
-                  happening
-                )}
-              </Section>
-            )}
-
-            {popular.length > 0 && data ? (
-              <Section title="Popular with travellers">
-                <CardRow
-                  cards={popular.map((p) => placeCard(p, data))}
-                  onAdd={(card) => {
-                    const place = popular.find((p) => p.id === card.id);
-                    if (place) void save.savePopular(place);
-                  }}
-                  saving={save.saving}
-                  testID="discover-popular"
-                />
-              </Section>
-            ) : null}
+            {body}
           </>
         )}
       </ScrollView>
-      {save.toast !== null ? (
+      {toast !== null ? (
         <View style={styles.toast}>
-          <Toast
-            visible
-            message={save.toast}
-            onDismiss={save.dismissToast}
-            testID="discover-toast"
-          />
+          <Toast visible message={toast} onDismiss={() => setToast(null)} testID="discover-toast" />
         </View>
       ) : null}
     </View>
+  );
+}
+
+interface BodyProps {
+  tripId: string | null;
+  filter: DiscoverFilter;
+  query: string;
+  notify: (message: string) => void;
+}
+
+/** The selected trip: "Happening in <city>" and "Popular with travellers". */
+function SelectedTrip({ tripId, filter, query, notify }: BodyProps) {
+  const discover = useDiscover(tripId, filter, query, notify);
+  const { data, trip, popular, save } = discover;
+  return (
+    <>
+      <Section title={trip ? `Happening in ${trip.city}` : 'Happening'}>
+        <EventsRow discover={discover} filter={filter} query={query} testID="discover-events" />
+      </Section>
+      {popular.length > 0 && data ? (
+        <Section title="Popular with travellers">
+          <CardRow
+            cards={popular.map((p) => placeCard(p, data))}
+            onAdd={(card) => {
+              const place = popular.find((p) => p.id === card.id);
+              if (place) void save.savePopular(place);
+            }}
+            saving={save.saving}
+            testID="discover-popular"
+          />
+        </Section>
+      ) : null}
+    </>
   );
 }
 
@@ -213,69 +164,6 @@ function SearchField({ value, onChange }: { value: string; onChange: (text: stri
   );
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <View style={styles.section}>
-      <Text variant="headline" accessibilityRole="header">
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
-}
-
-function Note({ children, testID }: { children: ReactNode; testID?: string }) {
-  return (
-    <Text variant="body" tone="secondary" testID={testID}>
-      {children}
-    </Text>
-  );
-}
-
-function CardRow({
-  cards,
-  onAdd,
-  saving,
-  testID,
-}: {
-  cards: DiscoverCard[];
-  onAdd: (card: DiscoverCard) => void;
-  saving: ReadonlySet<string>;
-  testID: string;
-}) {
-  return (
-    <FlatList
-      horizontal
-      data={cards}
-      keyExtractor={(c) => c.id}
-      renderItem={({ item }) => (
-        <DiscoverCardView
-          card={item}
-          onAdd={() => onAdd(item)}
-          saving={saving.has(item.id)}
-          testID={`${testID}-card-${item.id}`}
-        />
-      )}
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.row}
-      style={styles.bleed}
-      snapToInterval={CARD_WIDTH + spacing.md}
-      decelerationRate="fast"
-      testID={testID}
-    />
-  );
-}
-
-function SkeletonRow() {
-  return (
-    <View style={[styles.row, styles.skeletonRow, styles.bleed]} testID="discover-events-loading">
-      {[0, 1, 2].map((i) => (
-        <DiscoverCardSkeleton key={i} />
-      ))}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { gap: spacing.lg, paddingHorizontal: screenPadding, paddingBottom: spacing.xxxl },
@@ -303,9 +191,5 @@ const styles = StyleSheet.create({
   /** Rows scroll edge to edge while their first card lines up with the screen margin. */
   bleed: { marginHorizontal: -screenPadding },
   chips: { gap: spacing.sm, paddingHorizontal: screenPadding },
-  section: { gap: spacing.md },
-  row: { gap: spacing.md, paddingHorizontal: screenPadding },
-  skeletonRow: { flexDirection: 'row', overflow: 'hidden' },
-  retry: { gap: spacing.md, alignItems: 'flex-start' },
   toast: { paddingHorizontal: screenPadding, paddingBottom: spacing.md },
 });

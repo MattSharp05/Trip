@@ -1,0 +1,11 @@
+# QA screenshot of the vegas-discover-all scenario (Discover, all upcoming trips: a Las Vegas
+# section and a Cape Town section, each with the events on its own dates).
+appId: com.mattsharp05.trip
+tags:
+  - shots
+---
+- runFlow:
+    file: ../scenario.yaml
+    env:
+      SCENARIO: vegas-discover-all
+      READY_ID: discover-trip-trip-cape-town-events
