@@ -109,6 +109,10 @@ jobs:
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
       - name: Run the flows
+        env:
+          # The XCTest driver can take minutes to come up on a cold runner; Maestro's default
+          # timed out on main twice on 2026-10-07 before any flow ran.
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: '360000'
         run: |
           mkdir -p e2e-out
           maestro test --format junit --output e2e-out/report.xml --test-output-dir e2e-out \
