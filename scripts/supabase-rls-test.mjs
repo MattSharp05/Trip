@@ -151,6 +151,32 @@ try {
   });
   check("other user can't attach rows to the owner's trip", Boolean(attach.error));
 
+  // TR-26: the flight-status cache and allowance counter belong to the Edge Function alone.
+  for (const table of ['flight_status_cache', 'flight_status_usage']) {
+    for (const [who, client] of [
+      ['signed-in user', b.client],
+      ['anonymous', anonymous],
+    ]) {
+      const read = await client.from(table).select('*').limit(1);
+      check(`${table}: ${who} can't read`, Boolean(read.error) || read.data.length === 0);
+      const row =
+        table === 'flight_status_cache' ? { key: 'rls-test', status: null } : { month: '1999-01' };
+      const write = await client.from(table).insert(row);
+      check(`${table}: ${who} can't write`, Boolean(write.error));
+    }
+  }
+  for (const [who, client] of [
+    ['signed-in user', b.client],
+    ['anonymous', anonymous],
+  ]) {
+    const bump = await client.rpc('reserve_flight_status_units', {
+      p_month: '1999-01',
+      p_units: 1,
+      p_limit: 10,
+    });
+    check(`reserve_flight_status_units: ${who} can't call it`, Boolean(bump.error));
+  }
+
   for (const [bucket, path] of [
     ['originals', `${a.id}/rls-test.txt`],
     ['originals', `${a.id}/documents/rls-test.txt`],

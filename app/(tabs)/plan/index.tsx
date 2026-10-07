@@ -27,6 +27,7 @@ import {
   PlanHeader,
   PlanSheet,
 } from '@/features/plan';
+import { FlightStatusPill } from '@/features/wallet/flight';
 import { useTripData } from '@/services/data';
 import { useTripForecast } from '@/services/weather';
 import { useTripSelection } from '@/stores/selection';
@@ -199,6 +200,7 @@ export default function PlanScreen() {
               <>
                 <FlightCard
                   flight={flight.flight}
+                  status={<FlightStatusPill flight={flight.flight} />}
                   onPress={() =>
                     router.push(`/organize/flight/${encodeURIComponent(flight.bookingId)}`, {
                       withAnchor: true,

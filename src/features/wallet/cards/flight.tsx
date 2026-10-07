@@ -1,3 +1,4 @@
+import { FlightStatusPill } from '../flight/FlightStatusPill';
 import { formatDateTime } from '../format';
 import type { WalletCardDef, WalletCardRendererProps } from './types';
 import { WalletCard } from './WalletCard';
@@ -12,6 +13,7 @@ function FlightCard({ entry, onPress }: WalletCardRendererProps<'flight'>) {
         `${flight.flightNumber} · ${flight.from.code} → ${flight.to.code}`,
         formatDateTime(flight.departs),
       ]}
+      accessory={<FlightStatusPill flight={flight} />}
       onPress={onPress}
       testID={`wallet-card-${entry.id}`}
     />

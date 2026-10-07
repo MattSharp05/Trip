@@ -2,12 +2,14 @@ import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { useFlightStatus } from '@/services/flightStatus';
 import { colors, continuous, radii, screenPadding, spacing } from '@/theme';
 import { Button, ListRow, Skeleton, Surface, Text, Toast } from '@/ui';
 
 import { addFlightToCalendar, openOriginal } from './actions';
-import { flightFacts } from './flightInfo';
 import { FlightRoute } from './FlightRoute';
+import { StatusPill } from './FlightStatusPill';
+import { liveFacts } from './status';
 import { useFlightBooking } from './useFlightBooking';
 
 /**
@@ -19,6 +21,8 @@ export function FlightDetail({ id }: { id: string }) {
   const { flight: booking, isLoading } = useFlightBooking(id);
   const [toast, setToast] = useState<string | null>(null);
   const flight = booking?.data;
+  const status = useFlightStatus(flight);
+  const facts = flight ? liveFacts(flight, status) : [];
   const originalPath = booking?.originalPath ?? null;
 
   const addToCalendar = async () => {
@@ -58,7 +62,7 @@ export function FlightDetail({ id }: { id: string }) {
                   {flight.airlineCode}
                 </Text>
               </View>
-              <View>
+              <View style={styles.airlineName}>
                 <Text variant="body" style={styles.bold}>
                   {flight.airline}
                 </Text>
@@ -66,13 +70,14 @@ export function FlightDetail({ id }: { id: string }) {
                   {flight.flightNumber}
                 </Text>
               </View>
+              <StatusPill flight={flight} status={status} />
             </View>
 
             <FlightRoute flight={flight} />
 
-            {flightFacts(flight).length > 0 ? (
+            {facts.length > 0 ? (
               <Surface padding="none" style={styles.facts} testID="flight-facts">
-                {flightFacts(flight).map((fact, i) => (
+                {facts.map((fact, i) => (
                   <View key={fact.label} style={[styles.fact, i > 0 && styles.factDivider]}>
                     <Text variant="caption" tone="secondary">
                       {fact.label}
@@ -80,6 +85,15 @@ export function FlightDetail({ id }: { id: string }) {
                     <Text variant="headline" numberOfLines={1}>
                       {fact.value}
                     </Text>
+                    {fact.updated ? (
+                      <Text
+                        variant="caption"
+                        tone="accent"
+                        testID={`flight-fact-updated-${fact.label.toLowerCase()}`}
+                      >
+                        Updated
+                      </Text>
+                    ) : null}
                   </View>
                 ))}
               </Surface>
@@ -137,6 +151,7 @@ const styles = StyleSheet.create({
     borderColor: colors.hairline,
   },
   code: { fontWeight: '700', letterSpacing: 0.5 },
+  airlineName: { flex: 1 },
   bold: { fontWeight: '600' },
   facts: { flexDirection: 'row' },
   fact: { flex: 1, gap: spacing.xxs, padding: spacing.md },

@@ -22,7 +22,7 @@ Hard constraints from the PRD: iPhone only, **$0 running cost**, and everything 
 | Currency | Frankfurter (ECB rates, no key), cached daily | Free |
 | Place search / geocoding | Photon (komoot, OSM data, no key) via Edge Function | Free; Edge Function adds caching and a proper User-Agent |
 | Photos | Unsplash API (free key) for trip covers, Wikimedia for landmarks, Ticketmaster images for events | Free with attribution |
-| Flight status | Free tier of a flight-status API (AeroDataBox via RapidAPI, or similar; picked in its ticket), day-of-flight only | Free tier allowance is small |
+| Flight status | Free tier of a flight-status API (AeroDataBox via RapidAPI, ADR 0017), day-of-flight only | Free tier allowance is small |
 | TikTok / Reels | TikTok oEmbed (public) and page metadata via Edge Function → Gemini extracts places → Photon geocodes | No scraping; uses what a shared link exposes |
 | Tests | Jest (`jest-expo`) + React Native Testing Library; Maestro on an EAS iOS simulator build | Unit/component on Linux CI; on-device flows on GitHub's macOS runner (ADR 0005, 0015) |
 | Delivery | **EAS Update** to the `main` channel on every merge | Matthew opens the latest `main` in Expo Go; no per-PR previews (batched QA) |
