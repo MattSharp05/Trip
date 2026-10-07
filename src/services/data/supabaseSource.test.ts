@@ -243,6 +243,29 @@ describe('supabase source', () => {
     expect(saved).toMatchObject({ id: 'p9', name: 'Eggslut', kind: 'food' });
   });
 
+  it('inserts imported bookings with the id the app chose', async () => {
+    const data = { event: 'La Colombe', placeId: 'p9' };
+    mockTables.bookings = {
+      data: { id: 'b9', trip_id: 't1', type: 'ticket', data, original_path: 'u1/imports/a.pdf' },
+      error: null,
+    };
+    const saved = await supabaseSource.createBooking({
+      id: 'b9',
+      tripId: 't1',
+      originalPath: 'u1/imports/a.pdf',
+      type: 'ticket',
+      data: data as never,
+    });
+    expect(mockInserts.at(-1)).toEqual({
+      id: 'b9',
+      trip_id: 't1',
+      type: 'ticket',
+      data,
+      original_path: 'u1/imports/a.pdf',
+    });
+    expect(saved).toMatchObject({ id: 'b9', tripId: 't1', type: 'ticket' });
+  });
+
   it('throws the query error', async () => {
     mockTables.documents = { data: null, error: { message: 'JWT expired' } };
     await expect(supabaseSource.listDocuments()).rejects.toThrow('JWT expired');

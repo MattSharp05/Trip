@@ -330,4 +330,25 @@ export const supabaseSource: DataSource = {
     );
     return toBooking(row);
   },
+  async createBooking(booking) {
+    const supabase = client();
+    const row = checkRow(
+      await supabase
+        .from('bookings')
+        .insert({
+          id: booking.id,
+          trip_id: booking.tripId,
+          type: booking.type,
+          data: JSON.parse(JSON.stringify(booking.data)),
+          original_path: booking.originalPath,
+        })
+        .select()
+        .single(),
+    );
+    return toBooking(row);
+  },
+  async deleteBooking(id) {
+    const supabase = client();
+    check(await supabase.from('bookings').delete().eq('id', id));
+  },
 };

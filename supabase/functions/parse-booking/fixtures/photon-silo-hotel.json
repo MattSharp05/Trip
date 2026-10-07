@@ -1,0 +1,17 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [18.4217, -33.9083]
+      },
+      "properties": {
+        "name": "The Silo Hotel",
+        "city": "Cape Town",
+        "country": "South Africa"
+      }
+    }
+  ]
+}

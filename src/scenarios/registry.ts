@@ -142,6 +142,30 @@ export const SCENARIOS: readonly Scenario[] = [
     tab: 'organize',
     view: { organizeView: 'budget', currency: 'EUR' },
   }),
+  vegas({
+    name: 'import-review-flight',
+    description: 'Import review: a round-trip flight to Cape Town read from a sample PDF.',
+    tab: 'organize',
+    view: { organizeView: 'wallet', importSample: 'flight' },
+  }),
+  vegas({
+    name: 'import-review-restaurant',
+    description: 'Import review: a dinner reservation at La Colombe, Cape Town.',
+    tab: 'organize',
+    view: { organizeView: 'wallet', importSample: 'restaurant' },
+  }),
+  vegas({
+    name: 'import-review-new-trip',
+    description: 'Import review: a Lisbon hotel with no trip yet, offering to create one.',
+    tab: 'organize',
+    view: { organizeView: 'wallet', importSample: 'lisbon-hotel' },
+  }),
+  vegas({
+    name: 'import-not-configured',
+    description: 'Import before the Gemini key is set: the "not set up yet" message.',
+    tab: 'organize',
+    view: { organizeView: 'wallet', importSample: 'not-configured' },
+  }),
   {
     name: 'empty-account',
     description: 'A new account with no trips: Trips tab empty state.',

@@ -100,6 +100,44 @@ describe('demo source', () => {
     await expect(source.saveBooking({ ...flight, id: 'nope' })).rejects.toThrow('not found');
   });
 
+  it('adds and deletes imported bookings and their places', async () => {
+    const source = createDemoSource(vegasSnapshot);
+    await source.savePlace({
+      id: 'place-new',
+      name: 'Sample Hall',
+      address: null,
+      lat: 36.1,
+      lng: -115.1,
+      kind: 'arena',
+      photoUrl: null,
+      sourceUrl: null,
+    });
+    const booking = {
+      id: 'booking-new',
+      tripId: 'trip-vegas',
+      originalPath: null,
+      type: 'ticket' as const,
+      data: {
+        event: 'Sample Show',
+        placeId: 'place-new',
+        starts: { date: '2026-11-14', time: '20:00', timezone: 'America/Los_Angeles' },
+        section: null,
+        row: null,
+        seats: null,
+        confirmation: 'T1',
+      },
+    };
+    await source.createBooking(booking);
+    await expect(source.createBooking(booking)).rejects.toThrow('exists');
+    const data = (await source.getTripData('trip-vegas'))!;
+    expect(data.bookings.map((b) => b.id)).toContain('booking-new');
+    expect(data.places.map((p) => p.id)).toContain('place-new');
+    await source.deleteBooking('booking-new');
+    expect((await source.getTripData('trip-vegas'))!.bookings.map((b) => b.id)).not.toContain(
+      'booking-new',
+    );
+  });
+
   it('returns copies, so callers cannot change stored data', async () => {
     const source = createDemoSource(vegasSnapshot);
     (await source.listTrips())[0].city = 'Changed';
