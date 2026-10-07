@@ -1,0 +1,15 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\"places\":[{\"name\":\"Eggslut\",\"city\":\"Las Vegas\",\"kind\":\"food\"},{\"name\":\"Tacos El Gordo\",\"city\":\"Las Vegas\",\"kind\":\"cafe\"},{\"name\":\"Lotus of Siam\",\"city\":null,\"kind\":\"food\"},{\"name\":\"Bestia\",\"city\":\"Las Vegas\",\"kind\":\"food\"},{\"name\":\"eggslut\",\"city\":\"Las Vegas\",\"kind\":\"food\"}]}"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP"
+    }
+  ]
+}

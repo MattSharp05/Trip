@@ -58,7 +58,9 @@ export type Database = {
           fixed_time: string | null;
           id: string;
           place_id: string | null;
+          saved_link_id: string | null;
           source: string | null;
+          title: string | null;
           trip_id: string;
           updated_at: string;
           user_id: string;
@@ -72,7 +74,9 @@ export type Database = {
           fixed_time?: string | null;
           id?: string;
           place_id?: string | null;
+          saved_link_id?: string | null;
           source?: string | null;
+          title?: string | null;
           trip_id: string;
           updated_at?: string;
           user_id?: string;
@@ -86,7 +90,9 @@ export type Database = {
           fixed_time?: string | null;
           id?: string;
           place_id?: string | null;
+          saved_link_id?: string | null;
           source?: string | null;
+          title?: string | null;
           trip_id?: string;
           updated_at?: string;
           user_id?: string;
@@ -99,6 +105,13 @@ export type Database = {
             columns: ['place_id', 'user_id'];
             isOneToOne: false;
             referencedRelation: 'places';
+            referencedColumns: ['id', 'user_id'];
+          },
+          {
+            foreignKeyName: 'bucket_items_saved_link_fk';
+            columns: ['saved_link_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'saved_links';
             referencedColumns: ['id', 'user_id'];
           },
           {
@@ -356,39 +369,53 @@ export type Database = {
       };
       saved_links: {
         Row: {
+          author: string | null;
           created_at: string;
           id: string;
           place_ids: string[];
           platform: string | null;
           thumbnail_url: string | null;
           title: string | null;
+          trip_id: string | null;
           updated_at: string;
           url: string;
           user_id: string;
         };
         Insert: {
+          author?: string | null;
           created_at?: string;
           id?: string;
           place_ids?: string[];
           platform?: string | null;
           thumbnail_url?: string | null;
           title?: string | null;
+          trip_id?: string | null;
           updated_at?: string;
           url: string;
           user_id?: string;
         };
         Update: {
+          author?: string | null;
           created_at?: string;
           id?: string;
           place_ids?: string[];
           platform?: string | null;
           thumbnail_url?: string | null;
           title?: string | null;
+          trip_id?: string | null;
           updated_at?: string;
           url?: string;
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'saved_links_trip_fk';
+            columns: ['trip_id', 'user_id'];
+            isOneToOne: false;
+            referencedRelation: 'trips';
+            referencedColumns: ['id', 'user_id'];
+          },
+        ];
       };
       trips: {
         Row: {
