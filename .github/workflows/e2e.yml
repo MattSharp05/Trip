@@ -97,6 +97,11 @@ jobs:
           xcrun simctl boot "$udid"
           xcrun simctl bootstatus "$udid"
           xcrun simctl install "$udid" "$RUNNER_TEMP/Trip.app"
+          # Warm-up launch: the first launch on a fresh simulator is slow enough to time out a
+          # flow's first deep link.
+          xcrun simctl launch "$udid" com.mattsharp05.trip
+          sleep 30
+          xcrun simctl terminate "$udid" com.mattsharp05.trip || true
 
       - name: Install Maestro
         run: |

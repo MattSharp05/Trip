@@ -22,12 +22,12 @@ tags:
       id: itinerary-list
     timeout: 30000
 
-# Friday's four stops, in order. Times use a narrow no-break space before AM/PM (iOS), so '.'.
-- assertVisible: '10:00.AM'
-- assertVisible: 'Brunch at Mon Ami Gabi'
-- assertVisible: 'Bellagio Fountains'
-- assertVisible: 'Sphere Experience'
-- assertVisible: 'Dinner at Carbone'
+# Friday's four stops. Each row is one accessibility element ("10:00 AM, Brunch at Mon Ami Gabi,
+# Paris Las Vegas"), so the checks match part of its label.
+- assertVisible: '10:00.AM, Brunch at Mon Ami Gabi.*'
+- assertVisible: '.*Bellagio Fountains.*'
+- assertVisible: '.*Sphere Experience.*'
+- assertVisible: '.*Dinner at Carbone.*'
 - takeScreenshot: plan-linking-1-day
 
 # Row → map: the Sphere row is selected and its pin shows its label.
@@ -53,7 +53,7 @@ tags:
 # A new day clears the selection and re-frames the map.
 - tapOn:
     id: pill-2026-11-14
-- assertVisible: 'Gondola at The Venetian'
+- assertVisible: '.*Gondola at The Venetian.*'
 - assertNotVisible:
     id: itinerary-node-selected
 - waitForAnimationToEnd
