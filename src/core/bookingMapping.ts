@@ -37,8 +37,8 @@ export interface BookingSpan {
   endDate: string;
 }
 
-/** Times a booking may leave out; the review screen flags them. */
-const DEFAULT_TIME = {
+/** Times a booking may leave out; the review screen pre-fills and flags them. */
+export const DEFAULT_TIME = {
   checkIn: '15:00',
   checkOut: '11:00',
   other: '12:00',
@@ -280,7 +280,8 @@ export function planImport(
           type: 'flight',
           data: {
             airline: leg.airline,
-            airlineCode: leg.airlineCode ?? leg.flightNumber.replace(/[^A-Za-z]/g, '').slice(0, 2),
+            // The IATA code leads the flight number (`AA 2410`, `B6 123`).
+            airlineCode: leg.airlineCode ?? leg.flightNumber.trim().slice(0, 2).toUpperCase(),
             flightNumber: leg.flightNumber,
             aircraft: null,
             from: { code: leg.from.code, city: leg.from.city ?? leg.from.code, placeId: from.id },

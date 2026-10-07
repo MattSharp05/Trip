@@ -127,12 +127,16 @@ function Message({
 
 type Target = { trip: Trip } | { create: NewTrip } | null;
 
-/** Where the booking goes: its matching trip, a new trip for it, or the trip on screen. */
-function useTarget(result: ParseResult, draft: Draft): Target {
+/**
+ * Where the booking goes: its matching trip, a new trip for it, or the trip on screen. Undefined
+ * while trips load; null when there's nowhere to put it (no match, no place to create a trip at,
+ * no trip selected).
+ */
+function useTarget(result: ParseResult, draft: Draft): Target | undefined {
   const trips = useTrips().data;
   const selectedId = useTripStore((s) => s.selectedTripId);
   return useMemo(() => {
-    if (!trips) return null;
+    if (!trips) return undefined;
     const finished = finishDraft(draft);
     const booking = 'booking' in finished ? finished.booking : result.booking;
     const span = bookingSpan(booking);
@@ -221,7 +225,9 @@ function Review({ read }: { read: ReadBooking }) {
       return;
     }
     if (!target) {
-      setSaveError('Add the city it is in, so we can find its trip.');
+      setSaveError(
+        target === null ? 'There is no trip to add this to yet.' : 'Still loading your trips.',
+      );
       return;
     }
     try {
@@ -292,9 +298,20 @@ function Review({ read }: { read: ReadBooking }) {
   );
 }
 
-function TripTarget({ target }: { target: Target }) {
-  if (!target) {
+function TripTarget({ target }: { target: Target | undefined }) {
+  if (target === undefined) {
     return <Skeleton height={62} radius="card" testID="import-trip-loading" />;
+  }
+  if (target === null) {
+    return (
+      <Surface padding="none" testID="import-no-trip">
+        <ListRow
+          icon="suitcase"
+          title="No trip for this booking"
+          subtitle="Check the city and dates, or pick a trip on the Trips tab first."
+        />
+      </Surface>
+    );
   }
   if ('create' in target) {
     const { city, startDate, endDate } = target.create;

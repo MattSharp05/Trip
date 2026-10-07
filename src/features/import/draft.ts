@@ -1,3 +1,5 @@
+import { DEFAULT_TIME } from '@/core/bookingMapping';
+
 import {
   parsedBookingSchema,
   type ParsedBooking,
@@ -147,9 +149,9 @@ export function setAt<T>(value: T, path: string, next: unknown): T {
 
 /** The time a missing one starts as on the form (and in the plan). */
 function defaultTime(path: string): string {
-  if (path.startsWith('checkIn')) return '15:00';
-  if (path.startsWith('checkOut')) return '11:00';
-  return '12:00';
+  if (path.startsWith('checkIn')) return DEFAULT_TIME.checkIn;
+  if (path.startsWith('checkOut')) return DEFAULT_TIME.checkOut;
+  return DEFAULT_TIME.other;
 }
 
 const toText = (v: unknown) => (typeof v === 'number' ? String(v) : typeof v === 'string' ? v : '');
@@ -321,7 +323,7 @@ export function applyValues(draft: Draft): ParsedBooking {
     const text = (draft.values[field.path] ?? '').trim();
     switch (field.kind) {
       case 'amount':
-        amount = text ? Number(text.replace(/[,\s]/g, '')) : null;
+        amount = text ? readAmount(text) : null;
         break;
       case 'currency':
         currency = text.toUpperCase();
@@ -344,7 +346,42 @@ export function applyValues(draft: Draft): ParsedBooking {
     }
   }
   const price = amount === null ? null : { amount, currency };
-  return { ...booking, price } as ParsedBooking;
+  return forgetMovedPlaces(draft.base, { ...booking, price } as ParsedBooking);
+}
+
+/**
+ * A place whose name, address or city was edited is somewhere else: its coordinates (geocoded
+ * from what the model read) no longer apply, so trip matching falls back to the city name.
+ */
+function forgetMovedPlaces(before: ParsedBooking, after: ParsedBooking): ParsedBooking {
+  let result = after;
+  const placePaths = ['hotel', 'venue', 'pickupLocation', 'returnLocation'];
+  if (after.type === 'flight') {
+    after.legs.forEach((_leg, i) => placePaths.push(`legs.${i}.from`, `legs.${i}.to`));
+  }
+  for (const path of placePaths) {
+    const old = getAt(before, path) as Record<string, unknown> | null | undefined;
+    const now = getAt(result, path) as Record<string, unknown> | null | undefined;
+    if (!old || !now) continue;
+    const moved = ['name', 'address', 'city', 'code'].some(
+      (k) => (old[k] ?? null) !== (now[k] ?? null),
+    );
+    if (moved) result = setAt(result, path, { ...now, lat: null, lng: null });
+  }
+  return result;
+}
+
+/**
+ * A typed amount: `1,250.50` and `1250.5` as usual, and a decimal comma (`412,30`, `1.250,50`) as
+ * European receipts write it. NaN when it isn't a number (the schema then flags it).
+ */
+export function readAmount(text: string): number {
+  const t = text.replace(/\s/g, '');
+  const comma = t.lastIndexOf(',');
+  if (comma > t.lastIndexOf('.') && /,\d{1,2}$/.test(t)) {
+    return Number(`${t.slice(0, comma).replace(/[.,]/g, '')}.${t.slice(comma + 1)}`);
+  }
+  return Number(t.replace(/,/g, ''));
 }
 
 const MESSAGES: Record<FieldKind, string> = {
@@ -389,10 +426,7 @@ function endBeforeStart(b: ParsedBooking): string | null {
       return b.checkOut.date < b.checkIn.date ? 'checkOut.date' : null;
     case 'car':
       return stamp(b.dropoff) < stamp(b.pickup) ? 'dropoff.date' : null;
-    case 'flight': {
-      const i = b.legs.findIndex((l) => l.arrives.date < l.departs.date);
-      return i === -1 ? null : `legs.${i}.arrives.date`;
-    }
+    // Flights aren't checked: local times across the date line can land "before" departure.
     default:
       return null;
   }

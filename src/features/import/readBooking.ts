@@ -32,9 +32,14 @@ export async function readBooking(source: DataSource, file: PickedFile): Promise
     const result = JSON.parse(JSON.stringify(SAMPLE_PARSES[sampleFor(file.name)])) as ParseResult;
     return { result, originalPath: null };
   }
-  const originalPath = await uploadOriginal(file);
+  // "Try again" after a failed read reuses the upload instead of storing the file again.
+  const originalPath = uploads.get(file.uri) ?? (await uploadOriginal(file));
+  uploads.set(file.uri, originalPath);
   return { result: await parseStoredBooking(originalPath), originalPath };
 }
+
+/** Picked file URI → its Storage path, for retries. */
+const uploads = new Map<string, string>();
 
 /** The copy for anything that stopped a read. */
 export function importErrorMessage(error: unknown): string {

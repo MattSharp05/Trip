@@ -21,7 +21,8 @@ export interface SaveImportResult {
 /**
  * Saves a reviewed booking: the trip (when new), its places, the wallet bookings, the plan items
  * and the expense. Writes run in order; if one fails, the bookings and items already written are
- * removed again, so a failed import leaves no half-booking behind (unused places are harmless).
+ * removed again, so a failed import leaves no half-booking behind. A trip created for it stays
+ * (empty; a retry then matches it), as do unused places, which nothing shows.
  */
 export async function saveImport(
   source: DataSource,

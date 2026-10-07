@@ -183,12 +183,15 @@ export async function geocodeResult(
   result: ParseResult,
   fetchImpl: typeof fetch,
 ): Promise<ParseResult> {
+  // Each place is looked up once, however many legs it appears on.
+  const cache = new Map<string, Promise<{ lat: number; lng: number } | null>>();
   const fill = async <T extends { lat: number | null; lng: number | null }>(
     target: T,
     query: string,
   ): Promise<T> => {
     if (target.lat !== null && target.lng !== null) return target;
-    const found = await geocode(query, fetchImpl);
+    if (!cache.has(query)) cache.set(query, geocode(query, fetchImpl));
+    const found = await cache.get(query)!;
     return found ? { ...target, ...found } : target;
   };
   const b = result.booking;

@@ -17,6 +17,9 @@ reservation type.
   search for "create a trip".
 - `PARSE_PROVIDER=fixture` (a function secret) swaps Gemini for the canned sample parses; scenario
   demo sessions use the same samples in the app and never call the function.
+- PDFs are picked with `expo-document-picker` (in the Expo SDK and Expo Go, ADR 0001), screenshots
+  with `expo-image-picker` (already used). Adding it changes the iOS fingerprint, so the next E2E
+  run makes one new `e2e` simulator build (ADR 0015).
 - A reservation is saved as a `ticket` booking (the venue, the time, "Table for 2") with a `food`
   itinerary item; the wallet's Tickets filter already reads "Event tickets and reservations".
 

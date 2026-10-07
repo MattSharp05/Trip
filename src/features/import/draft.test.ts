@@ -6,6 +6,7 @@ import {
   fieldsFor,
   finishDraft,
   getAt,
+  readAmount,
   setAt,
   switchType,
 } from './draft';
@@ -102,5 +103,28 @@ describe('import draft', () => {
     expect(draft.base.type).toBe('flight');
     expect(draft.values['legs.0.airline']).toBe('The Silo Hotel');
     expect(draft.values['legs.0.departs.date']).toBe('2026-12-19');
+  });
+});
+
+describe('readAmount', () => {
+  it.each([
+    ['412.30', 412.3],
+    ['1,250.50', 1250.5],
+    ['1,250', 1250],
+    ['412,30', 412.3],
+    ['1.250,50', 1250.5],
+    ['twelve', NaN],
+    ['63 000', 63000],
+  ])('reads %s', (text, amount) => {
+    expect(readAmount(text)).toBe(amount);
+  });
+});
+
+describe('edited places', () => {
+  it('drops the coordinates of a place whose city was changed', () => {
+    const draft = draftFrom(SAMPLE_PARSES.hotel.booking);
+    const booking = applyValues({ ...draft, values: { ...draft.values, 'hotel.city': 'Lisbon' } });
+    expect(booking).toMatchObject({ hotel: { city: 'Lisbon', lat: null, lng: null } });
+    expect(applyValues(draft)).toMatchObject({ hotel: { lat: -33.9083 } });
   });
 });
