@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { screenPadding, spacing } from '@/theme';
-import { Button, Chip, Skeleton, Text } from '@/ui';
+import { Button, Chip, LoadError, Skeleton, Text } from '@/ui';
 
 import { walletDetailHref, WalletEntryCard } from './cards/registry';
 import { useWallet } from './useWallet';
@@ -13,7 +13,7 @@ import { EMPTY_COPY, filterWallet, WALLET_FILTERS, type WalletFilter } from './w
 export function WalletList() {
   const router = useRouter();
   const [filter, setFilter] = useState<WalletFilter>('all');
-  const { entries, places, isLoading, noTrip } = useWallet();
+  const { entries, places, isLoading, noTrip, loadError, retry } = useWallet();
   const shown = filterWallet(entries, filter);
   const empty =
     noTrip && filter !== 'document'
@@ -40,7 +40,13 @@ export function WalletList() {
         ))}
       </ScrollView>
       <ScrollView contentContainerStyle={styles.list} testID="wallet-list">
-        {isLoading ? (
+        {loadError ? (
+          <LoadError
+            message="Couldn't load your wallet. Check your connection."
+            onRetry={retry}
+            testID="wallet-error"
+          />
+        ) : isLoading ? (
           [0, 1, 2, 3].map((i) => <Skeleton key={i} height={66} radius="card" />)
         ) : shown.length === 0 ? (
           <View style={styles.empty} testID="wallet-empty">

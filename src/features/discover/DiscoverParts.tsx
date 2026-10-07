@@ -37,8 +37,16 @@ export function EventsRow({
   query: string;
   testID: string;
 }) {
-  const { data, trip, events, eventList, save, noPlace } = discover;
+  const { data, trip, events, eventList, save, noPlace, tripError, retryTrip } = discover;
 
+  if (tripError) {
+    return (
+      <View style={styles.retry}>
+        <Note testID={`${testID}-error`}>{"Couldn't load this trip right now."}</Note>
+        <Button label="Try again" variant="secondary" onPress={() => void retryTrip()} />
+      </View>
+    );
+  }
   if (noPlace) return <Note>{"Add the trip's city and dates to see events."}</Note>;
   if (!data || !trip || events.isPending) return <SkeletonRow testID={`${testID}-loading`} />;
   if (events.isError) {

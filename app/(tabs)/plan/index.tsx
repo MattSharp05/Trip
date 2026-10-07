@@ -44,7 +44,7 @@ import { useScenarioStore } from '@/stores/scenario';
 import { useTripSelection } from '@/stores/selection';
 import { useTripStore } from '@/stores/trip';
 import { colors, radii, screenPadding, spacing } from '@/theme';
-import { PlaceholderScreen, Skeleton, Toast } from '@/ui';
+import { Button, LoadError, Skeleton, Text, Toast } from '@/ui';
 
 /** Share of the screen the map shows above the half-height sheet (reference mockup, Plan). */
 const MAP_SHARE = 0.36;
@@ -59,6 +59,12 @@ const TOAST_BOTTOM = 49 + spacing.md;
 /** Demo sessions whose sample video has been opened: once per scenario load. */
 /** How long a scenario's sample video waits before its results sheet opens (TR-43). */
 const SAMPLE_OPEN_DELAY_MS = 600;
+
+/**
+ * The native tab bar floats over the bottom of the screen (iOS 26): the itinerary and Bucket List
+ * scroll their last row (and "Add a place") clear of it (TR-35).
+ */
+const FLOATING_TAB_BAR = 64;
 
 /** Until Settings has a units preference, temperatures follow the phone's region. */
 const UNIT = temperatureUnitForLocale(Intl.DateTimeFormat().resolvedOptions().locale);
@@ -239,7 +245,35 @@ export default function PlanScreen() {
   const mapHeight = Math.round(height * MAP_SHARE);
   const sheetHalf = Math.max(bodyHeight - mapHeight + SHEET_OVERLAP, 0);
 
-  if (!tripId) return <PlaceholderScreen title={tabTitle('plan')} />;
+  if (!tripId || trip.data === null) {
+    return (
+      <View
+        style={[styles.screen, styles.center, { paddingTop: insets.top }]}
+        testID="plan-no-trip"
+      >
+        <Text variant="largeTitle" accessibilityRole="header">
+          {tabTitle('plan')}
+        </Text>
+        <Text variant="body" tone="secondary" style={styles.centerText}>
+          {tripId
+            ? 'This trip is no longer in your account. Pick another one on Trips.'
+            : 'Pick a trip on Trips, or create one, to see its map and days here.'}
+        </Text>
+        <Button label="Go to Trips" variant="secondary" onPress={() => router.navigate('/trips')} />
+      </View>
+    );
+  }
+  if (trip.isError && !trip.data) {
+    return (
+      <View style={[styles.screen, styles.center, { paddingTop: insets.top }]}>
+        <LoadError
+          message="Couldn't load this trip. Check your connection."
+          onRetry={() => void trip.refetch()}
+          testID="plan-error"
+        />
+      </View>
+    );
+  }
 
   const weather = forecast.data ?? {};
   const bucketCount = trip.data?.bucketItems.length;
@@ -338,7 +372,7 @@ export default function PlanScreen() {
               reveal={selectedBy === 'map'}
               onSelect={pickRow}
               onOpenBucketList={() => selection.setPlanMode('bucket')}
-              bottomInset={insets.bottom + spacing.xl}
+              bottomInset={insets.bottom + FLOATING_TAB_BAR + spacing.lg}
               editing={editor.editing}
             />
           }
@@ -351,7 +385,7 @@ export default function PlanScreen() {
               onPlanAll={planAllBucket}
               notes={smart.notes}
               onAdd={actions.openSearch}
-              bottomInset={insets.bottom + spacing.xl}
+              bottomInset={insets.bottom + FLOATING_TAB_BAR + spacing.lg}
             />
           }
         />
@@ -388,6 +422,13 @@ export default function PlanScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
+  center: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.lg,
+    paddingHorizontal: screenPadding,
+  },
+  centerText: { textAlign: 'center' },
   headerLoading: { alignItems: 'center', paddingVertical: spacing.xs },
   pills: { paddingBottom: spacing.md },
   pillsLoading: { paddingHorizontal: screenPadding },

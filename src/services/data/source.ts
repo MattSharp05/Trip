@@ -25,7 +25,10 @@ export interface DataSource {
   readonly id: string;
   readonly kind: 'demo' | 'supabase';
   listTrips(): Promise<Trip[]>;
-  createTrip(trip: NewTrip): Promise<Trip>;
+  /** Adds a trip; the source assigns the id unless one is given (the sample trip, TR-35). */
+  createTrip(trip: NewTrip, id?: string): Promise<Trip>;
+  /** Deletes a trip with its bookings, itinerary, Bucket List, expenses and saved links. */
+  deleteTrip(id: string): Promise<void>;
   getTripData(tripId: string): Promise<TripData | null>;
   listDocuments(): Promise<TravelDocument[]>;
   saveDocument(document: DocumentInput): Promise<TravelDocument>;
@@ -34,6 +37,7 @@ export interface DataSource {
   deleteItineraryItem(id: string): Promise<void>;
   /** Adds a place (no id) or updates one; returns it with its id. */
   savePlace(place: PlaceInput): Promise<Place>;
+  deletePlace(id: string): Promise<void>;
   /** Adds a saved TikTok or Instagram link (no id) or updates one; returns it with its id. */
   saveLink(link: SavedLinkInput): Promise<SavedLink>;
   /** Saves a bucket item, with `saved_link_id` from `item.link`. */
@@ -76,13 +80,25 @@ export function createDemoSource(snapshot: DataSnapshot, name = 'demo'): DataSou
     async listTrips() {
       return copy([...db.trips].sort(byStart));
     },
-    async createTrip(input) {
+    async createTrip(input, id) {
       const trip: Trip = {
         ...copy(input),
-        id: `trip-${Date.now().toString(36)}-${db.trips.length}`,
+        id: id ?? `trip-${Date.now().toString(36)}-${db.trips.length}`,
       };
       db = { ...db, trips: [...db.trips, trip] };
       return copy(trip);
+    },
+    async deleteTrip(id) {
+      const other = <T extends { tripId: string }>(rows: T[]) =>
+        rows.filter((r) => r.tripId !== id);
+      db = {
+        ...db,
+        trips: db.trips.filter((t) => t.id !== id),
+        items: other(db.items),
+        bookings: other(db.bookings),
+        bucketItems: other(db.bucketItems),
+        expenses: other(db.expenses),
+      };
     },
     async getTripData(tripId) {
       const trip = db.trips.find((t) => t.id === tripId);
@@ -127,6 +143,14 @@ export function createDemoSource(snapshot: DataSnapshot, name = 'demo'): DataSou
       };
       db = { ...db, places: upsert(db.places, place) };
       return copy(place);
+    },
+    async deletePlace(id) {
+      // As in Postgres: rows that pointed at it keep going without a place.
+      db = {
+        ...db,
+        places: db.places.filter((p) => p.id !== id),
+        items: db.items.map((i) => (i.placeId === id ? { ...i, placeId: null } : i)),
+      };
     },
     async saveLink(input) {
       // Demo links live on the bucket items that point at them; nothing else lists them.

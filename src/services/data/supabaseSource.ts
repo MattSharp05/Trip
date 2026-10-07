@@ -141,12 +141,13 @@ export const supabaseSource: DataSource = {
     const rows = checkRow(await supabase.from('trips').select('*').order('start_date'));
     return rows.map(toTrip);
   },
-  async createTrip(trip) {
+  async createTrip(trip, id) {
     const supabase = client();
     const row = checkRow(
       await supabase
         .from('trips')
         .insert({
+          ...(id ? { id } : {}),
           city: trip.city,
           country: trip.country,
           lat: trip.lat,
@@ -161,6 +162,11 @@ export const supabaseSource: DataSource = {
         .single(),
     );
     return toTrip(row);
+  },
+  async deleteTrip(id) {
+    const supabase = client();
+    // Bookings, itinerary, Bucket List, expenses and saved links go with it (on delete cascade).
+    check(await supabase.from('trips').delete().eq('id', id));
   },
   async getTripData(tripId) {
     const supabase = client();
@@ -278,6 +284,10 @@ export const supabaseSource: DataSource = {
         .single(),
     );
     return toPlace(row);
+  },
+  async deletePlace(id) {
+    const supabase = client();
+    check(await supabase.from('places').delete().eq('id', id));
   },
   async saveBucketItem(item) {
     const supabase = client();
