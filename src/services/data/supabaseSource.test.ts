@@ -62,6 +62,8 @@ const itemRow = {
   kind: 'food',
   booking_id: null,
   fixed: false,
+  title: 'Brunch',
+  notes: 'Terrace table',
   created_at: '',
   updated_at: '',
 };
@@ -186,12 +188,16 @@ describe('supabase source', () => {
       kind: 'food',
       bookingId: null,
       fixed: false,
+      title: 'Brunch',
+      notes: 'Terrace table',
     });
-    expect(saved.startTime).toBe('10:00');
+    expect(saved).toMatchObject({ startTime: '10:00', title: 'Brunch', notes: 'Terrace table' });
     expect(mockUpserts.at(-1)).toMatchObject({
       trip_id: 't1',
       start_time: '10:00',
       place_id: 'p1',
+      title: 'Brunch',
+      notes: 'Terrace table',
     });
   });
 

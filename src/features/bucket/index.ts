@@ -1,4 +1,10 @@
-export { AddPlaceSheet, type AddMode, type AddPlaceSheetProps } from './AddPlaceSheet';
+export {
+  AddPlaceSheet,
+  SpotSearch,
+  type AddMode,
+  type AddPlaceSheetProps,
+  type SpotSearchProps,
+} from './AddPlaceSheet';
 export {
   bucketEntries,
   bucketPins,

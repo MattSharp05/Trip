@@ -29,6 +29,10 @@ export interface ItineraryEntry {
   symbol: SFSymbol;
   /** Getting to the next stop; null for the last stop, or when either stop has no map position. */
   leg: ItineraryLeg | null;
+  /** Keeps its time when the day is reordered (bookings, tickets). */
+  fixed: boolean;
+  /** Its time comes from a booking, so it can't be edited here. */
+  booked: boolean;
 }
 
 /** The estimated trip between two consecutive stops (`core/travel`). */
@@ -57,6 +61,10 @@ type ItineraryData = { places: Place[]; items: ItineraryItem[]; bookings: Bookin
 const byTime = (a: ItineraryItem, b: ItineraryItem) =>
   (a.startTime ?? '99:99').localeCompare(b.startTime ?? '99:99') || a.id.localeCompare(b.id);
 
+/** The day's items in visit order, as the timeline lists them. */
+export const dayItems = (items: ItineraryItem[], day: string) =>
+  items.filter((item) => item.day === day).sort(byTime);
+
 /** The first part of an address: the venue or street ("Paris Las Vegas", "255 Sands Ave"). */
 const area = (address: string | null) => address?.split(',')[0].trim() || null;
 
@@ -65,7 +73,7 @@ export function itineraryEntries({ places, items, bookings }: ItineraryData, day
   const placeById = new Map(places.map((p) => [p.id, p]));
   const bookingById = new Map(bookings.map((b) => [b.id, b]));
 
-  const dayItems = items.filter((item) => item.day === day).sort(byTime);
+  const ordered = dayItems(items, day);
   const position = (item: ItineraryItem) => {
     const place = item.placeId ? placeById.get(item.placeId) : undefined;
     return place && place.lat !== null && place.lng !== null
@@ -86,7 +94,7 @@ export function itineraryEntries({ places, items, bookings }: ItineraryData, day
     return { estimate, gap, tight: gap !== null && isTight(estimate, gap) };
   };
 
-  return dayItems.map((item, i): ItineraryEntry => {
+  return ordered.map((item, i): ItineraryEntry => {
     const place = item.placeId ? placeById.get(item.placeId) : undefined;
     const booking = item.bookingId ? bookingById.get(item.bookingId) : undefined;
     return {
@@ -98,7 +106,9 @@ export function itineraryEntries({ places, items, bookings }: ItineraryData, day
         booking?.type === 'flight' ? booking.data.flightNumber : area(place?.address ?? null),
       photo: place?.photoUrl ?? null,
       symbol: pinSymbol(place?.kind ?? item.kind),
-      leg: legAfter(item, dayItems[i + 1]),
+      leg: legAfter(item, ordered[i + 1]),
+      fixed: item.fixed,
+      booked: item.bookingId !== null,
     };
   });
 }

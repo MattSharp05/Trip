@@ -41,7 +41,7 @@ async function openPlan(scenario: string) {
 /** Each row's visible text, top to bottom. */
 const rows = () =>
   within(screen.getByTestId('itinerary-list'))
-    .getAllByRole('button')
+    .getAllByTestId(/^itinerary-row-/)
     .map((row) =>
       within(row)
         .queryAllByText(/./)

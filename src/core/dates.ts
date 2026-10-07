@@ -55,6 +55,12 @@ export const dayLabelLong = (day: string) => format(parseISO(day), 'EEEE, MMMM d
 export const timeLabel = (time: string) =>
   format(parse(time, 'HH:mm', new Date(2000, 0, 1)), 'h:mm a');
 
+/** A time picker's value for a wall-clock `HH:MM`; only its hours and minutes matter. */
+export const timeAsDate = (time: string) => parse(time, 'HH:mm', new Date(2000, 0, 1));
+
+/** The wall-clock `HH:MM` a time picker shows. */
+export const timeOfDate = (date: Date) => format(date, 'HH:mm');
+
 /** "Nov 12 – Nov 16, 2026", or "Dec 18, 2026 – Jan 6, 2027" across a new year. */
 export function dateRangeLabel(startDate: string, endDate: string): string {
   const start = parseISO(startDate);

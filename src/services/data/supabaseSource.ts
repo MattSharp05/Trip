@@ -74,6 +74,8 @@ const toItem = (r: Row<'itinerary_items'>): ItineraryItem => ({
   kind: r.kind as ItemKind,
   bookingId: r.booking_id,
   fixed: r.fixed,
+  ...(r.title ? { title: r.title } : {}),
+  notes: r.notes,
 });
 
 const toBooking = (r: Row<'bookings'>): Booking =>
@@ -225,6 +227,8 @@ export const supabaseSource: DataSource = {
           kind: item.kind,
           booking_id: item.bookingId,
           fixed: item.fixed,
+          title: item.title || null,
+          notes: item.notes || null,
         })
         .select()
         .single(),
