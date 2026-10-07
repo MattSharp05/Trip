@@ -17,7 +17,7 @@ export interface BucketRowProps {
   entry: BucketEntry;
   onPress: (entry: BucketEntry) => void;
   onDelete: (entry: BucketEntry) => void;
-  /** Smart Add's button (TR-29); nothing until then. */
+  /** Smart Add's button (TR-29). */
   action?: ReactNode;
 }
 
