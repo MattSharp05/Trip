@@ -27,7 +27,8 @@ interface PinMarkerProps {
 
 /**
  * One place: a round photo with a white ring, or the kind's symbol on orange; larger with an
- * orange ring and its label when selected; a small grey dot for other days' places.
+ * orange ring and its label when selected; a small grey dot for other days' places; an orange
+ * outline with the symbol in orange for a Bucket List place.
  */
 export const PinMarker = memo(function PinMarker({
   pin,
@@ -61,13 +62,18 @@ export const PinMarker = memo(function PinMarker({
               styles.circle,
               { width: size, height: size, borderRadius: size / 2 },
               style === 'symbol' && styles.symbol,
+              style === 'outline' && styles.outline,
               selected && styles.selected,
             ]}
           >
             {style === 'photo' && pin.photo ? (
               <Image source={{ uri: pin.photo }} style={styles.photo} recyclingKey={pin.id} />
             ) : (
-              <Icon name={pinSymbol(pin.kind)} size={selected ? 'lg' : 'md'} tone="onAccent" />
+              <Icon
+                name={pinSymbol(pin.kind)}
+                size={selected ? 'lg' : 'md'}
+                tone={style === 'outline' ? 'accent' : 'onAccent'}
+              />
             )}
           </View>
           {selected ? (
@@ -91,6 +97,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   symbol: { backgroundColor: mapColors.pinSymbolFill },
+  outline: { backgroundColor: mapColors.pinOutlineFill, borderColor: mapColors.pinOutlineRing },
   selected: { borderColor: mapColors.pinRingSelected },
   selectedBox: { width: LABEL_WIDTH, alignItems: 'center', gap: spacing.xs },
   photo: { width: '100%', height: '100%' },

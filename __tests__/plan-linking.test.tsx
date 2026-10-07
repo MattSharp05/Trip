@@ -157,7 +157,7 @@ describe('Plan itinerary on vegas-plan-day-2', () => {
     await openPlan('vegas-plan-day-2');
     fireEvent.press(screen.getByRole('tab', { name: 'Bucket List (5)' }));
     expect(screen.queryByTestId('itinerary-list')).toBeNull();
-    expect(screen.getByText('5 places saved for this trip.')).toBeTruthy();
+    expect(screen.getByTestId('bucket-list')).toBeTruthy();
     fireEvent.press(screen.getByRole('tab', { name: 'Itinerary' }));
     expect(screen.getByTestId('itinerary-list')).toBeTruthy();
   });
@@ -177,7 +177,7 @@ describe('Plan itinerary, other scenarios', () => {
   it('vegas-bucket opens on the Bucket List', async () => {
     await openPlan('vegas-bucket');
     expect(screen.getByRole('tab', { name: 'Bucket List (5)' })).toBeSelected();
-    expect(screen.getByTestId('bucket-slot')).toBeTruthy();
+    expect(screen.getByTestId('bucket-list')).toBeTruthy();
   });
 
   it("vegas-flight-day opens with the arrival selected and the flight's number", async () => {

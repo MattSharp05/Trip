@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import type { PlanMode } from '@/stores/selection';
 import { colors, radii, screenPadding, spacing } from '@/theme';
-import { Segmented, Text } from '@/ui';
+import { Segmented } from '@/ui';
 
 /** The sheet's two heights: over the lower part of the screen, or covering the map. */
 export const SHEET_HALF = 0;
@@ -85,19 +85,6 @@ export function PlanSheet({
   );
 }
 
-/** Until TR-27 builds the Bucket List, its segment says how many places are saved. */
-export function BucketListSlot({ count }: { count: number | undefined }) {
-  return (
-    <View style={styles.slot} testID="bucket-slot">
-      <Text variant="body" tone="secondary" style={styles.slotText}>
-        {count === undefined
-          ? ''
-          : `${count} ${count === 1 ? 'place' : 'places'} saved for this trip.`}
-      </Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   background: {
     backgroundColor: colors.surface,
@@ -110,6 +97,4 @@ const styles = StyleSheet.create({
   content: { flex: 1 },
   segmented: { paddingHorizontal: screenPadding, paddingBottom: spacing.sm },
   body: { flex: 1 },
-  slot: { paddingHorizontal: screenPadding * 2, paddingTop: spacing.xxl },
-  slotText: { textAlign: 'center' },
 });

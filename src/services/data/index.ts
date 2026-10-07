@@ -12,6 +12,7 @@ export {
   useSaveDocument,
   useSaveExpense,
   useSaveItineraryItem,
+  useSavePlace,
   useSaveTripBudget,
   useTripData,
   useTrips,

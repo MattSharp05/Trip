@@ -7,6 +7,8 @@ import type {
   ItineraryItem,
   Money,
   NewTrip,
+  Place,
+  PlaceInput,
   TravelDocument,
   Trip,
   TripData,
@@ -28,6 +30,8 @@ export interface DataSource {
   deleteDocument(id: string): Promise<void>;
   saveItineraryItem(item: ItineraryItem): Promise<ItineraryItem>;
   deleteItineraryItem(id: string): Promise<void>;
+  /** Adds a place (no id) or updates one; returns it with its id. */
+  savePlace(place: PlaceInput): Promise<Place>;
   saveBucketItem(item: BucketItem): Promise<BucketItem>;
   deleteBucketItem(id: string): Promise<void>;
   saveExpense(expense: Expense): Promise<Expense>;
@@ -106,6 +110,14 @@ export function createDemoSource(snapshot: DataSnapshot, name = 'demo'): DataSou
     },
     async deleteItineraryItem(id) {
       db = { ...db, items: db.items.filter((i) => i.id !== id) };
+    },
+    async savePlace(input) {
+      const place: Place = {
+        ...copy(input),
+        id: input.id ?? `place-${Date.now().toString(36)}-${db.places.length}`,
+      };
+      db = { ...db, places: upsert(db.places, place) };
+      return copy(place);
     },
     async saveBucketItem(item) {
       db = { ...db, bucketItems: upsert(db.bucketItems, copy(item)) };
