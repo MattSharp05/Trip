@@ -5,7 +5,9 @@ import {
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
 import { useCallback, useEffect, useRef, type ReactNode } from 'react';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { FullWindowOverlay } from 'react-native-screens';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, radii, spacing } from '@/theme';
@@ -14,6 +16,19 @@ import { Text } from './Text';
 
 const RETRY_MS = 400;
 const RETRIES = 5;
+
+/**
+ * On iOS the sheet draws in a full-window overlay: from the provider at the root it would sit under
+ * the native tab and stack views and never show (TR-43). The overlay needs its own gesture root.
+ */
+function OverlayContainer({ children }: { children?: ReactNode }) {
+  return (
+    <FullWindowOverlay>
+      <GestureHandlerRootView style={StyleSheet.absoluteFill}>{children}</GestureHandlerRootView>
+    </FullWindowOverlay>
+  );
+}
+const containerComponent = Platform.OS === 'ios' ? OverlayContainer : undefined;
 
 export interface SheetProps {
   open: boolean;
@@ -74,6 +89,7 @@ export function Sheet({ open, onClose, title, children, testID }: SheetProps) {
       ref={ref}
       onDismiss={handleDismiss}
       onChange={handleChange}
+      containerComponent={containerComponent}
       backdropComponent={renderBackdrop}
       backgroundStyle={styles.background}
       handleIndicatorStyle={styles.handle}

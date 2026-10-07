@@ -9,6 +9,12 @@ tags:
     env:
       SCENARIO: vegas-bucket
       READY_ID: bucket-list
+# Drag the Plan sheet up by its day header: a plain scroll would move the map.
+- swipe:
+    from:
+      id: day-header
+    direction: UP
+- waitForAnimationToEnd
 - scrollUntilVisible:
     element:
       id: bucket-add
