@@ -11,7 +11,7 @@ name: E2E
 
 on:
   push:
-    branches: [main, tr-8/maestro-e2e] # TEMP (TR-8 verification): branch trigger removed before review
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -111,7 +111,6 @@ jobs:
       - name: Run the flows
         run: |
           mkdir -p e2e-out
-          touch "$RUNNER_TEMP/started"
           maestro test --format junit --output e2e-out/report.xml --test-output-dir e2e-out \
             maestro/smoke.yaml maestro/shots maestro/plan-linking.yaml
 
@@ -119,9 +118,8 @@ jobs:
         if: always()
         run: |
           mkdir -p e2e-screenshots
-          # takeScreenshot writes next to the run (or into the test output dir, by Maestro version).
-          find . -name '*.png' -newer "$RUNNER_TEMP/started" -not -path './node_modules/*' \
-            -not -path './e2e-screenshots/*' -exec cp {} e2e-screenshots/ \; || true
+          # The flows' takeScreenshot pictures only; Maestro's debug captures stay in e2e-report.
+          find e2e-out -path '*/takeScreenshot/*.png' -exec cp {} e2e-screenshots/ \; || true
           ls -1 e2e-screenshots
       - uses: actions/upload-artifact@v4
         if: always()

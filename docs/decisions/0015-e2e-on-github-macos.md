@@ -29,4 +29,8 @@ runners cost nothing.
   company's Apple account; that is a native change (one new e2e build).
 - If the repo goes private, macOS minutes count 10× against GitHub's free minutes: switch the job
   to `workflow_dispatch` only, or move to a paid Expo plan and EAS's `maestro` job.
-- A run with a new fingerprint waits in the free plan's low-priority build queue.
+- Measured on the branch (2026-10-07): a run that reuses the build takes ~13–19 min (simulator
+  boot 5–8 min, flows ~3 min); a run with a new fingerprint ~22 min (EAS build ~9 min, including
+  the free plan's queue). Both stay under the 30-minute limit for running on every push.
+- iOS asks "Open in Trip?" for `trip://` links: flows open links through `maestro/open-link.yaml`,
+  which accepts it (and retries the link once a slow simulator times out).
