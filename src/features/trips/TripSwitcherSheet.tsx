@@ -6,7 +6,7 @@ import { filterTrips } from '@/core/trips';
 import { useTrips, type Trip } from '@/services/data';
 import { useSelectionStore } from '@/stores/selection';
 import { colors, spacing } from '@/theme';
-import { Icon, Sheet, Skeleton, Text } from '@/ui';
+import { Icon, LoadError, Sheet, Skeleton, Text } from '@/ui';
 
 import { useChooseTrip } from './selectedTrip';
 
@@ -39,7 +39,7 @@ export function TripSwitcherSheet({
   allUpcoming,
   testID = 'trip-switcher',
 }: TripSwitcherSheetProps) {
-  const { data: trips, isPending } = useTrips();
+  const { data: trips, isPending, isError, refetch } = useTrips();
   const chooseTrip = useChooseTrip();
 
   const choose = (trip: Trip) => {
@@ -76,6 +76,11 @@ export function TripSwitcherSheet({
               <Skeleton key={i} height={52} radius="card" />
             ))}
           </View>
+        ) : isError && !trips ? (
+          <LoadError
+            message="Couldn't load your trips. Check your connection."
+            onRetry={() => void refetch()}
+          />
         ) : (
           groups.map((group) => (
             <View key={group.title} style={styles.group}>
