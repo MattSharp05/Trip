@@ -12,6 +12,9 @@ import { colors, radii, spacing } from '@/theme';
 
 import { Text } from './Text';
 
+const RETRY_MS = 400;
+const RETRIES = 5;
+
 export interface SheetProps {
   open: boolean;
   /** Called when the user drags the sheet down or taps the backdrop; set `open` to false. */
@@ -30,15 +33,32 @@ export function Sheet({ open, onClose, title, children, testID }: SheetProps) {
   const insets = useSafeAreaInsets();
 
   const openRef = useRef(open);
+  const shown = useRef(false);
 
   useEffect(() => {
     openRef.current = open;
-    if (open) ref.current?.present();
-    else ref.current?.dismiss();
+    if (!open) {
+      ref.current?.dismiss();
+      return;
+    }
+    ref.current?.present();
+    // A present() during a screen transition can be dropped (TR-43): try again while the sheet
+    // hasn't appeared.
+    let tries = 0;
+    const timer = setInterval(() => {
+      if (shown.current || !openRef.current || ++tries > RETRIES) clearInterval(timer);
+      else ref.current?.present();
+    }, RETRY_MS);
+    return () => clearInterval(timer);
   }, [open]);
+
+  const handleChange = useCallback((index: number) => {
+    shown.current = index >= 0;
+  }, []);
 
   // Only report dismissals the parent didn't ask for (drag down, backdrop tap).
   const handleDismiss = useCallback(() => {
+    shown.current = false;
     if (openRef.current) onClose();
   }, [onClose]);
 
@@ -53,6 +73,7 @@ export function Sheet({ open, onClose, title, children, testID }: SheetProps) {
     <BottomSheetModal
       ref={ref}
       onDismiss={handleDismiss}
+      onChange={handleChange}
       backdropComponent={renderBackdrop}
       backgroundStyle={styles.background}
       handleIndicatorStyle={styles.handle}

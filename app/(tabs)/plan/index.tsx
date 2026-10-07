@@ -1,6 +1,6 @@
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { InteractionManager, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { tripDays } from '@/core/dates';
@@ -57,8 +57,6 @@ const TOP_ESTIMATE = 140;
 const TOAST_BOTTOM = 49 + spacing.md;
 
 /** Demo sessions whose sample video has been opened: once per scenario load. */
-const openedSamples = new WeakSet<DataSource>();
-
 /** Until Settings has a units preference, temperatures follow the phone's region. */
 const UNIT = temperatureUnitForLocale(Intl.DateTimeFormat().resolvedOptions().locale);
 
@@ -168,19 +166,31 @@ export default function PlanScreen() {
     },
     [closeAddSheet, openLink],
   );
-  // A scenario can open straight on the results for a sample video.
+  // A scenario can open straight on the results for a sample video: once this screen is focused
+  // with its trip loaded and the tab switch has finished (TR-43: opened during the scenario link's
+  // redirect, the sheet never showed). Every Plan screen that mounts opens it; it is used up only
+  // when the sheet this screen opened closes (saved or dismissed), so a screen torn down by the
+  // redirect doesn't use it up for the one that stays.
   const source = useDataSource();
+  const tripLoaded = trip.data !== undefined;
+  const sampleOpened = useRef<DataSource | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      const sample = useScenarioStore.getState().view.linkSample;
+      if (!sample || source.kind !== 'demo' || !tripLoaded || sampleOpened.current === source)
+        return;
+      const task = InteractionManager.runAfterInteractions(() => {
+        sampleOpened.current = source;
+        openLink(LINK_SAMPLES[sample].result.url);
+      });
+      return () => task.cancel();
+    }, [openLink, source, tripLoaded]),
+  );
   useEffect(() => {
-    const sample = useScenarioStore.getState().view.linkSample;
-    if (!sample || source.kind !== 'demo' || openedSamples.has(source)) return;
-    // On the next tick, and only marked as opened then: if this first Plan screen is torn down at
-    // once (the scenario link's redirect), the one that stays still opens the sheet (TR-41).
-    const timer = setTimeout(() => {
-      openedSamples.add(source);
-      openLink(LINK_SAMPLES[sample].result.url);
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [openLink, source]);
+    if (sampleOpened.current !== source || links.isOpen) return;
+    const { view } = useScenarioStore.getState();
+    if (view.linkSample) useScenarioStore.setState({ view: { ...view, linkSample: undefined } });
+  }, [links.isOpen, source]);
 
   // Smart Add (TR-29): the new stop's day opens with it selected, so the map flies to it.
   const smart = useSmartAdd(tripId, trip.data);
