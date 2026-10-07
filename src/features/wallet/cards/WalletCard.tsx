@@ -1,4 +1,5 @@
 import type { SFSymbol } from 'expo-symbols';
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { colors, continuous, radii, spacing } from '@/theme';
@@ -12,13 +13,15 @@ export interface WalletCardProps {
   title: string;
   /** Up to two grey lines under the title. */
   lines: readonly string[];
+  /** Shown before the chevron, e.g. a flight's live status pill. */
+  accessory?: ReactNode;
   /** Makes the card tappable and shows a chevron. */
   onPress?: () => void;
   testID?: string;
 }
 
 /** The shared shell of every wallet card: badge, title and detail lines, chevron. */
-export function WalletCard({ badge, title, lines, onPress, testID }: WalletCardProps) {
+export function WalletCard({ badge, title, lines, accessory, onPress, testID }: WalletCardProps) {
   const content = (
     <>
       <View style={styles.badge}>
@@ -40,6 +43,7 @@ export function WalletCard({ badge, title, lines, onPress, testID }: WalletCardP
           </Text>
         ))}
       </View>
+      {accessory}
       {onPress ? <Icon name="chevron.right" size="sm" tone="secondary" /> : null}
     </>
   );

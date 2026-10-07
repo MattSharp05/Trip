@@ -3,11 +3,12 @@
 // Management API, so they never ship in the app (TDD → Environments & deploy). Only the names below
 // are sent, and only when set; values are never printed.
 //
-//   SUPABASE_ACCESS_TOKEN=… UNSPLASH_ACCESS_KEY=… GEMINI_API_KEY=… node scripts/supabase-secrets.mjs
+//   SUPABASE_ACCESS_TOKEN=… UNSPLASH_ACCESS_KEY=… GEMINI_API_KEY=… FLIGHT_STATUS_API_KEY=… \
+//     node scripts/supabase-secrets.mjs
 
 import { api } from './supabase-api.mjs';
 
-const NAMES = ['UNSPLASH_ACCESS_KEY', 'GEMINI_API_KEY'];
+const NAMES = ['UNSPLASH_ACCESS_KEY', 'GEMINI_API_KEY', 'FLIGHT_STATUS_API_KEY'];
 
 try {
   const secrets = NAMES.filter((name) => process.env[name]).map((name) => ({

@@ -82,8 +82,10 @@ describe('Plan on a travel day', () => {
     expect(card.getByText('11:02 AM')).toBeTruthy();
     // The card sits at the top of the sheet, over the day header.
     expect(within(screen.getByTestId('plan-sheet')).getByTestId('flight-card')).toBeTruthy();
-    // TR-26 fills the status slot; it's empty until then.
-    expect(screen.getByTestId('flight-card-status').props.children).toBeUndefined();
+    // TR-26: the status slot holds the live status pill (the demo status: on time).
+    expect(
+      await within(screen.getByTestId('flight-card-status')).findByText('On time'),
+    ).toBeTruthy();
   });
 
   it('the plane button shows the flight, and the Map pill goes back to the city map', async () => {

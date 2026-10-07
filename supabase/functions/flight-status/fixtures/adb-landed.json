@@ -1,0 +1,82 @@
+[
+  {
+    "greatCircleDistance": {
+      "meter": 3159612.3,
+      "km": 3159.6,
+      "mile": 1963.3,
+      "nm": 1706.1,
+      "feet": 10366182.0
+    },
+    "departure": {
+      "airport": {
+        "icao": "KTPA",
+        "iata": "TPA",
+        "name": "Tampa",
+        "shortName": "Tampa",
+        "municipalityName": "Tampa",
+        "location": {
+          "lat": 27.9755,
+          "lon": -82.5332
+        },
+        "countryCode": "US",
+        "timeZone": "America/New_York"
+      },
+      "scheduledTime": {
+        "utc": "2026-11-12 14:05Z",
+        "local": "2026-11-12 09:05-05:00"
+      },
+      "terminal": "E",
+      "gate": "E75",
+      "quality": ["Basic", "Live"],
+      "runwayTime": {
+        "utc": "2026-11-12 14:24Z",
+        "local": "2026-11-12 09:24-05:00"
+      },
+      "revisedTime": {
+        "utc": "2026-11-12 14:12Z",
+        "local": "2026-11-12 09:12-05:00"
+      }
+    },
+    "arrival": {
+      "airport": {
+        "icao": "KLAS",
+        "iata": "LAS",
+        "name": "Las Vegas, Harry Reid",
+        "shortName": "Harry Reid",
+        "municipalityName": "Las Vegas",
+        "location": {
+          "lat": 36.084,
+          "lon": -115.1537
+        },
+        "countryCode": "US",
+        "timeZone": "America/Los_Angeles"
+      },
+      "scheduledTime": {
+        "utc": "2026-11-12 19:02Z",
+        "local": "2026-11-12 11:02-08:00"
+      },
+      "terminal": "1",
+      "quality": ["Basic", "Live"],
+      "revisedTime": {
+        "utc": "2026-11-12 19:14Z",
+        "local": "2026-11-12 11:14-08:00"
+      },
+      "gate": "D7",
+      "baggageBelt": "12"
+    },
+    "lastUpdatedUtc": "2026-11-12 19:20Z",
+    "number": "AA 2410",
+    "callSign": "AAL2410",
+    "status": "Arrived",
+    "codeshareStatus": "IsOperator",
+    "isCargo": false,
+    "aircraft": {
+      "model": "Boeing 737-800"
+    },
+    "airline": {
+      "name": "American",
+      "iata": "AA",
+      "icao": "AAL"
+    }
+  }
+]
