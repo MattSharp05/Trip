@@ -41,6 +41,8 @@ export interface TripMapProps {
   onPinPress?: (id: string) => void;
   /** Touch and hold on the map (not on a pin): where the finger was. */
   onLongPress?: (coordinate: LngLat) => void;
+  /** A travel day: adds the plane button to the map's controls (TR-23). */
+  onShowFlight?: () => void;
   ref?: Ref<TripMapHandle>;
   testID?: string;
 }

@@ -1,8 +1,10 @@
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { tripDays } from '@/core/dates';
+import { dayFlight } from '@/core/flights';
 import { tabTitle } from '@/core/tabs';
 import { temperatureUnitForLocale } from '@/core/weather';
 import {
@@ -14,9 +16,11 @@ import {
   type BucketEntry,
 } from '@/features/bucket';
 import { TripDayMap, type TripMapHandle } from '@/features/map';
+import { FlightGlobe } from '@/features/map/globe';
 import {
   DatePills,
   DayHeader,
+  FlightCard,
   Itinerary,
   itemForPin,
   itineraryEntries,
@@ -45,6 +49,7 @@ const UNIT = temperatureUnitForLocale(Intl.DateTimeFormat().resolvedOptions().lo
 
 export default function PlanScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { height } = useWindowDimensions();
   const tripId = useTripStore((s) => s.selectedTripId);
   const trip = useTripData(tripId);
@@ -60,6 +65,15 @@ export default function PlanScreen() {
     [trip.data, selectedDay],
   );
   const selectedPlace = entries?.find((e) => e.id === selectedItemId)?.placeId ?? null;
+
+  // A travel day (TR-23): the plane button or the flight's row swaps the map for the globe.
+  const flight = useMemo(
+    () => (trip.data && selectedDay ? dayFlight(trip.data, selectedDay) : null),
+    [trip.data, selectedDay],
+  );
+  const [globeDay, setGlobeDay] = useState<string | null>(null);
+  const showFlight = useCallback(() => setGlobeDay(selectedDay), [selectedDay]);
+  const showMap = useCallback(() => setGlobeDay(null), []);
 
   // Every pick, from the list or the map, flies the map to the item's place.
   const flown = useRef(picks);
@@ -78,7 +92,14 @@ export default function PlanScreen() {
     },
     [items, selectedDay, selectItem],
   );
-  const pickRow = useCallback((itemId: string) => selectItem(itemId, 'list'), [selectItem]);
+  const pickRow = useCallback(
+    (itemId: string) => {
+      // The flight's row shows it on the globe; any other stop goes back to the map.
+      setGlobeDay(flight && itemId === flight.itemId ? selectedDay : null);
+      selectItem(itemId, 'list');
+    },
+    [flight, selectedDay, selectItem],
+  );
 
   // The selected pill again re-frames the day (the map re-frames itself on a new day).
   const pickDay = useCallback(
@@ -86,6 +107,7 @@ export default function PlanScreen() {
       if (day === selectedDay && entries) {
         map.current?.fitTo(entries.flatMap((e) => e.placeId ?? []));
       }
+      if (day !== selectedDay) setGlobeDay(null);
       selectDay(day);
     },
     [selectedDay, entries, selectDay],
@@ -111,6 +133,14 @@ export default function PlanScreen() {
 
   const weather = forecast.data ?? {};
   const bucketCount = trip.data?.bucketItems.length;
+  const onGlobe = flight !== null && !inBucket && globeDay === selectedDay;
+  const dayHeader = selectedDay ? (
+    <DayHeader day={selectedDay} weather={weather[selectedDay]} unit={UNIT} />
+  ) : (
+    <View style={styles.dayLoading}>
+      <Skeleton width={140} height={28} />
+    </View>
+  );
   const near =
     info && info.lat !== null && info.lng !== null ? { lat: info.lat, lng: info.lng } : null;
 
@@ -140,7 +170,9 @@ export default function PlanScreen() {
       </View>
       <View style={styles.body} onLayout={(e) => setBodyHeight(e.nativeEvent.layout.height)}>
         <View style={{ height: mapHeight }}>
-          {trip.data && selectedDay ? (
+          {onGlobe ? (
+            <FlightGlobe key={flight.bookingId} route={flight} onShowMap={showMap} />
+          ) : trip.data && selectedDay ? (
             <TripDayMap
               ref={map}
               data={trip.data}
@@ -150,6 +182,7 @@ export default function PlanScreen() {
               extraPins={inBucket ? savedPins : undefined}
               fitIds={inBucket && savedIds.length ? savedIds : undefined}
               onLongPress={inBucket ? actions.dropPin : undefined}
+              onShowFlight={flight && !inBucket ? showFlight : undefined}
             />
           ) : (
             <Skeleton height={mapHeight} radius="sm" testID="map-loading" />
@@ -162,12 +195,20 @@ export default function PlanScreen() {
           onModeChange={selection.setPlanMode}
           bucketCount={bucketCount}
           header={
-            selectedDay ? (
-              <DayHeader day={selectedDay} weather={weather[selectedDay]} unit={UNIT} />
+            onGlobe ? (
+              <>
+                <FlightCard
+                  flight={flight.flight}
+                  onPress={() =>
+                    router.push(`/organize/flight/${encodeURIComponent(flight.bookingId)}`, {
+                      withAnchor: true,
+                    })
+                  }
+                />
+                {dayHeader}
+              </>
             ) : (
-              <View style={styles.dayLoading}>
-                <Skeleton width={140} height={28} />
-              </View>
+              dayHeader
             )
           }
           itinerary={

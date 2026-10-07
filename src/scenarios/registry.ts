@@ -104,6 +104,13 @@ export const SCENARIOS: readonly Scenario[] = [
     view: { day: '2026-11-12', itemId: 'item-01', planMode: 'itinerary' },
   }),
   vegas({
+    name: 'vegas-flight-home',
+    description: 'Mon Nov 16 at 9:00 AM in Las Vegas, the day AA 2411 flies home to Tampa.',
+    tab: 'plan',
+    today: '2026-11-16T09:00:00-08:00',
+    view: { day: '2026-11-16', itemId: 'item-15', planMode: 'itinerary' },
+  }),
+  vegas({
     name: 'vegas-free-day',
     data: vegasFreeSaturday,
     description: 'Plan tab on Sat Nov 14 with nothing planned: the free-day state.',

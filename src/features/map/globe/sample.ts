@@ -1,11 +1,12 @@
-/** The plane flies the arc in `flightMs`, then waits at the gate until `loopMs`. */
-export const planeTiming = { flightMs: 7000, loopMs: 8000 } as const;
+import type { GlobeRoute } from './AppleGlobe';
+
+export { planeTiming } from '@/core/flights';
 
 /**
- * The sample flight from the TR-5 spike: Tampa to Las Vegas (TPA → LAS). TR-23 replaces it with
- * the trip's real flights.
+ * The sample flight from the TR-5 spike: Tampa to Las Vegas (TPA → LAS). The Plan tab's flight
+ * globe shows the trip's real flights; this is the default when no route is given.
  */
-export const flight = {
+export const flight: GlobeRoute = {
   from: { lat: 27.9755, lng: -82.5332, code: 'TPA', city: 'Tampa' },
   to: { lat: 36.084, lng: -115.1537, code: 'LAS', city: 'Las Vegas' },
-} as const;
+};

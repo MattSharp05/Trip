@@ -18,6 +18,8 @@ export interface TripDayMapProps {
   /** What the map frames instead of the day's route (e.g. the extra pins). */
   fitIds?: string[];
   onLongPress?: (coordinate: LngLat) => void;
+  /** A travel day: the plane button that shows the flight on the globe. */
+  onShowFlight?: () => void;
   ref?: Ref<TripMapHandle>;
 }
 
@@ -30,6 +32,7 @@ export function TripDayMap({
   extraPins,
   fitIds,
   onLongPress,
+  onShowFlight,
   ref,
 }: TripDayMapProps) {
   const { pins, routeIds, dimmedIds } = useMemo(() => dayPins(data, focusDay), [data, focusDay]);
@@ -44,6 +47,7 @@ export function TripDayMap({
       pins={allPins}
       fitIds={fitIds}
       onLongPress={onLongPress}
+      onShowFlight={onShowFlight}
       routeIds={routeIds}
       dimmedIds={dimmedIds}
       selectedId={selectedId}
