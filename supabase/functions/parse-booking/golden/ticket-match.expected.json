@@ -1,0 +1,22 @@
+{
+  "type": "ticket",
+  "event": "Lisboa Lions vs Porto Pilots",
+  "venue": {
+    "name": "Estádio do Exemplo",
+    "address": null,
+    "city": "Lisbon",
+    "country": "Portugal"
+  },
+  "starts": {
+    "date": "2026-05-08",
+    "time": "20:45"
+  },
+  "section": "N3",
+  "row": "12",
+  "seats": "7",
+  "confirmation": "EX-99120",
+  "price": {
+    "amount": 90.0,
+    "currency": "EUR"
+  }
+}

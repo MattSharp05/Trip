@@ -1,0 +1,67 @@
+name: Parse accuracy
+
+# Booking-import accuracy on the golden set (TR-28, ADR 0004, ADR 0020): runs the 12 made-up
+# bookings in supabase/functions/parse-booking/golden/ through the deployed `parse-booking` function
+# (Gemini free tier) and scores the answers field by field. On demand only: each run spends 12
+# calls of the free daily quota. The scorer itself is checked on every PR by Jest
+# (scripts/parse-accuracy.test.ts, canned answers, no network).
+# Needs the SUPABASE_ACCESS_TOKEN repo secret and GEMINI_API_KEY stored as a function secret
+# (`GEMINI_API_KEY=… npm run db:secrets`). The report is the job summary and the
+# `parse-accuracy` artifact (docs/parse-accuracy.md, plus the answers when "record" is ticked).
+
+on:
+  workflow_dispatch:
+    inputs:
+      min:
+        description: Fail below this overall accuracy (%)
+        default: '90'
+      record:
+        description: Also save the answers (artifact) to commit as golden/recorded/
+        type: boolean
+        default: false
+
+concurrency:
+  group: parse-accuracy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  accuracy:
+    name: Golden set through parse-booking
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: wghftsubdrkxfzysovou
+    steps:
+      - name: Require the SUPABASE_ACCESS_TOKEN secret
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "::error title=SUPABASE_ACCESS_TOKEN missing::Add the SUPABASE_ACCESS_TOKEN repository secret (GitHub → Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Score the golden set
+        env:
+          MIN: ${{ inputs.min }}
+          RECORD: ${{ inputs.record && '--record' || '' }}
+        run: node scripts/parse-accuracy.mjs --min "$MIN" $RECORD
+      - name: Job summary
+        if: always()
+        run: |
+          if [ -f docs/parse-accuracy.md ]; then cat docs/parse-accuracy.md >> "$GITHUB_STEP_SUMMARY"; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: parse-accuracy
+          path: |
+            docs/parse-accuracy.md
+            supabase/functions/parse-booking/golden/recorded/
+          if-no-files-found: warn

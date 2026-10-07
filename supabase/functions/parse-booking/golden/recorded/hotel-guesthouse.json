@@ -1,0 +1,29 @@
+{
+  "booking": {
+    "type": "hotel",
+    "hotel": {
+      "name": "Pensão Azul",
+      "address": "Rua do Exemplo 12, 1100-001 Lisboa",
+      "city": "lisbon",
+      "country": "Portugal"
+    },
+    "checkIn": {
+      "date": "2026-05-04",
+      "time": "14:00"
+    },
+    "checkOut": {
+      "date": "2026-05-10",
+      "time": "12:00"
+    },
+    "confirmation": "88231",
+    "room": "Double Room, River View",
+    "phone": null,
+    "website": null,
+    "email": null,
+    "price": {
+      "amount": 540.0,
+      "currency": "EUR"
+    }
+  },
+  "uncertain": []
+}

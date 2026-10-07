@@ -1,0 +1,28 @@
+{
+  "booking": {
+    "type": "car",
+    "company": "Roadrunner Rentals",
+    "pickupLocation": {
+      "name": "Las Vegas Airport (LAS) Rent-A-Car Center",
+      "address": "7135 Example Rd",
+      "city": "Las Vegas",
+      "country": "United States"
+    },
+    "returnLocation": null,
+    "pickup": {
+      "date": "2026-11-12",
+      "time": "11:00"
+    },
+    "dropoff": {
+      "date": "2026-11-15",
+      "time": "09:00"
+    },
+    "confirmation": "RR-20931",
+    "vehicle": "Toyota Corolla or similar",
+    "price": {
+      "amount": 198.33,
+      "currency": "USD"
+    }
+  },
+  "uncertain": []
+}
