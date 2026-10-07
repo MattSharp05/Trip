@@ -1,11 +1,12 @@
+import type { DistanceUnit } from '@/core/travel';
 import { temperatureUnitForLocale, type TemperatureUnit } from '@/core/weather';
+
+export type { DistanceUnit };
 
 /**
  * The traveller's display preferences (TR-11). A real account keeps them in its Supabase auth
  * `user_metadata.preferences`; a scenario demo session keeps them in memory.
  */
-export type DistanceUnit = 'miles' | 'km';
-
 export interface Preferences {
   temperatureUnit: TemperatureUnit;
   distanceUnit: DistanceUnit;

@@ -1,6 +1,16 @@
 import type { SFSymbol } from 'expo-symbols';
 
 import { timeLabel } from '@/core/dates';
+import {
+  distanceLabel,
+  durationLabel,
+  gapMinutes,
+  isTight,
+  travelEstimate,
+  travelLabel,
+  type DistanceUnit,
+  type TravelEstimate,
+} from '@/core/travel';
 import { pinSymbol } from '@/features/map';
 import type { Booking, ItineraryItem, Place } from '@/services/data/types';
 
@@ -17,6 +27,28 @@ export interface ItineraryEntry {
   photo: string | null;
   /** Drawn on the thumbnail when there's no photo. */
   symbol: SFSymbol;
+  /** Getting to the next stop; null for the last stop, or when either stop has no map position. */
+  leg: ItineraryLeg | null;
+}
+
+/** The estimated trip between two consecutive stops (`core/travel`). */
+export interface ItineraryLeg {
+  estimate: TravelEstimate;
+  /** Free minutes between the stops; null when either has no time. */
+  gap: number | null;
+  /** The trip takes longer than the gap. */
+  tight: boolean;
+}
+
+/** "6 min walk · 0.3 mi", or when it doesn't fit: "Tight: 25 min drive, 15 min gap". */
+export function legCaption(leg: ItineraryLeg, unit: DistanceUnit): string {
+  const travel = travelLabel(leg.estimate);
+  if (!leg.tight || leg.gap === null) {
+    return `${travel} · ${distanceLabel(leg.estimate.distanceKm, unit)}`;
+  }
+  return leg.gap > 0
+    ? `Tight: ${travel}, ${durationLabel(leg.gap)} gap`
+    : `Tight: ${travel}, no gap`;
 }
 
 type ItineraryData = { places: Place[]; items: ItineraryItem[]; bookings: Booking[] };
@@ -33,23 +65,42 @@ export function itineraryEntries({ places, items, bookings }: ItineraryData, day
   const placeById = new Map(places.map((p) => [p.id, p]));
   const bookingById = new Map(bookings.map((b) => [b.id, b]));
 
-  return items
-    .filter((item) => item.day === day)
-    .sort(byTime)
-    .map((item): ItineraryEntry => {
-      const place = item.placeId ? placeById.get(item.placeId) : undefined;
-      const booking = item.bookingId ? bookingById.get(item.bookingId) : undefined;
-      return {
-        id: item.id,
-        placeId: place ? place.id : null,
-        time: item.startTime ? timeLabel(item.startTime) : null,
-        title: item.title || place?.name || 'Untitled stop',
-        subtitle:
-          booking?.type === 'flight' ? booking.data.flightNumber : area(place?.address ?? null),
-        photo: place?.photoUrl ?? null,
-        symbol: pinSymbol(place?.kind ?? item.kind),
-      };
-    });
+  const dayItems = items.filter((item) => item.day === day).sort(byTime);
+  const position = (item: ItineraryItem) => {
+    const place = item.placeId ? placeById.get(item.placeId) : undefined;
+    return place && place.lat !== null && place.lng !== null
+      ? { lat: place.lat, lng: place.lng }
+      : null;
+  };
+
+  const legAfter = (item: ItineraryItem, next: ItineraryItem | undefined): ItineraryLeg | null => {
+    if (!next || item.placeId === next.placeId) return null;
+    const from = position(item);
+    const to = position(next);
+    if (!from || !to) return null;
+    const estimate = travelEstimate(from, to);
+    const gap =
+      item.startTime && next.startTime
+        ? gapMinutes(item.startTime, item.durationMinutes ?? 0, next.startTime)
+        : null;
+    return { estimate, gap, tight: gap !== null && isTight(estimate, gap) };
+  };
+
+  return dayItems.map((item, i): ItineraryEntry => {
+    const place = item.placeId ? placeById.get(item.placeId) : undefined;
+    const booking = item.bookingId ? bookingById.get(item.bookingId) : undefined;
+    return {
+      id: item.id,
+      placeId: place ? place.id : null,
+      time: item.startTime ? timeLabel(item.startTime) : null,
+      title: item.title || place?.name || 'Untitled stop',
+      subtitle:
+        booking?.type === 'flight' ? booking.data.flightNumber : area(place?.address ?? null),
+      photo: place?.photoUrl ?? null,
+      symbol: pinSymbol(place?.kind ?? item.kind),
+      leg: legAfter(item, dayItems[i + 1]),
+    };
+  });
 }
 
 /**

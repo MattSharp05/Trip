@@ -66,6 +66,16 @@ const vegasBoardingPass: DataSnapshot = {
   ),
 };
 
+/** Friday with the Sphere moved to 1:05 PM: 5 minutes after the fountains for a 9 min drive. */
+const vegasTightFriday: DataSnapshot = {
+  ...vegasSnapshot,
+  items: vegasSnapshot.items.map((item) =>
+    item.day === '2026-11-13' && item.placeId === 'place-sphere'
+      ? { ...item, startTime: '13:05' }
+      : item,
+  ),
+};
+
 const vegas = (
   s: Omit<Scenario, 'data' | 'tripId' | 'today'> & { today?: string; data?: DataSnapshot },
 ): Scenario => ({
@@ -86,6 +96,13 @@ export const SCENARIOS: readonly Scenario[] = [
   vegas({
     name: 'vegas-plan-day-2',
     description: 'Plan tab, Las Vegas, Fri Nov 13: brunch, fountains, Sphere, Carbone.',
+    tab: 'plan',
+    view: { day: '2026-11-13', planMode: 'itinerary' },
+  }),
+  vegas({
+    name: 'vegas-plan-tight',
+    data: vegasTightFriday,
+    description: 'Plan tab, Fri Nov 13 with the Sphere at 1:05 PM: a tight leg in orange.',
     tab: 'plan',
     view: { day: '2026-11-13', planMode: 'itinerary' },
   }),
