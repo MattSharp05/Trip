@@ -44,7 +44,7 @@ async function openBucket() {
   await screen.findByTestId('bucket-list');
 }
 
-/** Each row's visible text, top to bottom. */
+/** Each row's visible text, top to bottom (the last part is its Smart Add button). */
 const rows = () =>
   within(screen.getByTestId('bucket-list'))
     .getAllByTestId(/^bucket-row-/)
@@ -69,11 +69,11 @@ describe('Bucket List on vegas-bucket', () => {
   it('lists the saved places and the Discover event, with outlined pins', async () => {
     await openBucket();
     expect(rows()).toEqual([
-      'Golden Tiki | 3939 Spring Mountain Rd · Bar | Saved from TikTok',
-      'Fremont Street Experience | Fremont St · Landmark | From search',
-      'Lotus of Siam | 620 E Flamingo Rd · Food | Saved from Instagram',
-      'Pinball Hall of Fame | 4925 Las Vegas Blvd S · Attraction | From search',
-      'Fred again.. | Wynn Las Vegas · Nightlife | From Discover · Sat, Nov 14, 8:00 PM',
+      'Golden Tiki | 3939 Spring Mountain Rd · Bar | Saved from TikTok | Smart Add',
+      'Fremont Street Experience | Fremont St · Landmark | From search | Smart Add',
+      'Lotus of Siam | 620 E Flamingo Rd · Food | Saved from Instagram | Smart Add',
+      'Pinball Hall of Fame | 4925 Las Vegas Blvd S · Attraction | From search | Smart Add',
+      'Fred again.. | Wynn Las Vegas · Nightlife | From Discover · Sat, Nov 14, 8:00 PM | Smart Add',
     ]);
     expect(outlined()).toEqual([
       'place-golden-tiki',
@@ -99,7 +99,9 @@ describe('Bucket List on vegas-bucket', () => {
     await act(async () => fireEvent.press(result));
 
     await waitFor(() =>
-      expect(rows().at(-1)).toBe('Eggslut | 3708 South Las Vegas Boulevard · Food | From search'),
+      expect(rows().at(-1)).toBe(
+        'Eggslut | 3708 South Las Vegas Boulevard · Food | From search | Smart Add',
+      ),
     );
     expect(screen.getByRole('tab', { name: 'Bucket List (6)' })).toBeSelected();
     expect(outlined()).toHaveLength(6);
@@ -118,7 +120,9 @@ describe('Bucket List on vegas-bucket', () => {
     fireEvent.changeText(screen.getByTestId('pin-name-input'), 'Viewpoint by the Strip');
     await act(async () => fireEvent.press(screen.getByTestId('pin-save')));
 
-    await waitFor(() => expect(rows().at(-1)).toBe('Viewpoint by the Strip | Dropped pin'));
+    await waitFor(() =>
+      expect(rows().at(-1)).toBe('Viewpoint by the Strip | Dropped pin | Smart Add'),
+    );
     expect(outlined()).toHaveLength(6);
   });
 
