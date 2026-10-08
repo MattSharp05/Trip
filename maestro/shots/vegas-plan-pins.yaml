@@ -1,0 +1,15 @@
+# QA screenshot (TR-47): Plan, Fri Nov 13 with Sphere selected. The pins carry their stop number,
+# the selected one its time and title; there are no straight lines between them.
+appId: com.mattsharp05.trip
+tags:
+  - shots
+---
+- runFlow:
+    file: ../scenario.yaml
+    env:
+      SCENARIO: vegas-plan-day-2
+      READY_ID: itinerary-list
+- tapOn: Sphere Experience
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: vegas-plan-pins

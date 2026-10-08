@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react-native';
+import { act, render, screen } from '@testing-library/react-native';
 import { readdirSync, readFileSync, statSync } from 'fs';
 import path from 'path';
 import { StyleSheet } from 'react-native';
@@ -39,12 +39,24 @@ function nativeBox(marker: Instance) {
 
 /** The anchor view's centre inside the box: boxes stack from the top, centred across. */
 function anchorOf(size: { width: number }, dot: Instance) {
-  const dotStyle = StyleSheet.flatten(dot.props.style) as { width: number; height: number };
+  const dotStyle = StyleSheet.flatten(dot.props.style) as {
+    width: number;
+    height: number;
+    left?: number;
+    top?: number;
+  };
+  // Placed explicitly (Plan pins, round their number badge)…
+  if (typeof dotStyle.left === 'number' && typeof dotStyle.top === 'number') {
+    return { x: dotStyle.left + dotStyle.width / 2, y: dotStyle.top + dotStyle.height / 2 };
+  }
+  // …or stacked from the top, centred across (globe dots).
   return { x: size.width / 2, y: dotStyle.height / 2 };
 }
 
 const pin = (extra: Partial<MapPin> = {}): MapPin => ({
   id: 'p1',
+  order: 3,
+  time: '3:00 PM',
   coordinate: { lat: 36.1, lng: -115.2 },
   kind: 'food',
   photo: null,
@@ -62,8 +74,10 @@ describe('globe dots', () => {
     expect(anchorOnScreen(size, marker.props.centerOffset, anchor)).toEqual({ x: 0, y: 0 });
   });
 
-  it('draws both airports and the plane of the flight globe with real boxes', () => {
+  it('draws both airports and the plane of the flight globe with real boxes', async () => {
     render(<AppleGlobe route={flight} />);
+    // Let the Reduce Motion setting resolve, so the plane settles before the checks.
+    await act(async () => {});
     for (const code of [flight.from.code, flight.to.code]) {
       const marker = screen.getByTestId(`globe-end-${code}`);
       const { box, size } = nativeBox(marker);
@@ -92,6 +106,21 @@ describe('Plan pins', () => {
     const { box, size } = nativeBox(marker);
     const anchor = anchorOf(size, host(box.children[0] as Instance));
     expect(anchorOnScreen(size, marker.props.centerOffset, anchor)).toEqual({ x: 0, y: 0 });
+  });
+
+  it.each([false, true])('keeps the number badge inside the box (selected: %s)', (selected) => {
+    render(<PinMarker pin={pin()} selected={selected} dimmed={false} />);
+    const { size } = nativeBox(screen.getByTestId('pin-p1'));
+    const badge = StyleSheet.flatten(screen.getByTestId('pin-order').props.style) as {
+      left: number;
+      top: number;
+      minWidth: number;
+      height: number;
+    };
+    expect(badge.left).toBeGreaterThanOrEqual(0);
+    expect(badge.top).toBeGreaterThanOrEqual(0);
+    expect(badge.left + badge.minWidth).toBeLessThanOrEqual(size.width);
+    expect(badge.top + badge.height).toBeLessThanOrEqual(size.height);
   });
 });
 

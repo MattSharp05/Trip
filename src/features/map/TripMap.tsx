@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import MapView, { Polyline } from 'react-native-maps';
+import MapView from 'react-native-maps';
 
-import { mapColors, spacing } from '@/theme';
+import { spacing } from '@/theme';
 
 import { cityRegion, latLng, regionFor } from './bounds';
 import { MapControls } from './MapControls';
@@ -19,8 +19,9 @@ const FLY_ALTITUDE_3D = 900;
 const EDGE = { top: 56, right: 64, bottom: 48, left: 40 };
 
 /**
- * The trip map (ADR 0002): Apple Maps in its dark appearance with photo pins, the day's route as a
- * dashed orange line, other days' places as grey dots, and the 3D and fit-the-day buttons.
+ * The trip map (ADR 0002): Apple Maps in its dark appearance with the day's stops as numbered photo
+ * pins (no straight lines between them: TR-47), other days' places as grey dots, and the 3D and
+ * fit-the-day buttons.
  */
 export function TripMap({
   pins,
@@ -41,10 +42,6 @@ export function TripMap({
 
   const pinById = useMemo(() => new Map(pins.map((p) => [p.id, p])), [pins]);
   const dimmed = useMemo(() => new Set(dimmedIds), [dimmedIds]);
-  const route = useMemo(
-    () => routeIds.flatMap((id) => pinById.get(id)?.coordinate ?? []).map(latLng),
-    [routeIds, pinById],
-  );
   const frameIds = useMemo(
     () => fitIds ?? (routeIds.length ? routeIds : pins.map((p) => p.id)),
     [fitIds, routeIds, pins],
@@ -143,15 +140,6 @@ export function TripMap({
             : undefined
         }
       >
-        {route.length > 1 ? (
-          <Polyline
-            testID="day-route"
-            coordinates={route}
-            strokeColor={mapColors.route}
-            strokeWidth={3}
-            lineDashPattern={[6, 6]}
-          />
-        ) : null}
         {pins.map((pin) => (
           <PinMarker
             key={pin.id}
