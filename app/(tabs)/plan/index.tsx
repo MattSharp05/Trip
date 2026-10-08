@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { tripDays } from '@/core/dates';
 import { dayFlight } from '@/core/flights';
+import { mapAreaHeight } from '@/core/sheet';
 import { tabTitle } from '@/core/tabs';
 import { temperatureUnitForLocale } from '@/core/weather';
 import {
@@ -234,8 +235,12 @@ export default function PlanScreen() {
         : links.dismissToast;
 
   const [bodyHeight, setBodyHeight] = useState(() => height - insets.top - TOP_ESTIMATE);
-  const mapHeight = Math.round(height * MAP_SHARE);
-  const sheetHalf = Math.max(bodyHeight - mapHeight + SHEET_OVERLAP, 0);
+  const halfMapHeight = Math.round(height * MAP_SHARE);
+  const sheetHalf = Math.max(bodyHeight - halfMapHeight + SHEET_OVERLAP, 0);
+  // The sheet collapsed, the map fills the screen down to it (TR-46 QA round 2).
+  const [sheetCover, setSheetCover] = useState<number | null>(null);
+  const mapHeight = mapAreaHeight(bodyHeight, sheetCover ?? sheetHalf, SHEET_OVERLAP);
+  const sheetBottom = tabBarInset;
 
   if (!tripId || trip.data === null) {
     return (
@@ -313,7 +318,7 @@ export default function PlanScreen() {
         )}
       </View>
       <View style={styles.body} onLayout={(e) => setBodyHeight(e.nativeEvent.layout.height)}>
-        <View style={{ height: mapHeight }}>
+        <View style={{ height: mapHeight }} testID="plan-map-area">
           {onGlobe ? (
             <FlightGlobe key={flight.bookingId} route={flight} onShowMap={showMap} />
           ) : trip.data && selectedDay ? (
@@ -327,6 +332,7 @@ export default function PlanScreen() {
               fitIds={inBucket && savedIds.length ? savedIds : undefined}
               onLongPress={inBucket ? actions.dropPin : undefined}
               onShowFlight={flight && !inBucket ? showFlight : undefined}
+              city={near}
             />
           ) : (
             <Skeleton height={mapHeight} radius="sm" testID="map-loading" />
@@ -339,6 +345,8 @@ export default function PlanScreen() {
         ) : null}
         <PlanSheet
           halfHeight={sheetHalf}
+          bottomInset={sheetBottom}
+          onCoverChange={setSheetCover}
           collapseKey={picks}
           mode={selection.planMode}
           onModeChange={selection.setPlanMode}
@@ -369,7 +377,7 @@ export default function PlanScreen() {
               reveal={selectedBy === 'map'}
               onSelect={pickRow}
               onOpenBucketList={() => selection.setPlanMode('bucket')}
-              bottomInset={tabBarInset + spacing.lg}
+              bottomInset={sheetBottom + spacing.lg}
               editing={editor.editing}
               reordering={reordering}
             />
@@ -383,7 +391,7 @@ export default function PlanScreen() {
               onPlanAll={planAllBucket}
               notes={smart.notes}
               onAdd={actions.openSearch}
-              bottomInset={tabBarInset + spacing.lg}
+              bottomInset={sheetBottom + spacing.lg}
             />
           }
         />

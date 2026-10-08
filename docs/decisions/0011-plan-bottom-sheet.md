@@ -22,3 +22,12 @@ screen.
 - No native code, nothing new to install. Modal sheets keep using `Sheet` (`src/ui`).
 - Sheet gestures and snapping only run on a device; Jest covers the content and linking, the feel
   is checked on the phone at the Plan checkpoint.
+
+**Update (TR-46 QA round 2, 2026-10-08).** Matthew asked for the map to be able to take the whole
+screen, on Plan and on the Trips globe. The sheet now has three snap points: collapsed (the grabber
+and the day header, or the Trips filter, above the floating tab bar), half and full. The shared
+`MapSheet` (`src/features/map/MapSheet.tsx`) holds the sheet for both tabs; the Trips list moved into
+it. The map or globe is sized to the part the sheet leaves (`src/core/sheet.ts`): it grows as soon as
+the sheet starts down and shrinks once the sheet has settled going up, so no gap shows. The map
+re-frames for its new height, and the globe raises its camera so the whole Earth still fits
+(`src/core/globe.ts`).

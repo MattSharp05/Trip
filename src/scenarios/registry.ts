@@ -169,6 +169,16 @@ export const SCENARIOS: readonly Scenario[] = [
     tab: 'plan',
     view: { day: '2026-11-14', planMode: 'itinerary' },
   }),
+  {
+    name: 'tokyo-free-day',
+    data: vegasSnapshot,
+    tripId: 'trip-tokyo',
+    today: DEFAULT_TODAY,
+    description:
+      'Plan tab on the Tokyo trip, Sun Mar 21, nothing planned yet: the map shows Tokyo.',
+    tab: 'plan',
+    view: { day: '2027-03-21', planMode: 'itinerary' },
+  },
   vegas({
     name: 'vegas-bucket',
     description: 'Plan tab on the Bucket List: five saved places and events.',

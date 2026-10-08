@@ -1,13 +1,16 @@
 import { useRouter } from 'expo-router';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { now } from '@/core/clock';
+import { mapAreaHeight } from '@/core/sheet';
 import { filterTrips, type TripFilter } from '@/core/trips';
+import { MapSheet } from '@/features/map/MapSheet';
 import { useTrips, type Trip } from '@/services/data';
-import { colors, screenPadding, spacing } from '@/theme';
-import { Button, IconButton, Segmented, Skeleton, Text } from '@/ui';
+import { colors, radii, screenPadding, spacing } from '@/theme';
+import { Button, IconButton, Segmented, Skeleton, Text, useTabBarInset } from '@/ui';
 
 import { useChooseTrip, useRestoreSelectedTrip } from './selectedTrip';
 import { TRIP_CARD_HEIGHT, TripCard } from './TripCard';
@@ -18,6 +21,13 @@ const SEGMENTS = [
   { value: 'past', label: 'Past' },
   { value: 'all', label: 'All' },
 ] as const;
+
+/** Share of the screen the globe shows above the half-height sheet (as Plan's map). */
+const GLOBE_SHARE = 0.36;
+/** The sheet's rounded top overlaps the globe by its corner radius. */
+const SHEET_OVERLAP = radii.photo;
+/** The title row, until the body under it has been measured. */
+const TOP_ESTIMATE = 72;
 
 const EMPTY_FILTER: Record<TripFilter, string> = {
   upcoming: 'No upcoming trips.',
@@ -33,6 +43,7 @@ const EMPTY_FILTER: Record<TripFilter, string> = {
 export function TripsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { height } = useWindowDimensions();
   const { data: trips, isPending, isError, refetch } = useTrips();
   const [filter, setFilter] = useState<TripFilter>('upcoming');
   const chooseTrip = useChooseTrip();
@@ -45,6 +56,15 @@ export function TripsScreen() {
   };
 
   const hasTrips = !!trips && trips.length > 0;
+
+  // The globe fills the space the list's sheet leaves: drag the sheet down to see all of it
+  // (TR-46 QA round 2).
+  const [bodyHeight, setBodyHeight] = useState(() => height - insets.top - TOP_ESTIMATE);
+  const globeHalf = Math.round(height * GLOBE_SHARE);
+  const sheetHalf = Math.max(bodyHeight - globeHalf + SHEET_OVERLAP, 0);
+  const [sheetCover, setSheetCover] = useState<number | null>(null);
+  const globeHeight = mapAreaHeight(bodyHeight, sheetCover ?? sheetHalf, SHEET_OVERLAP);
+  const sheetBottom = useTabBarInset();
   const shown = trips ? filterTrips(trips, filter, now()) : [];
 
   let body;
@@ -77,11 +97,13 @@ export function TripsScreen() {
     );
   } else {
     body = (
-      <FlatList
+      <BottomSheetFlatList
         data={shown}
-        keyExtractor={(trip) => trip.id}
-        renderItem={({ item }) => <TripCard trip={item} onPress={() => open(item)} />}
-        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + spacing.xxxl }]}
+        keyExtractor={(trip: Trip) => trip.id}
+        renderItem={({ item }: { item: Trip }) => (
+          <TripCard trip={item} onPress={() => open(item)} />
+        )}
+        contentContainerStyle={[styles.list, { paddingBottom: sheetBottom + spacing.lg }]}
         ListEmptyComponent={
           <Text variant="body" tone="secondary" style={styles.center}>
             {EMPTY_FILTER[filter]}
@@ -117,19 +139,30 @@ export function TripsScreen() {
         </View>
       </View>
       {hasTrips ? (
-        <>
-          <TripsGlobe trips={shown} onOpen={open} />
-          <View style={styles.header}>
-            <Segmented
-              segments={SEGMENTS}
-              value={filter}
-              onChange={setFilter}
-              testID="trips-filter"
-            />
-          </View>
-        </>
-      ) : null}
-      {body}
+        <View style={styles.body} onLayout={(e) => setBodyHeight(e.nativeEvent.layout.height)}>
+          <TripsGlobe trips={shown} onOpen={open} height={globeHeight} />
+          <MapSheet
+            halfHeight={sheetHalf}
+            bottomInset={sheetBottom}
+            onCoverChange={setSheetCover}
+            top={
+              <View style={styles.filter}>
+                <Segmented
+                  segments={SEGMENTS}
+                  value={filter}
+                  onChange={setFilter}
+                  testID="trips-filter"
+                />
+              </View>
+            }
+            testID="trips-sheet"
+          >
+            {body}
+          </MapSheet>
+        </View>
+      ) : (
+        body
+      )}
     </View>
   );
 }
@@ -138,6 +171,8 @@ const styles = StyleSheet.create({
   screen: { flex: 1, gap: spacing.md, backgroundColor: colors.background },
   title: { flex: 1 },
   header: { gap: spacing.md, paddingHorizontal: screenPadding },
+  body: { flex: 1 },
+  filter: { paddingHorizontal: screenPadding, paddingBottom: spacing.md },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   list: { gap: spacing.md, paddingHorizontal: screenPadding },
   message: { alignItems: 'center', gap: spacing.md, padding: screenPadding },
