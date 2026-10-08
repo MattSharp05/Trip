@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import MapView, { Polyline } from 'react-native-maps';
 
 import { mapColors, spacing } from '@/theme';
 
-import { latLng, regionFor } from './bounds';
+import { cityRegion, latLng, regionFor } from './bounds';
 import { MapControls } from './MapControls';
 import { PinMarker } from './PinMarker';
 import type { TripMapProps } from './types';
@@ -31,6 +31,7 @@ export function TripMap({
   onPinPress,
   onLongPress,
   onShowFlight,
+  city,
   ref,
   testID = 'trip-map',
 }: TripMapProps) {
@@ -68,29 +69,49 @@ export function TripMap({
   const fitTo = useCallback(
     (ids: string[]) => {
       const known = [...new Set(ids)].filter((id) => pinById.has(id));
-      if (known.length === 0) return;
+      if (known.length === 0) {
+        // Nothing placed yet (a free day of a new trip): show the trip's city, not Apple's default.
+        const region = city ? cityRegion(city) : null;
+        if (region) map.current?.animateToRegion(region, FLY_MS);
+        return;
+      }
       if (known.length === 1) return flyTo(known[0]);
       map.current?.fitToCoordinates(
         known.map((id) => latLng(pinById.get(id)!.coordinate)),
         { edgePadding: EDGE, animated: true },
       );
     },
-    [pinById, flyTo],
+    [pinById, flyTo, city],
   );
 
   useImperativeHandle(ref, () => ({ fitTo, flyTo }), [fitTo, flyTo]);
 
   // The first frame comes from initialRegion; afterwards a new day (or new pins) re-frames.
   const [initialRegion] = useState(
-    () => regionFor(frameIds.flatMap((id) => pinById.get(id)?.coordinate ?? [])) ?? undefined,
+    () =>
+      regionFor(frameIds.flatMap((id) => pinById.get(id)?.coordinate ?? [])) ??
+      (city ? cityRegion(city) : undefined),
   );
-  const frameKey = frameIds.join();
+  const frameKey = `${frameIds.join()}|${city ? `${city.lat},${city.lng}` : ''}`;
   const framed = useRef(frameKey);
   useEffect(() => {
     if (framed.current === frameKey) return;
     framed.current = frameKey;
     fitTo(frameIds);
   }, [frameKey, frameIds, fitTo]);
+
+  // The sheet over the map snapped and the map changed height: frame the day again for what
+  // shows, or keep the selected pin in the middle at the same zoom.
+  const height = useRef<number | null>(null);
+  const onLayout = (e: LayoutChangeEvent) => {
+    const next = Math.round(e.nativeEvent.layout.height);
+    const before = height.current;
+    height.current = next;
+    if (before === null || before === next) return;
+    const pin = selectedId ? pinById.get(selectedId) : undefined;
+    if (pin) map.current?.animateCamera({ center: latLng(pin.coordinate) }, { duration: FLY_MS });
+    else fitTo(frameIds);
+  };
 
   const toggle3D = () => {
     tilted.current = !tilted.current;
@@ -99,7 +120,7 @@ export function TripMap({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onLayout={onLayout}>
       <MapView
         ref={map}
         testID={testID}

@@ -1,17 +1,17 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
+import { globeAltitude } from '@/core/globe';
 import { latLng } from '@/features/map';
 import { startCenter, useGlobeSpin } from '@/features/map/globe';
 import type { Trip } from '@/services/data';
 import { mapColors, radii, spacing } from '@/theme';
 import { Text, useReduceMotion } from '@/ui';
 
+/** The globe's height before the screen has measured it. */
 export const GLOBE_HEIGHT = 200;
-/** Camera height in metres: high enough that the whole Earth fits the 200 pt band. */
-const ALTITUDE = 24_000_000;
 
 const DOT = 12;
 const LABEL_WIDTH = 120;
@@ -23,6 +23,8 @@ interface TripsGlobeProps {
   /** The trips the list below shows, soonest first; the globe opens on the first one. */
   trips: readonly Trip[];
   onOpen: (trip: Trip) => void;
+  /** The globe's height: the room the trip list's sheet leaves (TR-46). */
+  height?: number;
 }
 
 /**
@@ -31,8 +33,18 @@ interface TripsGlobeProps {
  * while Trips is on screen), stops under a finger and can be dragged round. Tapping a dot opens
  * that trip's plan.
  */
-export function TripsGlobe({ trips, onOpen }: TripsGlobeProps) {
+export function TripsGlobe({ trips, onOpen, height = GLOBE_HEIGHT }: TripsGlobeProps) {
   const map = useRef<MapView>(null);
+  const { width } = useWindowDimensions();
+  // The whole Earth fits whatever height the sheet leaves; a new height moves the camera.
+  const altitude = globeAltitude({ width, height });
+  const [initialAltitude] = useState(altitude);
+  const shownAltitude = useRef(altitude);
+  useEffect(() => {
+    if (shownAltitude.current === altitude) return;
+    shownAltitude.current = altitude;
+    map.current?.setCamera({ altitude });
+  }, [altitude]);
   const placed = useMemo(
     () => trips.filter((t): t is PlacedTrip => t.lat !== null && t.lng !== null),
     [trips],
@@ -55,7 +67,7 @@ export function TripsGlobe({ trips, onOpen }: TripsGlobeProps) {
 
   return (
     <View
-      style={styles.band}
+      style={[styles.band, { height }]}
       testID="trips-globe"
       accessibilityLabel="Globe of your trips"
       {...touchHandlers}
@@ -76,7 +88,7 @@ export function TripsGlobe({ trips, onOpen }: TripsGlobeProps) {
           center: latLng(start),
           pitch: 0,
           heading: 0,
-          altitude: ALTITUDE,
+          altitude: initialAltitude,
         }}
         onMapReady={() => setReady(true)}
       >
@@ -110,7 +122,7 @@ function TripDot({ trip, onOpen }: { trip: PlacedTrip; onOpen: (trip: Trip) => v
 }
 
 const styles = StyleSheet.create({
-  band: { height: GLOBE_HEIGHT, backgroundColor: mapColors.globeSpace },
+  band: { backgroundColor: mapColors.globeSpace },
   box: { width: LABEL_WIDTH, alignItems: 'center', gap: spacing.xs },
   dot: {
     width: DOT,

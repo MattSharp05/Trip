@@ -1,20 +1,20 @@
-import BottomSheet from '@gorhom/bottom-sheet';
-import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { MapSheet } from '@/features/map/MapSheet';
 import type { PlanMode } from '@/stores/selection';
-import { colors, radii, screenPadding, spacing } from '@/theme';
+import { screenPadding, spacing } from '@/theme';
 import { Segmented } from '@/ui';
-
-/** The sheet's two heights: over the lower part of the screen, or covering the map. */
-export const SHEET_HALF = 0;
-export const SHEET_FULL = 1;
 
 export interface PlanSheetProps {
   /** Height of the half snap point, from the bottom of the screen. */
   halfHeight: number;
+  /** The floating tab bar and home indicator under a collapsed sheet. */
+  bottomInset: number;
   /** Ask the sheet to go back to half height; changes each time (e.g. a row was tapped). */
   collapseKey: number;
+  /** How much of the screen the sheet covers now: the map is sized to the rest. */
+  onCoverChange?: (cover: number) => void;
   mode: PlanMode;
   onModeChange: (mode: PlanMode) => void;
   /** Shown in the Bucket List segment's label. */
@@ -27,11 +27,14 @@ export interface PlanSheetProps {
 
 /**
  * The Plan sheet over the map (PRD → Plan): a grabber, the day header, Itinerary / Bucket List, and
- * the selected segment's content. Snaps at half height and full height.
+ * the selected segment's content. Snaps collapsed (grabber and day header over a full-screen map),
+ * half and full (TR-46).
  */
 export function PlanSheet({
   halfHeight,
+  bottomInset,
   collapseKey,
+  onCoverChange,
   mode,
   onModeChange,
   bucketCount,
@@ -39,17 +42,6 @@ export function PlanSheet({
   itinerary,
   bucketList,
 }: PlanSheetProps) {
-  const sheet = useRef<BottomSheet>(null);
-  const snapPoints = useMemo(() => [halfHeight, '100%'], [halfHeight]);
-
-  // A tap in the list while the sheet covers the map brings the map back into view.
-  const collapsed = useRef(collapseKey);
-  useEffect(() => {
-    if (collapsed.current === collapseKey) return;
-    collapsed.current = collapseKey;
-    sheet.current?.snapToIndex(SHEET_HALF);
-  }, [collapseKey]);
-
   const segments = useMemo(
     () =>
       [
@@ -63,38 +55,23 @@ export function PlanSheet({
   );
 
   return (
-    <BottomSheet
-      ref={sheet}
-      index={SHEET_HALF}
-      snapPoints={snapPoints}
-      enableDynamicSizing={false}
-      enableOverDrag={false}
-      animateOnMount={false}
-      backgroundStyle={styles.background}
-      handleIndicatorStyle={styles.grabber}
-      handleStyle={styles.handle}
+    <MapSheet
+      halfHeight={halfHeight}
+      bottomInset={bottomInset}
+      collapseKey={collapseKey}
+      onCoverChange={onCoverChange}
+      top={header}
+      testID="plan-sheet"
     >
-      <View testID="plan-sheet" style={styles.content}>
-        {header}
-        <View style={styles.segmented}>
-          <Segmented segments={segments} value={mode} onChange={onModeChange} testID="plan-mode" />
-        </View>
-        <View style={styles.body}>{mode === 'itinerary' ? itinerary : bucketList}</View>
+      <View style={styles.segmented}>
+        <Segmented segments={segments} value={mode} onChange={onModeChange} testID="plan-mode" />
       </View>
-    </BottomSheet>
+      <View style={styles.body}>{mode === 'itinerary' ? itinerary : bucketList}</View>
+    </MapSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  background: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.photo,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.hairline,
-  },
-  handle: { paddingTop: spacing.sm, paddingBottom: spacing.xxs },
-  grabber: { backgroundColor: colors.textSecondary, width: 36, height: 5 },
-  content: { flex: 1 },
   segmented: { paddingHorizontal: screenPadding, paddingBottom: spacing.sm },
   body: { flex: 1 },
 });

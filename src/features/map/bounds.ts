@@ -52,3 +52,11 @@ export function regionFor(
     longitudeDelta: Math.min(Math.max((b.maxLng - b.minLng) * padding, minDelta), 360),
   };
 }
+
+/** About 15 km across: a city, for a map with nothing placed on it yet. */
+const CITY_DELTA = 0.15;
+
+/** The region around a trip's city centre. */
+export function cityRegion({ lat, lng }: LngLat): Region {
+  return { latitude: lat, longitude: lng, latitudeDelta: CITY_DELTA, longitudeDelta: CITY_DELTA };
+}

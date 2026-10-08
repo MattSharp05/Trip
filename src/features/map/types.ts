@@ -43,6 +43,8 @@ export interface TripMapProps {
   onLongPress?: (coordinate: LngLat) => void;
   /** A travel day: adds the plane button to the map's controls (TR-23). */
   onShowFlight?: () => void;
+  /** The trip's city centre: framed when there is nothing to frame (a free day of a new trip). */
+  city?: LngLat | null;
   ref?: Ref<TripMapHandle>;
   testID?: string;
 }
