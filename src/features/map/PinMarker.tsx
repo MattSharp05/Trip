@@ -7,6 +7,8 @@ import { mapColors, spacing } from '@/theme';
 import { Icon, Text } from '@/ui';
 
 import { latLng } from './bounds';
+import { labelledDotLayout } from './markerAnchor';
+import { MarkerBox } from './MarkerBox';
 import { pinStyle, pinSymbol } from './pins';
 import type { MapPin } from './types';
 
@@ -17,6 +19,20 @@ const RING = 3;
 /** The selected pin's label sits under the photo inside a fixed box, so the offset is known. */
 const LABEL_WIDTH = 160;
 const LABEL_HEIGHT = 22;
+
+/** Each look's box, and the offset that keeps the circle's (or dot's) centre on the place. */
+const centred = (side: number) => ({
+  size: { width: side, height: side },
+  centerOffset: { x: 0, y: 0 },
+});
+const DOT_LAYOUT = centred(DOT);
+const PIN_LAYOUT = centred(PIN);
+const SELECTED_LAYOUT = labelledDotLayout({
+  width: LABEL_WIDTH,
+  dot: SELECTED,
+  gap: spacing.xs,
+  labelHeight: LABEL_HEIGHT,
+});
 
 interface PinMarkerProps {
   pin: MapPin;
@@ -38,24 +54,24 @@ export const PinMarker = memo(function PinMarker({
 }: PinMarkerProps) {
   const style = pinStyle(pin, dimmed && !selected);
   const size = selected ? SELECTED : PIN;
-  // Apple Maps centres the view on the coordinate: with a label below, shift it down so the
-  // circle's centre stays on the place.
-  const offset = selected ? (LABEL_HEIGHT + spacing.xs) / 2 : 0;
+  const layout = style === 'dot' ? DOT_LAYOUT : selected ? SELECTED_LAYOUT : PIN_LAYOUT;
 
   return (
     <Marker
       identifier={pin.id}
       testID={`pin-${pin.id}`}
       coordinate={latLng(pin.coordinate)}
-      centerOffset={{ x: 0, y: offset }}
+      centerOffset={layout.centerOffset}
       zIndex={selected ? 3 : style === 'dot' ? 1 : 2}
       onPress={() => onPress?.(pin.id)}
       accessibilityLabel={pin.label}
     >
       {style === 'dot' ? (
-        <View style={styles.dot} testID="pin-dot" />
+        <MarkerBox {...layout.size}>
+          <View style={styles.dot} testID="pin-dot" />
+        </MarkerBox>
       ) : (
-        <View style={selected ? styles.selectedBox : undefined}>
+        <MarkerBox {...layout.size} style={styles.box}>
           <View
             testID={`pin-${style}`}
             style={[
@@ -81,7 +97,7 @@ export const PinMarker = memo(function PinMarker({
               {pin.label}
             </Text>
           ) : null}
-        </View>
+        </MarkerBox>
       )}
     </Marker>
   );
@@ -99,7 +115,7 @@ const styles = StyleSheet.create({
   symbol: { backgroundColor: mapColors.pinSymbolFill },
   outline: { backgroundColor: mapColors.pinOutlineFill, borderColor: mapColors.pinOutlineRing },
   selected: { borderColor: mapColors.pinRingSelected },
-  selectedBox: { width: LABEL_WIDTH, alignItems: 'center', gap: spacing.xs },
+  box: { alignItems: 'center', gap: spacing.xs },
   photo: { width: '100%', height: '100%' },
   label: { height: LABEL_HEIGHT, maxWidth: LABEL_WIDTH, textAlign: 'center', fontWeight: '600' },
   dot: {

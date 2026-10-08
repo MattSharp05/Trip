@@ -1,21 +1,17 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView from 'react-native-maps';
 
 import { globeAltitude } from '@/core/globe';
 import { latLng } from '@/features/map';
-import { startCenter, useGlobeSpin } from '@/features/map/globe';
+import { GlobeDot, startCenter, useGlobeSpin } from '@/features/map/globe';
 import type { Trip } from '@/services/data';
-import { mapColors, radii, spacing } from '@/theme';
-import { Text, useReduceMotion } from '@/ui';
+import { mapColors } from '@/theme';
+import { useReduceMotion } from '@/ui';
 
 /** The globe's height before the screen has measured it. */
 export const GLOBE_HEIGHT = 200;
-
-const DOT = 12;
-const LABEL_WIDTH = 120;
-const LABEL_HEIGHT = 20;
 
 type PlacedTrip = Trip & { lat: number; lng: number };
 
@@ -102,44 +98,17 @@ export function TripsGlobe({ trips, onOpen, height = GLOBE_HEIGHT }: TripsGlobeP
 
 function TripDot({ trip, onOpen }: { trip: PlacedTrip; onOpen: (trip: Trip) => void }) {
   return (
-    <Marker
+    <GlobeDot
       identifier={trip.id}
       testID={`globe-trip-${trip.id}`}
-      coordinate={latLng(trip)}
-      // Apple Maps centres the view on the coordinate: shift it so the dot, not the box, sits there.
-      centerOffset={{ x: 0, y: (LABEL_HEIGHT + spacing.xs) / 2 }}
+      coordinate={trip}
+      label={trip.city}
       onPress={() => onOpen(trip)}
       accessibilityLabel={`${trip.city}, open the plan`}
-    >
-      <View style={styles.box}>
-        <View style={styles.dot} />
-        <Text variant="caption" numberOfLines={1} style={styles.label}>
-          {trip.city}
-        </Text>
-      </View>
-    </Marker>
+    />
   );
 }
 
 const styles = StyleSheet.create({
   band: { backgroundColor: mapColors.globeSpace },
-  box: { width: LABEL_WIDTH, alignItems: 'center', gap: spacing.xs },
-  dot: {
-    width: DOT,
-    height: DOT,
-    borderRadius: DOT / 2,
-    backgroundColor: mapColors.route,
-    borderWidth: 2,
-    borderColor: mapColors.pinRing,
-  },
-  label: {
-    height: LABEL_HEIGHT,
-    maxWidth: LABEL_WIDTH,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radii.pill,
-    overflow: 'hidden',
-    backgroundColor: mapColors.globeLabelFill,
-    fontWeight: '600',
-    lineHeight: LABEL_HEIGHT,
-  },
 });
