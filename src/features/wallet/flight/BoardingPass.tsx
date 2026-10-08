@@ -5,7 +5,17 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSaveBooking } from '@/services/data';
 import type { PassCrop } from '@/services/data/types';
 import { colors, continuous, passColors, radii, screenPadding, spacing } from '@/theme';
-import { Button, Icon, ListRow, LoadError, Skeleton, Surface, Text, Toast } from '@/ui';
+import {
+  Button,
+  Icon,
+  ListRow,
+  LoadError,
+  Skeleton,
+  Surface,
+  Text,
+  Toast,
+  useTabBarInset,
+} from '@/ui';
 
 import { pickPassImage } from './actions';
 import { CropEditor } from './CropEditor';
@@ -35,6 +45,7 @@ function Field({ label, value, end }: { label: string; value: string | null; end
  */
 export function BoardingPass({ id }: { id: string }) {
   const { loadError, retry } = useWallet();
+  const tabBarInset = useTabBarInset();
   useBrightnessBoost();
   const { flight: booking, isLoading } = useFlightBooking(id);
   const save = useSaveBooking();
@@ -72,7 +83,9 @@ export function BoardingPass({ id }: { id: string }) {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarInset + spacing.lg }]}
+      >
         <Stack.Screen
           options={{ headerShown: true, title: 'Boarding pass', headerBackTitle: 'Flight' }}
         />

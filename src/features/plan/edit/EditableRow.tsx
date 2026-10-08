@@ -19,6 +19,8 @@ import { dragShift, dropIndex } from './drag';
 /** Hold this long before a row lifts and follows the finger (iOS's own long-press time). */
 export const LONG_PRESS_MS = 350;
 const ACTION_WIDTH = 72;
+/** The drag handle's column in Edit mode: a full 44 pt touch target. */
+const HANDLE_WIDTH = 44;
 const SHIFT_MS = 150;
 
 /** What the timeline does with edit gestures (the Plan screen's `useItineraryEditor`). */
@@ -52,12 +54,14 @@ export interface EditableRowProps {
   onSelect: (id: string) => void;
   editing: ItineraryEditing;
   drag: DragState;
+  /** Edit mode: a drag handle on the right moves the row straight away; no swipe actions. */
+  reordering?: boolean;
 }
 
 /**
  * An itinerary row you can edit: touch and hold to lift it and drag it to another place in the
- * day; swipe left for Edit, Move (another day) and Delete; tap the time to change it. VoiceOver
- * gets the same as actions.
+ * day (or, in Edit mode, drag its handle); swipe left for Edit, Move (another day) and Delete; tap
+ * the time to change it. VoiceOver gets the same as actions.
  */
 export const EditableRow = memo(function EditableRow({
   entry,
@@ -68,15 +72,33 @@ export const EditableRow = memo(function EditableRow({
   onSelect,
   editing,
   drag,
+  reordering = false,
 }: EditableRowProps) {
   const swipeable = useRef<SwipeableMethods>(null);
 
   const pan = useMemo(
     () =>
       Gesture.Pan()
+        .enabled(!reordering)
         .activateAfterLongPress(LONG_PRESS_MS)
         .runOnJS(true)
         .withTestId(`itinerary-drag-${entry.id}`)
+        .onStart(() => drag.start(index))
+        .onUpdate((e) => drag.move(e.translationY))
+        .onEnd((_e, success) => drag.end(success)),
+    [drag, index, entry.id, reordering],
+  );
+
+  // The handle's drag starts on the first movement, like the swipe, so it's ahead of the sheet's
+  // own pan and the list's scroll (which wait for about 10 pt) and needs no hold (TR-24 QA round 2:
+  // the touch-and-hold drag never lifted inside the Plan sheet on device).
+  const handlePan = useMemo(
+    () =>
+      Gesture.Pan()
+        .minDistance(0)
+        .shouldCancelWhenOutside(false)
+        .runOnJS(true)
+        .withTestId(`itinerary-handle-${entry.id}`)
         .onStart(() => drag.start(index))
         .onUpdate((e) => drag.move(e.translationY))
         .onEnd((_e, success) => drag.end(success)),
@@ -136,6 +158,7 @@ export const EditableRow = memo(function EditableRow({
     <Animated.View style={lifted}>
       <ReanimatedSwipeable
         ref={swipeable}
+        enabled={!reordering}
         friction={2}
         rightThreshold={ACTION_WIDTH}
         overshootRight={false}
@@ -165,16 +188,30 @@ export const EditableRow = memo(function EditableRow({
       >
         <GestureDetector gesture={pan}>
           <View style={styles.row}>
-            <ItineraryRow
-              entry={entry}
-              selected={selected}
-              first={index === 0}
-              last={index === count - 1}
-              onPress={onSelect}
-              onTimePress={editing.onTimePress}
-              accessibilityActions={actions}
-              onAccessibilityAction={onAction}
-            />
+            <View style={styles.main}>
+              <ItineraryRow
+                entry={entry}
+                selected={selected}
+                first={index === 0}
+                last={index === count - 1}
+                onPress={onSelect}
+                onTimePress={editing.onTimePress}
+                accessibilityActions={actions}
+                onAccessibilityAction={onAction}
+              />
+            </View>
+            {reordering ? (
+              <GestureDetector gesture={handlePan}>
+                <View
+                  style={styles.handle}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  testID={`itinerary-handle-${entry.id}`}
+                >
+                  <Icon name="line.3.horizontal" size="md" tone="secondary" />
+                </View>
+              </GestureDetector>
+            ) : null}
           </View>
         </GestureDetector>
       </ReanimatedSwipeable>
@@ -216,7 +253,14 @@ function SwipeAction({
 
 const styles = StyleSheet.create({
   // The swipe reveals the actions behind an opaque row.
-  row: { backgroundColor: colors.surface },
+  row: { backgroundColor: colors.surface, flexDirection: 'row', alignItems: 'stretch' },
+  main: { flex: 1 },
+  handle: {
+    width: HANDLE_WIDTH,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
   actions: { flexDirection: 'row', gap: spacing.xs, marginRight: spacing.sm },
   action: {
     width: ACTION_WIDTH,

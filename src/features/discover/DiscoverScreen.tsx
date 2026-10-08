@@ -9,7 +9,7 @@ import type { CityReel } from '@/services/cityLinks';
 import { useTripData, type Trip } from '@/services/data';
 import { useTripStore } from '@/stores/trip';
 import { colors, continuous, radii, screenPadding, spacing, typography } from '@/theme';
-import { Chip, Icon, IconButton, Skeleton, Text, Toast } from '@/ui';
+import { Chip, Icon, IconButton, Skeleton, Text, Toast, useTabBarInset } from '@/ui';
 
 import { AllTripsSections } from './AllTripsSections';
 import { FILTERS, placeCard, type DiscoverFilter } from './discover';
@@ -27,6 +27,7 @@ import { useDiscover } from './useDiscover';
  */
 export function DiscoverScreen() {
   const insets = useSafeAreaInsets();
+  const tabBarInset = useTabBarInset();
   const tripId = useTripStore((s) => s.selectedTripId);
   const discoverAll = useTripStore((s) => s.discoverAll);
   const setDiscoverAll = useTripStore((s) => s.setDiscoverAll);
@@ -79,7 +80,7 @@ export function DiscoverScreen() {
       <ScrollView
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarInset + spacing.lg }]}
         testID="discover-screen"
       >
         <View style={styles.header}>
@@ -94,7 +95,7 @@ export function DiscoverScreen() {
               testID="discover-trip-title"
             />
           ) : tripId ? (
-            <Skeleton width={200} height={18} testID="discover-trip-title-loading" />
+            <Skeleton width={220} height={22} testID="discover-trip-title-loading" />
           ) : null}
         </View>
 
@@ -124,19 +125,15 @@ export function DiscoverScreen() {
           </>
         )}
       </ScrollView>
-      {message !== null ? (
-        <View style={styles.toast}>
-          <Toast
-            visible
-            message={message}
-            onDismiss={() => {
-              setToast(null);
-              dismissLinkToast();
-            }}
-            testID="discover-toast"
-          />
-        </View>
-      ) : null}
+      <Toast
+        visible={message !== null}
+        message={message ?? ''}
+        onDismiss={() => {
+          setToast(null);
+          dismissLinkToast();
+        }}
+        testID="discover-toast"
+      />
       <LinkResultsSheet flow={links} near={linkArea.near} />
     </View>
   );
@@ -217,7 +214,7 @@ function SearchField({ value, onChange }: { value: string; onChange: (text: stri
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  content: { gap: spacing.lg, paddingHorizontal: screenPadding, paddingBottom: spacing.xxxl },
+  content: { gap: spacing.lg, paddingHorizontal: screenPadding },
   header: { gap: spacing.xxs },
   field: {
     flexDirection: 'row',
@@ -242,5 +239,4 @@ const styles = StyleSheet.create({
   /** Rows scroll edge to edge while their first card lines up with the screen margin. */
   bleed: { marginHorizontal: -screenPadding },
   chips: { gap: spacing.sm, paddingHorizontal: screenPadding },
-  toast: { paddingHorizontal: screenPadding, paddingBottom: spacing.md },
 });

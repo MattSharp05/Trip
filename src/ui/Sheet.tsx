@@ -53,7 +53,11 @@ export function Sheet({ open, onClose, title, children, testID }: SheetProps) {
   useEffect(() => {
     openRef.current = open;
     if (!open) {
-      ref.current?.dismiss();
+      // Only a sheet on screen is dismissed. A dismiss() before the modal has shown (on mount, or
+      // while a present() is pending) leaves gorhom's modal "dismissing" with nothing to close, and
+      // a dismissing modal never renders again: every later present() did nothing (TR-27 QA round
+      // 2). A sheet closed while it was still appearing is dismissed once it has shown.
+      if (shown.current) ref.current?.dismiss();
       return;
     }
     ref.current?.present();
@@ -69,6 +73,7 @@ export function Sheet({ open, onClose, title, children, testID }: SheetProps) {
 
   const handleChange = useCallback((index: number) => {
     shown.current = index >= 0;
+    if (shown.current && !openRef.current) ref.current?.dismiss();
   }, []);
 
   // Only report dismissals the parent didn't ask for (drag down, backdrop tap).

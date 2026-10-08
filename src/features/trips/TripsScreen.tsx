@@ -10,7 +10,7 @@ import { filterTrips, type TripFilter } from '@/core/trips';
 import { MapSheet } from '@/features/map/MapSheet';
 import { useTrips, type Trip } from '@/services/data';
 import { colors, radii, screenPadding, spacing } from '@/theme';
-import { Button, IconButton, Segmented, Skeleton, Text } from '@/ui';
+import { Button, IconButton, Segmented, Skeleton, Text, useTabBarInset } from '@/ui';
 
 import { useChooseTrip, useRestoreSelectedTrip } from './selectedTrip';
 import { TRIP_CARD_HEIGHT, TripCard } from './TripCard';
@@ -28,8 +28,6 @@ const GLOBE_SHARE = 0.36;
 const SHEET_OVERLAP = radii.photo;
 /** The title row, until the body under it has been measured. */
 const TOP_ESTIMATE = 72;
-/** The native tab bar floats over the bottom of the screen (iOS 26), as on Plan. */
-const FLOATING_TAB_BAR = 64;
 
 const EMPTY_FILTER: Record<TripFilter, string> = {
   upcoming: 'No upcoming trips.',
@@ -66,7 +64,7 @@ export function TripsScreen() {
   const sheetHalf = Math.max(bodyHeight - globeHalf + SHEET_OVERLAP, 0);
   const [sheetCover, setSheetCover] = useState<number | null>(null);
   const globeHeight = mapAreaHeight(bodyHeight, sheetCover ?? sheetHalf, SHEET_OVERLAP);
-  const sheetBottom = insets.bottom + FLOATING_TAB_BAR;
+  const sheetBottom = useTabBarInset();
   const shown = trips ? filterTrips(trips, filter, now()) : [];
 
   let body;

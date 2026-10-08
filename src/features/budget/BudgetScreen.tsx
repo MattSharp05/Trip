@@ -9,7 +9,7 @@ import { useRates } from '@/services/rates';
 import { useScenarioStore } from '@/stores/scenario';
 import { useTripStore } from '@/stores/trip';
 import { colors, continuous, radii, screenPadding, spacing } from '@/theme';
-import { Button, Icon, ListRow, Segmented, Skeleton, Surface, Text } from '@/ui';
+import { Button, Icon, ListRow, Segmented, Skeleton, Surface, Text, useTabBarInset } from '@/ui';
 
 import { AddExpenseSheet } from './AddExpenseSheet';
 import {
@@ -38,6 +38,7 @@ const TABS = [
  * stored amounts never change.
  */
 export function BudgetScreen() {
+  const tabBarInset = useTabBarInset();
   const tripId = useTripStore((s) => s.selectedTripId);
   const tripData = useTripData(tripId);
   const { preferences } = usePreferences();
@@ -112,7 +113,10 @@ export function BudgetScreen() {
 
   return (
     <>
-      <ScrollView contentContainerStyle={styles.content} testID="budget-slot">
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarInset + spacing.lg }]}
+        testID="budget-slot"
+      >
         <View style={styles.header}>
           <Text variant="subhead" tone="secondary" style={styles.flex} numberOfLines={1}>
             {`${trip.city} · ${dateRangeLabel(trip.startDate, trip.endDate)}`}
@@ -288,7 +292,7 @@ function SummaryCard({ summary, onEdit }: { summary: BudgetSummary; onEdit: () =
 }
 
 const styles = StyleSheet.create({
-  content: { gap: spacing.lg, paddingHorizontal: screenPadding, paddingBottom: spacing.xxxl },
+  content: { gap: spacing.lg, paddingHorizontal: screenPadding },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   flex: { flex: 1 },
   currency: {

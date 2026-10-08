@@ -75,7 +75,7 @@ export function OrganizeScreen() {
           {trip ? (
             <TripTitle trip={trip} variant="inline" testID="organize-trip-title" />
           ) : tripId ? (
-            <Skeleton width={200} height={18} testID="organize-trip-title-loading" />
+            <Skeleton width={220} height={22} testID="organize-trip-title-loading" />
           ) : null}
         </View>
         <Segmented segments={SEGMENTS} value={view} onChange={setView} testID="organize-view" />

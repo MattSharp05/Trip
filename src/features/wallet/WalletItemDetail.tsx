@@ -2,7 +2,7 @@ import { Stack } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { colors, screenPadding, spacing } from '@/theme';
-import { ListRow, LoadError, Skeleton, Surface, Text } from '@/ui';
+import { ListRow, LoadError, Skeleton, Surface, Text, useTabBarInset } from '@/ui';
 
 import { walletLabel, WalletEntryCard } from './cards/registry';
 import { formatMonthYear } from './format';
@@ -23,12 +23,16 @@ function facts(entry: WalletEntry): { title: string; value: string }[] {
  */
 export function WalletItemDetail({ id }: { id: string }) {
   const { entries, places, isLoading, loadError, retry } = useWallet();
+  const tabBarInset = useTabBarInset();
   const entry = entries.find((e) => e.id === id);
   const title = entry ? walletLabel(entry) : '';
   const rows = entry ? facts(entry) : [];
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={[styles.content, { paddingBottom: tabBarInset + spacing.lg }]}
+    >
       <Stack.Screen options={{ headerShown: true, title, headerBackTitle: 'Organize' }} />
       {isLoading ? (
         <Skeleton height={66} radius="card" />
