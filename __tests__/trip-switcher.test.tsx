@@ -1,4 +1,5 @@
 import { act, fireEvent, renderRouter, screen, waitFor, within } from 'expo-router/testing-library';
+import { StyleSheet } from 'react-native';
 
 import TabLayout from '../app/(tabs)/_layout';
 import OrganizeScreen from '../app/(tabs)/organize/index';
@@ -16,6 +17,7 @@ import { queryClient } from '@/services/data/hooks';
 import { createDemoSource } from '@/services/data/source';
 import { useSelectionStore } from '@/stores/selection';
 import { useTripStore } from '@/stores/trip';
+import { colors, typography } from '@/theme';
 
 jest.mock('@/services/supabase', () => ({
   supabase: { auth: require('@/features/auth/testing').fakeAuth },
@@ -137,6 +139,20 @@ describe('Trip switcher on Organize', () => {
     await switchTo('organize-trip-title', 'trip-cape-town');
     expect(await screen.findByText('Cape Town · Dec 18, 2026 – Jan 6, 2027')).toBeOnTheScreen();
     expect(useTripStore.getState().selectedTripId).toBe('trip-cape-town');
+  });
+
+  // TR-48: the trip line was small grey footnote text and easy to miss.
+  it('shows the trip in headline type and primary text, the dates in secondary', async () => {
+    renderRouter(routes, { initialUrl: '/scenario/vegas-wallet' });
+    const title = await screen.findByTestId('organize-trip-title');
+    const line = within(title).getByText('Las Vegas · Nov 12 – Nov 16, 2026');
+    expect(StyleSheet.flatten(line.props.style)).toMatchObject({
+      ...typography.headline,
+      color: colors.textPrimary,
+    });
+    expect(
+      StyleSheet.flatten(within(title).getByText(' · Nov 12 – Nov 16, 2026').props.style),
+    ).toMatchObject({ ...typography.body, color: colors.textSecondary });
   });
 });
 

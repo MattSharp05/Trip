@@ -94,7 +94,7 @@ export function DiscoverScreen() {
               testID="discover-trip-title"
             />
           ) : tripId ? (
-            <Skeleton width={200} height={18} testID="discover-trip-title-loading" />
+            <Skeleton width={220} height={22} testID="discover-trip-title-loading" />
           ) : null}
         </View>
 

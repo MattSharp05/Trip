@@ -12,7 +12,8 @@ export interface TripTitleProps {
   trip: Pick<Trip, 'id' | 'city' | 'startDate' | 'endDate'>;
   /**
    * `center`: the city with a chevron over the dates, for a navigation bar (Plan). `inline`: one
-   * line under a large title, "Las Vegas · Nov 12 – Nov 16, 2026" (Organize, Discover).
+   * line under a large title, "Las Vegas · Nov 12 – Nov 16, 2026" (Organize, Discover): the city
+   * in headline type, the dates in secondary body type.
    */
   variant?: 'center' | 'inline';
   /**
@@ -38,7 +39,6 @@ export function TripTitle({
   const [used, setUsed] = useState(false);
   const dates = dateRangeLabel(trip.startDate, trip.endDate);
   const all = allUpcoming?.selected === true;
-  const label = all ? ALL_UPCOMING : `${trip.city} · ${dates}`;
 
   return (
     <>
@@ -71,10 +71,13 @@ export function TripTitle({
           </>
         ) : (
           <>
-            <Text variant="subhead" tone="secondary" numberOfLines={1} style={styles.shrink}>
-              {label}
+            {/* TR-48: headline size with the trip in primary text, so it reads as the screen's
+                trip and not a footnote; the dates stay secondary. */}
+            <Text variant="headline" numberOfLines={1} style={styles.shrink}>
+              {all ? ALL_UPCOMING : trip.city}
+              {all ? null : <Text variant="body" tone="secondary">{` · ${dates}`}</Text>}
             </Text>
-            <Icon name="chevron.down" size="sm" tone="secondary" weight="semibold" />
+            <Icon name="chevron.down" size="sm" weight="semibold" />
           </>
         )}
       </Pressable>
