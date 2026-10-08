@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { useFlightStatus } from '@/services/flightStatus';
 import { colors, continuous, radii, screenPadding, spacing } from '@/theme';
-import { Button, ListRow, LoadError, Skeleton, Surface, Text, Toast } from '@/ui';
+import { Button, ListRow, LoadError, Skeleton, Surface, Text, Toast, useTabBarInset } from '@/ui';
 
 import { addFlightToCalendar, openOriginal } from './actions';
 import { FlightRoute } from './FlightRoute';
@@ -19,6 +19,7 @@ import { useWallet } from '../useWallet';
  */
 export function FlightDetail({ id }: { id: string }) {
   const { loadError, retry } = useWallet();
+  const tabBarInset = useTabBarInset();
   const router = useRouter();
   const { flight: booking, isLoading } = useFlightBooking(id);
   const [toast, setToast] = useState<string | null>(null);
@@ -47,7 +48,9 @@ export function FlightDetail({ id }: { id: string }) {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarInset + spacing.lg }]}
+      >
         <Stack.Screen
           options={{ headerShown: true, title: 'Flight details', headerBackTitle: 'Organize' }}
         />

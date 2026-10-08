@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, continuous, radii, spacing } from '@/theme';
+import { colors, continuous, radii, screenPadding, spacing } from '@/theme';
 
+import { useTabBarInset } from './tabBar';
 import { Text } from './Text';
 
 export interface ToastProps {
@@ -16,10 +18,19 @@ export interface ToastProps {
   onDismiss: () => void;
   /** Milliseconds before it closes on its own. */
   duration?: number;
+  /**
+   * `tabBar` (default): floats just above the native tab bar, for every screen inside the tabs.
+   * `screen`: just above the home indicator, for screens without a tab bar (Settings).
+   */
+  placement?: 'tabBar' | 'screen';
   testID?: string;
 }
 
-/** A short confirmation at the bottom of the screen, optionally with one action (Undo). */
+/**
+ * A short confirmation floating at the bottom of the screen, optionally with one action (Undo).
+ * It positions itself (absolutely, over the screen's content), so render it as a direct child of
+ * the screen's full-height root view.
+ */
 export function Toast({
   visible,
   message,
@@ -27,8 +38,13 @@ export function Toast({
   onAction,
   onDismiss,
   duration = 4000,
+  placement = 'tabBar',
   testID,
 }: ToastProps) {
+  const tabBarInset = useTabBarInset();
+  const insets = useSafeAreaInsets();
+  const bottom = placement === 'tabBar' ? tabBarInset : insets.bottom + spacing.lg;
+
   // Latest callback without restarting the timer on every parent render.
   const onDismissRef = useRef(onDismiss);
   useEffect(() => {
@@ -50,7 +66,7 @@ export function Toast({
       exiting={FadeOut.duration(150)}
       accessibilityLiveRegion="polite"
       accessibilityRole="alert"
-      style={styles.toast}
+      style={[styles.toast, { bottom }]}
       testID={testID}
     >
       <Text variant="body" style={styles.message} numberOfLines={2}>
@@ -76,6 +92,9 @@ export function Toast({
 
 const styles = StyleSheet.create({
   toast: {
+    position: 'absolute',
+    left: screenPadding,
+    right: screenPadding,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { screenPadding, spacing } from '@/theme';
-import { Button, Chip, LoadError, Skeleton, Text } from '@/ui';
+import { Button, Chip, LoadError, Skeleton, Text, useTabBarInset } from '@/ui';
 
 import { walletDetailHref, WalletEntryCard } from './cards/registry';
 import { useWallet } from './useWallet';
@@ -12,6 +12,7 @@ import { EMPTY_COPY, filterWallet, WALLET_FILTERS, type WalletFilter } from './w
 /** Organize → Wallet: filter chips over the trip's booking cards and the account's documents. */
 export function WalletList() {
   const router = useRouter();
+  const tabBarInset = useTabBarInset();
   const [filter, setFilter] = useState<WalletFilter>('all');
   const { entries, places, isLoading, noTrip, loadError, retry } = useWallet();
   const shown = filterWallet(entries, filter);
@@ -39,7 +40,10 @@ export function WalletList() {
           />
         ))}
       </ScrollView>
-      <ScrollView contentContainerStyle={styles.list} testID="wallet-list">
+      <ScrollView
+        contentContainerStyle={[styles.list, { paddingBottom: tabBarInset + spacing.lg }]}
+        testID="wallet-list"
+      >
         {loadError ? (
           <LoadError
             message="Couldn't load your wallet. Check your connection."
@@ -84,7 +88,7 @@ const styles = StyleSheet.create({
   // A horizontal ScrollView grows by default; keep the chip row its own height.
   chipRow: { flexGrow: 0 },
   chips: { gap: spacing.sm, paddingHorizontal: screenPadding },
-  list: { gap: spacing.sm, paddingHorizontal: screenPadding, paddingBottom: spacing.xxxl },
+  list: { gap: spacing.sm, paddingHorizontal: screenPadding },
   empty: { alignItems: 'center', gap: spacing.xs, paddingTop: spacing.xxxl },
   emptyBody: { textAlign: 'center' },
 });

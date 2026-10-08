@@ -1,4 +1,5 @@
 import { act, fireEvent, renderRouter, screen, waitFor, within } from 'expo-router/testing-library';
+import { StyleSheet } from 'react-native';
 
 import TabLayout from '../app/(tabs)/_layout';
 import DiscoverScreen from '../app/(tabs)/discover/index';
@@ -8,6 +9,7 @@ import { resetFakeAuth } from '@/features/auth/testing';
 import { exitScenario } from '@/scenarios';
 import { useActiveSource } from '@/services/data';
 import { useTripStore } from '@/stores/trip';
+import { FLOATING_TAB_BAR } from '@/ui';
 
 jest.mock('@/services/supabase', () => ({
   supabase: { auth: require('@/features/auth/testing').fakeAuth },
@@ -52,7 +54,7 @@ afterEach(() => act(() => exitScenario()));
 
 describe('Discover across all upcoming trips (vegas-discover-all)', () => {
   it('shows one section per upcoming trip, soonest first, each with its own dates’ events', async () => {
-    await open('vegas-discover-all', CAPE_ROW);
+    await open('vegas-discover-all', `${CAPE_ROW}-empty`);
     await screen.findByTestId(VEGAS_ROW);
     expect(screen.getByTestId('discover-trip-title')).toHaveTextContent('All upcoming trips');
     expect(sectionTitles()).toEqual([
@@ -69,12 +71,10 @@ describe('Discover across all upcoming trips (vegas-discover-all)', () => {
       'UFC 310',
       'Comedy Cellar Late Show',
     ]);
-    expect(titles(CAPE_ROW)).toEqual([
-      'Neighbourgoods Market',
-      'Kirstenbosch Summer Sunset Concert',
-      "New Year's Eve at the V&A Waterfront",
-      'Proteas New Year Test, Day 1',
-    ]);
+    // No demo events in Cape Town until live listings are on (TR-33 QA round 2).
+    expect(screen.getByTestId(`${CAPE_ROW}-empty`)).toHaveTextContent(
+      'No events found on your dates.',
+    );
     // Sections carry events only; curated places stay with a single trip.
     expect(screen.queryByText('Popular with travellers')).toBeNull();
     // Saved videos follow each trip's city: Las Vegas has some, Cape Town none (TR-34).
@@ -83,7 +83,7 @@ describe('Discover across all upcoming trips (vegas-discover-all)', () => {
   });
 
   it('Networking shows the samples in Las Vegas and stays empty in Cape Town', async () => {
-    await open('vegas-discover-all', CAPE_ROW);
+    await open('vegas-discover-all', `${CAPE_ROW}-empty`);
     fireEvent.press(screen.getByTestId('discover-filter-networking'));
     expect(titles(VEGAS_ROW)).toEqual([
       'Founders & Funders Breakfast',
@@ -97,7 +97,7 @@ describe('Discover across all upcoming trips (vegas-discover-all)', () => {
   });
 
   it('a saved video in the Las Vegas section saves to Las Vegas', async () => {
-    await open('vegas-discover-all', CAPE_ROW);
+    await open('vegas-discover-all', `${CAPE_ROW}-empty`);
     fireEvent.press(screen.getByTestId('discover-trip-trip-vegas-reels-reel-2'));
     expect(await screen.findByText('High Roller')).toBeTruthy();
     await act(async () => fireEvent.press(screen.getByTestId('link-save')));
@@ -108,46 +108,49 @@ describe('Discover across all upcoming trips (vegas-discover-all)', () => {
     expect(vegas?.bucketItems.at(-1)).toMatchObject({ tripId: 'trip-vegas', source: 'tiktok' });
   });
 
-  it('+ in the Cape Town section saves to Cape Town’s Bucket List, not Las Vegas’s', async () => {
-    await open('vegas-discover-all', CAPE_ROW);
+  it('+ in the Las Vegas section saves to Las Vegas’s Bucket List, not Cape Town’s', async () => {
+    await open('vegas-discover-all', `${CAPE_ROW}-empty`);
     const source = useActiveSource.getState().source;
-    const vegasBefore = (await source.getTripData('trip-vegas'))?.bucketItems.length;
+    const capeBefore = (await source.getTripData('trip-cape-town'))?.bucketItems.length;
 
     await act(async () =>
-      fireEvent.press(screen.getByTestId(`${CAPE_ROW}-card-fx:kirstenbosch-1220-add`)),
+      fireEvent.press(screen.getByTestId(`${VEGAS_ROW}-card-fx:o-bellagio-1112-add`)),
     );
     await waitFor(() =>
-      expect(screen.getByTestId(`${CAPE_ROW}-card-fx:kirstenbosch-1220-saved`)).toBeTruthy(),
+      expect(screen.getByTestId(`${VEGAS_ROW}-card-fx:o-bellagio-1112-saved`)).toBeTruthy(),
     );
-    expect(
-      screen.getByText('Added Kirstenbosch Summer Sunset Concert to your Bucket List'),
-    ).toBeTruthy();
+    expect(screen.getByText('Added O by Cirque du Soleil to your Bucket List')).toBeTruthy();
 
-    const cape = await source.getTripData('trip-cape-town');
-    expect(cape?.bucketItems.at(-1)).toMatchObject({
-      tripId: 'trip-cape-town',
-      title: 'Kirstenbosch Summer Sunset Concert',
+    const vegas = await source.getTripData('trip-vegas');
+    expect(vegas?.bucketItems.at(-1)).toMatchObject({
+      tripId: 'trip-vegas',
+      title: 'O by Cirque du Soleil',
       source: 'discover',
-      fixedDate: '2026-12-20',
-      fixedTime: '17:30',
+      fixedDate: '2026-11-12',
     });
-    expect(cape?.places.some((p) => p.name === 'Kirstenbosch National Botanical Garden')).toBe(
-      true,
+    expect((await source.getTripData('trip-cape-town'))?.bucketItems).toHaveLength(capeBefore ?? 0);
+  });
+
+  // TR-33 QA round 2: the last section ended under the floating tab bar and bounced back.
+  it('pads the bottom so the last section scrolls clear of the tab bar', async () => {
+    await open('vegas-discover-all', `${CAPE_ROW}-empty`);
+    const content = StyleSheet.flatten(
+      screen.getByTestId('discover-screen').props.contentContainerStyle,
     );
-    expect((await source.getTripData('trip-vegas'))?.bucketItems).toHaveLength(vegasBefore ?? 0);
+    expect(content.paddingBottom).toBeGreaterThanOrEqual(FLOATING_TAB_BAR);
   });
 
   it('applies the chips and search to every section', async () => {
-    await open('vegas-discover-all', CAPE_ROW);
+    await open('vegas-discover-all', `${CAPE_ROW}-empty`);
     await screen.findByTestId(VEGAS_ROW);
     fireEvent.press(screen.getByTestId('discover-filter-sports'));
     expect(titles(VEGAS_ROW)).toEqual(['Vegas Golden Knights vs. Seattle Kraken', 'UFC 310']);
-    expect(titles(CAPE_ROW)).toEqual(['Proteas New Year Test, Day 1']);
+    expect(screen.getByTestId(`${CAPE_ROW}-empty`)).toHaveTextContent('No sports on your dates.');
 
     fireEvent.press(screen.getByTestId('discover-filter-all'));
     fireEvent.changeText(screen.getByTestId('discover-search'), 'market');
     expect(screen.getByTestId(`${VEGAS_ROW}-empty`)).toHaveTextContent('No events match "market".');
-    expect(titles(CAPE_ROW)).toEqual(['Neighbourgoods Market']);
+    expect(screen.getByTestId(`${CAPE_ROW}-empty`)).toHaveTextContent('No events match "market".');
   });
 });
 
@@ -161,7 +164,7 @@ describe('The trip line’s "All upcoming trips" option', () => {
     expect(all).not.toBeSelected();
 
     fireEvent.press(all);
-    await screen.findByTestId(CAPE_ROW);
+    await screen.findByTestId(`${CAPE_ROW}-empty`);
     expect(useTripStore.getState().discoverAll).toBe(true);
     expect(sectionTitles()).toEqual([
       "While you're in Las Vegas · Nov 12 – 16",

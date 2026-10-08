@@ -1,5 +1,6 @@
-// Deterministic demo events (TR-31): Las Vegas, around the sample trip's dates (Nov 12–16, 2026),
-// and a few in Cape Town on its trip's dates (Dec 18, 2026 – Jan 6, 2027; TR-33).
+// Deterministic demo events (TR-31): Las Vegas, around the sample trip's dates (Nov 12–16, 2026).
+// None in Cape Town (Dec 18, 2026 – Jan 6, 2027): its section says "No events found on your dates."
+// until live listings are on (TR-33 QA round 2).
 // The `events` function answers with these when EVENTS_PROVIDER=fixture, and scenario demo
 // sessions use them in the app without calling the function (like the flight-status fixtures).
 
@@ -159,66 +160,6 @@ export const FIXTURE_EVENTS: readonly TripEvent[] = [
       address: '4 Pennsylvania Plaza, New York, NY',
       lat: 40.7505,
       lng: -73.9934,
-    },
-    imageUrl: null,
-    url: null,
-  },
-  {
-    id: 'fx:neighbourgoods-1219',
-    title: 'Neighbourgoods Market',
-    category: 'food',
-    date: '2026-12-19',
-    time: '09:00',
-    venue: {
-      name: 'The Old Biscuit Mill',
-      address: '373 Albert Rd, Woodstock, Cape Town',
-      lat: -33.9275,
-      lng: 18.4571,
-    },
-    imageUrl: null,
-    url: null,
-  },
-  {
-    id: 'fx:kirstenbosch-1220',
-    title: 'Kirstenbosch Summer Sunset Concert',
-    category: 'events',
-    date: '2026-12-20',
-    time: '17:30',
-    venue: {
-      name: 'Kirstenbosch National Botanical Garden',
-      address: 'Rhodes Dr, Newlands, Cape Town',
-      lat: -33.9875,
-      lng: 18.4327,
-    },
-    imageUrl: null,
-    url: null,
-  },
-  {
-    id: 'fx:waterfront-nye-1231',
-    title: "New Year's Eve at the V&A Waterfront",
-    category: 'nightlife',
-    date: '2026-12-31',
-    time: '21:00',
-    venue: {
-      name: 'V&A Waterfront',
-      address: 'Dock Rd, V&A Waterfront, Cape Town',
-      lat: -33.9036,
-      lng: 18.4207,
-    },
-    imageUrl: null,
-    url: null,
-  },
-  {
-    id: 'fx:new-year-test-0103',
-    title: 'Proteas New Year Test, Day 1',
-    category: 'sports',
-    date: '2027-01-03',
-    time: '10:00',
-    venue: {
-      name: 'Newlands Cricket Ground',
-      address: '146 Campground Rd, Newlands, Cape Town',
-      lat: -33.9737,
-      lng: 18.4682,
     },
     imageUrl: null,
     url: null,
