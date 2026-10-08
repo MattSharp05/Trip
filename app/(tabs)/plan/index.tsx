@@ -44,7 +44,7 @@ import { useScenarioStore } from '@/stores/scenario';
 import { useTripSelection } from '@/stores/selection';
 import { useTripStore } from '@/stores/trip';
 import { colors, radii, screenPadding, spacing } from '@/theme';
-import { Button, LoadError, Skeleton, Text, Toast } from '@/ui';
+import { Button, LoadError, Skeleton, Text, Toast, useTabBarInset } from '@/ui';
 
 /** Share of the screen the map shows above the half-height sheet (reference mockup, Plan). */
 const MAP_SHARE = 0.36;
@@ -53,24 +53,16 @@ const SHEET_OVERLAP = radii.photo;
 /** Header and date pills, until the body under them has been measured. */
 const TOP_ESTIMATE = 140;
 
-/** The toast floats above the tab bar (49 pt on iPhone) over the sheet. */
-const TOAST_BOTTOM = 49 + spacing.md;
-
 /** Demo sessions whose sample video has been opened: once per scenario load. */
 /** How long a scenario's sample video waits before its results sheet opens (TR-43). */
 const SAMPLE_OPEN_DELAY_MS = 600;
-
-/**
- * The native tab bar floats over the bottom of the screen (iOS 26): the itinerary and Bucket List
- * scroll their last row (and "Add a place") clear of it (TR-35).
- */
-const FLOATING_TAB_BAR = 64;
 
 /** Until Settings has a units preference, temperatures follow the phone's region. */
 const UNIT = temperatureUnitForLocale(Intl.DateTimeFormat().resolvedOptions().locale);
 
 export default function PlanScreen() {
   const insets = useSafeAreaInsets();
+  const tabBarInset = useTabBarInset();
   const router = useRouter();
   const { height } = useWindowDimensions();
   const tripId = useTripStore((s) => s.selectedTripId);
@@ -372,7 +364,7 @@ export default function PlanScreen() {
               reveal={selectedBy === 'map'}
               onSelect={pickRow}
               onOpenBucketList={() => selection.setPlanMode('bucket')}
-              bottomInset={insets.bottom + FLOATING_TAB_BAR + spacing.lg}
+              bottomInset={tabBarInset + spacing.lg}
               editing={editor.editing}
             />
           }
@@ -385,24 +377,19 @@ export default function PlanScreen() {
               onPlanAll={planAllBucket}
               notes={smart.notes}
               onAdd={actions.openSearch}
-              bottomInset={insets.bottom + FLOATING_TAB_BAR + spacing.lg}
+              bottomInset={tabBarInset + spacing.lg}
             />
           }
         />
       </View>
-      <View
-        style={[styles.toast, { bottom: insets.bottom + TOAST_BOTTOM }]}
-        pointerEvents="box-none"
-      >
-        <Toast
-          visible={toast !== null}
-          message={toast?.message ?? ''}
-          actionLabel={toast?.undo ? 'Undo' : undefined}
-          onAction={toastUndo}
-          onDismiss={toastDismiss}
-          testID="plan-toast"
-        />
-      </View>
+      <Toast
+        visible={toast !== null}
+        message={toast?.message ?? ''}
+        actionLabel={toast?.undo ? 'Undo' : undefined}
+        onAction={toastUndo}
+        onDismiss={toastDismiss}
+        testID="plan-toast"
+      />
       <AddPlaceSheet
         mode={actions.addMode}
         near={near}
@@ -434,6 +421,5 @@ const styles = StyleSheet.create({
   pillsLoading: { paddingHorizontal: screenPadding },
   body: { flex: 1 },
   banner: { position: 'absolute', top: spacing.sm, left: screenPadding, right: screenPadding },
-  toast: { position: 'absolute', left: screenPadding, right: screenPadding },
   dayLoading: { paddingHorizontal: screenPadding, paddingVertical: spacing.md },
 });
