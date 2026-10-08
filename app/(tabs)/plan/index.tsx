@@ -270,12 +270,17 @@ export default function PlanScreen() {
   const weather = forecast.data ?? {};
   const bucketCount = trip.data?.bucketItems.length;
   const onGlobe = flight !== null && !inBucket && globeDay === selectedDay;
+  // Edit / Done (drag handles) only when the day has stops to reorder.
+  const canReorder = !inBucket && (entries?.length ?? 0) > 1;
+  const reordering = canReorder && editor.reordering;
   const dayHeader = selectedDay ? (
     <DayHeader
       day={selectedDay}
       weather={weather[selectedDay]}
       unit={UNIT}
       onAdd={inBucket ? undefined : editor.add}
+      onToggleReorder={canReorder ? editor.toggleReorder : undefined}
+      reordering={reordering}
     />
   ) : (
     <View style={styles.dayLoading}>
@@ -366,6 +371,7 @@ export default function PlanScreen() {
               onOpenBucketList={() => selection.setPlanMode('bucket')}
               bottomInset={tabBarInset + spacing.lg}
               editing={editor.editing}
+              reordering={reordering}
             />
           }
           bucketList={

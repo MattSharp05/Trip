@@ -46,7 +46,8 @@ export interface ItineraryEditorOptions {
 
 /**
  * Editing the Plan tab's itinerary: the gestures for `Itinerary` (`editing`), the day header's
- * Add (`add`), the toast to show, and the sheets to draw (`sheets`).
+ * Add (`add`) and Edit / Done (`reordering`, `toggleReorder`), the toast to show, and the sheets to
+ * draw (`sheets`).
  */
 export function useItineraryEditor({ data, day, days, near }: ItineraryEditorOptions) {
   const edits = useItineraryEdits(data?.trip.id ?? null);
@@ -55,6 +56,8 @@ export function useItineraryEditor({ data, day, days, near }: ItineraryEditorOpt
   const [sheet, setSheet] = useState<EditorSheet | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  /** Edit mode: drag handles on the rows (the day header's Edit / Done). */
+  const [reordering, setReordering] = useState(false);
 
   // Keep the last content while the sheet slides away; each opening starts fresh (its own key).
   const [shown, setShown] = useState<{ sheet: EditorSheet; key: number } | null>(null);
@@ -217,6 +220,8 @@ export function useItineraryEditor({ data, day, days, near }: ItineraryEditorOpt
   return {
     editing,
     add: useCallback(() => open({ kind: 'add' }), [open]),
+    reordering,
+    toggleReorder: useCallback(() => setReordering((on) => !on), []),
     toast: edits.toast,
     undo: edits.undo,
     dismissToast: edits.dismissToast,
