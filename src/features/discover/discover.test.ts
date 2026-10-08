@@ -280,19 +280,14 @@ describe('tripSectionTitle', () => {
 });
 
 describe('Cape Town fixture events', () => {
-  it('are on the Cape Town trip’s dates and nowhere near Las Vegas', () => {
+  // TR-33 QA round 2: no demo events there until live listings are on.
+  it('are none, so its section says there are no events on its dates', () => {
     const capeTown = {
       lat: -33.9249,
       lng: 18.4241,
       startDate: '2026-12-18',
       endDate: '2027-01-06',
     };
-    expect(titles(fixtureEvents(capeTown))).toEqual([
-      'Neighbourgoods Market',
-      'Kirstenbosch Summer Sunset Concert',
-      "New Year's Eve at the V&A Waterfront",
-      'Proteas New Year Test, Day 1',
-    ]);
-    expect(titles(events).some((t) => t.includes('Kirstenbosch'))).toBe(false);
+    expect(fixtureEvents(capeTown)).toEqual([]);
   });
 });
