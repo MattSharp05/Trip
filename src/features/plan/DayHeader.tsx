@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { dayLabel } from '@/core/dates';
 import {
@@ -17,10 +17,20 @@ export interface DayHeaderProps {
   unit: TemperatureUnit;
   /** Shows the Add button (a stop on this day). */
   onAdd?: () => void;
+  /** Shows Edit / Done: Edit puts drag handles on the rows (reorder). */
+  onToggleReorder?: () => void;
+  reordering?: boolean;
 }
 
 /** "Fri, Nov 13" over the itinerary, with the day's weather, high and low when there is a forecast. */
-export function DayHeader({ day, weather, unit, onAdd }: DayHeaderProps) {
+export function DayHeader({
+  day,
+  weather,
+  unit,
+  onAdd,
+  onToggleReorder,
+  reordering = false,
+}: DayHeaderProps) {
   return (
     <View style={styles.row} testID="day-header">
       <Text variant="title" accessibilityRole="header" testID="day-header-title">
@@ -40,6 +50,20 @@ export function DayHeader({ day, weather, unit, onAdd }: DayHeaderProps) {
               {formatTemperature(weather.lowC, unit)}
             </Text>
           </View>
+        ) : null}
+        {onToggleReorder ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={reordering ? 'Done reordering' : 'Reorder stops'}
+            hitSlop={spacing.sm}
+            onPress={onToggleReorder}
+            style={({ pressed }) => pressed && styles.pressed}
+            testID="day-header-reorder"
+          >
+            <Text variant="headline" tone="accent">
+              {reordering ? 'Done' : 'Edit'}
+            </Text>
+          </Pressable>
         ) : null}
         {onAdd ? (
           <IconButton
@@ -66,4 +90,5 @@ const styles = StyleSheet.create({
   },
   trailing: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   weather: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  pressed: { opacity: 0.6 },
 });

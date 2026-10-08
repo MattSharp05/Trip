@@ -42,6 +42,8 @@ export interface ItineraryProps {
   bottomInset: number;
   /** Edit gestures (drag, swipe, time); without it the rows are read-only. */
   editing?: ItineraryEditing;
+  /** Edit mode: each row shows a drag handle (DayHeader's Edit / Done). */
+  reordering?: boolean;
 }
 
 /** A row plus, under it, the travel leg to the next stop when there is one. */
@@ -60,6 +62,7 @@ export function Itinerary({
   onOpenBucketList,
   bottomInset,
   editing,
+  reordering = false,
 }: ItineraryProps) {
   const list = useRef<BottomSheetFlatListMethods>(null);
   const unit = useDistanceUnit();
@@ -95,6 +98,7 @@ export function Itinerary({
           onSelect={onSelect}
           editing={editing}
           drag={drag}
+          reordering={reordering}
         />
       ) : (
         <>
@@ -110,7 +114,7 @@ export function Itinerary({
           ) : null}
         </>
       ),
-    [selectedId, entries, onSelect, unit, editing, drag],
+    [selectedId, entries, onSelect, unit, editing, drag, reordering],
   );
 
   if (!entries) {
@@ -146,7 +150,7 @@ export function Itinerary({
         data={entries}
         keyExtractor={(e: ItineraryEntry) => e.id}
         renderItem={renderItem}
-        extraData={`${selectedId}:${unit}`}
+        extraData={`${selectedId}:${unit}:${reordering}`}
         scrollEnabled={lifted === null}
         CellRendererComponent={editing ? Cell : undefined}
         getItemLayout={(_: unknown, i: number) => ({

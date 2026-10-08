@@ -158,6 +158,29 @@ describe('Editing the itinerary on vegas-plan-day-2', () => {
     await waitFor(() => expect(rows()[0]).toBe('10:00 AM Bellagio Fountains'));
   });
 
+  it('Edit mode: the drag handles move a row without a hold, and Done hides them', async () => {
+    await openFriday();
+    expect(screen.queryByTestId(`itinerary-handle-${BRUNCH}`)).toBeNull();
+
+    fireEvent.press(screen.getByTestId('day-header-reorder'));
+    expect(within(screen.getByTestId('day-header-reorder')).getByText('Done')).toBeTruthy();
+    act(() => {
+      fireGestureHandler(getByGestureTestId(`itinerary-handle-${BRUNCH}`), [
+        { state: State.BEGAN, translationY: 0 },
+        { state: State.ACTIVE, translationY: 4 },
+        { state: State.ACTIVE, translationY: 90 },
+        { state: State.END, translationY: 90 },
+      ]);
+    });
+
+    expect(Haptics.impactAsync).toHaveBeenCalledWith('medium');
+    await waitFor(() => expect(rows()[0]).toBe('10:00 AM Bellagio Fountains'));
+
+    fireEvent.press(screen.getByTestId('day-header-reorder'));
+    expect(within(screen.getByTestId('day-header-reorder')).getByText('Edit')).toBeTruthy();
+    expect(screen.queryByTestId(`itinerary-handle-${BRUNCH}`)).toBeNull();
+  });
+
   it('refuses dropping onto a fixed stop, with a message, and keeps the order', async () => {
     await openFriday();
     await action(FOUNTAINS, 'moveLater');
