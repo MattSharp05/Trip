@@ -24,3 +24,17 @@ export function dragShift(offsets: readonly number[], from: number, to: number, 
   if (to < from && index >= to && index < from) return height;
   return 0;
 }
+
+/** How far a finger may wander while holding a row before the hold gives way to scroll or swipe. */
+export const HOLD_SLOP = 10;
+
+/**
+ * What the row's drag does as the finger moves (TR-24 QA round 3). Before the hold has lifted the
+ * row, a move past the slop means the finger is scrolling or swiping, so the drag gives up; once
+ * the row is lifted, the first move starts the drag.
+ */
+export function holdMove(lifted: boolean, dx: number, dy: number): 'drag' | 'give-up' | 'wait' {
+  'worklet';
+  if (lifted) return 'drag';
+  return dx * dx + dy * dy > HOLD_SLOP * HOLD_SLOP ? 'give-up' : 'wait';
+}
