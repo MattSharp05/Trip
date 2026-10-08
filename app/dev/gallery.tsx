@@ -195,15 +195,14 @@ function Gallery() {
         </Section>
       </ScrollView>
 
-      <View style={[styles.toastSlot, { bottom: insets.bottom + spacing.lg }]}>
-        <Toast
-          visible={toastVisible}
-          message="Added to Day 3 at 2:00 PM"
-          actionLabel="Undo"
-          onAction={() => setUndone(true)}
-          onDismiss={hideToast}
-        />
-      </View>
+      <Toast
+        visible={toastVisible}
+        message="Added to Day 3 at 2:00 PM"
+        actionLabel="Undo"
+        onAction={() => setUndone(true)}
+        onDismiss={hideToast}
+        placement="screen"
+      />
 
       <Sheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="Fri, Nov 14">
         <Surface padding="none">
@@ -224,5 +223,4 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm + spacing.xs },
   between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   skeletonCard: { gap: spacing.sm },
-  toastSlot: { position: 'absolute', left: screenPadding, right: screenPadding },
 });

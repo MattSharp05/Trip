@@ -11,5 +11,6 @@ export { Sheet, type SheetProps } from './Sheet';
 export { Skeleton, type SkeletonProps } from './Skeleton';
 export { Surface, type SurfaceProps } from './Surface';
 export { Text, type TextProps, type TextTone } from './Text';
+export { FLOATING_TAB_BAR, useTabBarInset } from './tabBar';
 export { Toast, type ToastProps } from './Toast';
 export { useReduceMotion } from './useReduceMotion';

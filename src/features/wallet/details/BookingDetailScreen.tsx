@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { colors, screenPadding, spacing } from '@/theme';
-import { LoadError, Skeleton, Text, Toast } from '@/ui';
+import { LoadError, Skeleton, Text, Toast, useTabBarInset } from '@/ui';
 
 import { useWallet } from '../useWallet';
 
@@ -28,9 +28,12 @@ export function BookingDetailScreen({
   children: ReactNode;
 }) {
   const { loadError, retry } = useWallet();
+  const tabBarInset = useTabBarInset();
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarInset + spacing.lg }]}
+      >
         <Stack.Screen options={{ headerShown: true, title, headerBackTitle: 'Organize' }} />
         {isLoading ? (
           <>

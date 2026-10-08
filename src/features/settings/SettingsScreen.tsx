@@ -150,7 +150,12 @@ export function SettingsScreen() {
         </View>
       </Sheet>
 
-      <Toast visible={message !== null} message={message ?? ''} onDismiss={hideMessage} />
+      <Toast
+        visible={message !== null}
+        message={message ?? ''}
+        onDismiss={hideMessage}
+        placement="screen"
+      />
     </View>
   );
 }

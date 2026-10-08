@@ -1,6 +1,25 @@
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render as rntlRender, screen } from '@testing-library/react-native';
+import type { ReactElement } from 'react';
+import { StyleSheet } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { FLOATING_TAB_BAR } from './tabBar';
 import { Toast } from './Toast';
+
+/** An iPhone with a home indicator: 34 pt bottom safe area. */
+const metrics = {
+  frame: { x: 0, y: 0, width: 402, height: 874 },
+  insets: { top: 62, left: 0, right: 0, bottom: 34 },
+};
+
+function wrap(ui: ReactElement) {
+  return <SafeAreaProvider initialMetrics={metrics}>{ui}</SafeAreaProvider>;
+}
+
+function render(ui: ReactElement) {
+  const result = rntlRender(wrap(ui));
+  return { ...result, rerender: (next: ReactElement) => result.rerender(wrap(next)) };
+}
 
 describe('Toast', () => {
   beforeEach(() => jest.useFakeTimers());
@@ -50,5 +69,22 @@ describe('Toast', () => {
     rerender(<Toast visible message="Added B" onDismiss={() => onDismiss()} duration={3000} />);
     act(() => jest.advanceTimersByTime(500));
     expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  // TR-33 QA round 2: on a real iPhone the toast rendered under the floating tab bar.
+  it('floats above the tab bar by default', () => {
+    render(<Toast visible message="Added" onDismiss={() => {}} testID="toast" />);
+    const style = StyleSheet.flatten(screen.getByTestId('toast').props.style);
+    expect(style.position).toBe('absolute');
+    expect(style.bottom).toBe(34 + FLOATING_TAB_BAR);
+  });
+
+  it('sits just above the home indicator on screens without a tab bar', () => {
+    render(
+      <Toast visible message="Signed out" onDismiss={() => {}} placement="screen" testID="toast" />,
+    );
+    const style = StyleSheet.flatten(screen.getByTestId('toast').props.style);
+    expect(style.bottom).toBeGreaterThan(34);
+    expect(style.bottom).toBeLessThan(34 + FLOATING_TAB_BAR);
   });
 });

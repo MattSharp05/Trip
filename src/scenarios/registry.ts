@@ -196,7 +196,7 @@ export const SCENARIOS: readonly Scenario[] = [
     name: 'vegas-discover-all',
     data: vegasTwoUpcoming,
     description:
-      'Discover, all upcoming trips: Las Vegas (now) and Cape Town, each with its events.',
+      'Discover, all upcoming trips: Las Vegas (now) with its events, and Cape Town with none yet.',
     tab: 'discover',
     view: { discoverAll: true },
   }),

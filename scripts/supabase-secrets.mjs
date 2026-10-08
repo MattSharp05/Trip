@@ -11,6 +11,7 @@ import { api } from './supabase-api.mjs';
 const NAMES = [
   'UNSPLASH_ACCESS_KEY',
   'GEMINI_API_KEY',
+  'GEMINI_FALLBACK_MODEL',
   'FLIGHT_STATUS_API_KEY',
   'TICKETMASTER_API_KEY',
 ];
