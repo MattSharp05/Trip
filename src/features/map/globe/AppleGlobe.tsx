@@ -3,12 +3,14 @@ import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
 import { planeProgress, routeCamera, type FlightEnd } from '@/core/flights';
-import { mapColors, radii, spacing } from '@/theme';
-import { Icon, Text, useReduceMotion } from '@/ui';
+import { mapColors } from '@/theme';
+import { Icon, useReduceMotion } from '@/ui';
 
 import { latLng } from '../bounds';
+import { MarkerBox } from '../MarkerBox';
 import type { LngLat } from '../types';
 import { along, greatCircle } from './geo';
+import { GlobeDot } from './GlobeDot';
 import { flight } from './sample';
 
 /** A flight's two airports, drawn as an arc on the globe. */
@@ -24,11 +26,10 @@ export interface AppleGlobeProps {
   testID?: string;
 }
 
-const DOT = 12;
-const LABEL_WIDTH = 120;
-const LABEL_HEIGHT = 20;
 /** Plane updates per second while it flies. */
 const PLANE_FPS = 30;
+/** The plane's box: centred on its point on the arc, so no offset is needed. */
+const PLANE = 32;
 
 /**
  * Apple Maps' own globe (satellite flyover zoomed out, ADR 0002) with a flight's orange
@@ -69,21 +70,13 @@ export function AppleGlobe({ route = flight, onReady, testID = 'apple-globe' }: 
         strokeWidth={3}
       />
       {[from, to].map((end) => (
-        <Marker
+        <GlobeDot
           key={end.code}
           testID={`globe-end-${end.code}`}
-          coordinate={latLng(end)}
-          // Apple Maps centres the view on the coordinate: shift it so the dot, not the box, sits there.
-          centerOffset={{ x: 0, y: (LABEL_HEIGHT + spacing.xs) / 2 }}
+          coordinate={end}
+          label={end.city}
           accessibilityLabel={`${end.city} (${end.code})`}
-        >
-          <View style={styles.box}>
-            <View style={styles.dot} />
-            <Text variant="caption" numberOfLines={1} style={styles.label}>
-              {end.city}
-            </Text>
-          </View>
-        </Marker>
+        />
       ))}
       <Plane arc={arc} />
     </MapView>
@@ -111,31 +104,15 @@ function Plane({ arc }: { arc: LngLat[] }) {
   return (
     <Marker testID="globe-plane" coordinate={latLng(at)} anchor={{ x: 0.5, y: 0.5 }} flat>
       {/* SF Symbols draw the airplane pointing east, so turn it by heading − 90°. */}
-      <View style={{ transform: [{ rotate: `${heading - 90}deg` }] }}>
-        <Icon name="airplane" size="lg" />
-      </View>
+      <MarkerBox width={PLANE} height={PLANE} style={styles.plane}>
+        <View style={{ transform: [{ rotate: `${heading - 90}deg` }] }}>
+          <Icon name="airplane" size="lg" />
+        </View>
+      </MarkerBox>
     </Marker>
   );
 }
 
 const styles = StyleSheet.create({
-  box: { width: LABEL_WIDTH, alignItems: 'center', gap: spacing.xs },
-  dot: {
-    width: DOT,
-    height: DOT,
-    borderRadius: DOT / 2,
-    backgroundColor: mapColors.route,
-    borderWidth: 2,
-    borderColor: mapColors.pinRing,
-  },
-  label: {
-    height: LABEL_HEIGHT,
-    maxWidth: LABEL_WIDTH,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radii.pill,
-    overflow: 'hidden',
-    backgroundColor: mapColors.globeLabelFill,
-    fontWeight: '600',
-    lineHeight: LABEL_HEIGHT,
-  },
+  plane: { alignItems: 'center', justifyContent: 'center' },
 });
