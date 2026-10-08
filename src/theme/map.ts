@@ -15,6 +15,9 @@ export const mapColors = {
   /** A Bucket List place (not on a day yet): an orange ring around a dark centre. */
   pinOutlineFill: colors.background,
   pinOutlineRing: colors.accent,
+  /** A day stop's number badge (TR-47): dark with a white ring; orange on the selected pin. */
+  pinBadgeFill: colors.background,
+  pinBadgeFillSelected: colors.accent,
   /** Other days' places. */
   pinDot: colors.textSecondary,
   pinDotRing: colors.background,

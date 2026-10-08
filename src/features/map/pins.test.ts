@@ -35,6 +35,22 @@ describe('dayPins on the Vegas trip', () => {
     expect(pins).toHaveLength(12);
   });
 
+  it("numbers Friday's pins by their row in the day's list, with the time; others not", () => {
+    expect(
+      ['place-mon-ami-gabi', 'place-bellagio', 'place-sphere', 'place-carbone'].map((id) => [
+        pin(id).order,
+        pin(id).time,
+      ]),
+    ).toEqual([
+      [1, '10:00 AM'],
+      [2, '12:00 PM'],
+      [3, '3:00 PM'],
+      [4, '8:00 PM'],
+    ]);
+    expect(pin('place-area15').order).toBeUndefined();
+    expect(pin('place-area15').time).toBeUndefined();
+  });
+
   it("labels Friday's pins with the plan's title, others with the place name", () => {
     expect(pin('place-carbone').label).toBe('Dinner at Carbone');
     expect(pin('place-cosmopolitan').label).toBe('The Cosmopolitan');
@@ -105,6 +121,26 @@ describe('dayPins edge cases', () => {
     );
     expect(r.pins[0].label).toBe('Visit 2');
     expect(r.dimmedIds).toEqual([]);
+  });
+
+  it('counts rows without a map position, so the number matches the list', () => {
+    const r = dayPins(
+      {
+        places: [place('a'), place('b')],
+        items: [
+          item('1', 'd1', '09:00', null),
+          item('2', 'd1', '10:00', 'a'),
+          item('3', 'd1', null, 'b'),
+          item('4', 'd1', '11:00', 'a'),
+        ],
+      },
+      'd1',
+    );
+    // A repeat visit keeps the first visit's number and time.
+    expect(r.pins.map((p) => [p.id, p.order, p.time])).toEqual([
+      ['a', 2, '10:00 AM'],
+      ['b', 4, undefined],
+    ]);
   });
 
   it('skips items without a place or coordinates', () => {

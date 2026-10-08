@@ -60,10 +60,11 @@ describe('Plan map on vegas-plan-day-2', () => {
     const las = screen.getByTestId('pin-place-las').props.coordinate;
     expect(Math.abs(las.latitude - region.latitude)).toBeGreaterThan(region.latitudeDelta / 2);
 
-    const route = screen.getByTestId('day-route');
-    expect(route.props.coordinates).toHaveLength(4);
-    expect(route.props.coordinates[3]).toEqual({ latitude: 36.1073, longitude: -115.1767 });
-    expect(route.props.lineDashPattern).toEqual([6, 6]);
+    // No straight lines between the stops (TR-47): the pins carry their order instead.
+    expect(screen.queryByTestId('day-route')).toBeNull();
+    expect(
+      FRIDAY.map((id) => within(screen.getByTestId(`pin-${id}`)).getByTestId('pin-order')),
+    ).toHaveLength(4);
 
     expect(screen.getAllByTestId('pin-dot')).toHaveLength(8);
     expect(screen.getAllByTestId('pin-photo')).toHaveLength(2);
@@ -78,8 +79,17 @@ describe('Plan map on vegas-plan-day-2', () => {
       within(screen.getByTestId('pin-place-sphere')).queryByText('Sphere Experience'),
     ).toBeNull();
 
+    expect(within(screen.getByTestId('pin-place-sphere')).queryByTestId('pin-time')).toBeNull();
+
     fireEvent(screen.getByTestId('pin-place-sphere'), 'touchEnd');
-    expect(within(screen.getByTestId('pin-place-sphere')).getByText('Sphere Experience'));
+    const sphere = within(screen.getByTestId('pin-place-sphere'));
+    expect(sphere.getByText('Sphere Experience'));
+    // The selected pin adds its time to the label, and keeps its number (TR-47).
+    expect(sphere.getByTestId('pin-time')).toHaveTextContent('3:00 PM');
+    expect(sphere.getByTestId('pin-order')).toHaveTextContent('3');
+    expect(screen.getByTestId('pin-place-sphere').props.accessibilityLabel).toBe(
+      'Stop 3, Sphere Experience, 3:00 PM',
+    );
     expect(calls).toEqual([
       {
         method: 'animateCamera',
@@ -113,7 +123,7 @@ describe('Plan map on vegas-plan-day-2', () => {
     await openPlan('vegas-map-40-pins');
     const full = [...screen.getAllByTestId('pin-photo'), ...screen.getAllByTestId('pin-symbol')];
     expect(full).toHaveLength(40);
-    expect(screen.getByTestId('day-route').props.coordinates).toHaveLength(40);
+    expect(screen.getAllByTestId('pin-order')).toHaveLength(40);
   });
 });
 

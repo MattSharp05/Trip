@@ -25,7 +25,7 @@ export interface TripDayMapProps {
   ref?: Ref<TripMapHandle>;
 }
 
-/** The trip map with one day in focus: its stops as photo pins with the route, the rest as dots. */
+/** The trip map with one day in focus: its stops as numbered photo pins, the rest as dots. */
 export function TripDayMap({
   data,
   focusDay,

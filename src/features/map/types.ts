@@ -19,6 +19,10 @@ export interface MapPin {
   label: string;
   /** A saved place not on a day yet (Bucket List): drawn as an orange outline. */
   outlined?: boolean;
+  /** Its row in the day's list (1 = first), drawn as a badge on the pin; absent off the day. */
+  order?: number;
+  /** "3:00 PM": the day's visit, shown with the label when the pin is selected. */
+  time?: string;
 }
 
 /** What the screen can ask the map to do (ADR 0002). */
@@ -31,7 +35,7 @@ export interface TripMapHandle {
 
 export interface TripMapProps {
   pins: MapPin[];
-  /** The day's stops in visit order, drawn as a dashed orange line. */
+  /** The day's stops in visit order: what the map frames for the day. */
   routeIds: string[];
   selectedId: string | null;
   /** Pins drawn as small grey dots (other days' places). */
