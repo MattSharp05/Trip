@@ -5,7 +5,13 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import ReanimatedSwipeable, {
   type SwipeableMethods,
 } from 'react-native-gesture-handler/ReanimatedSwipeable';
-import Animated, { useAnimatedStyle, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  type SharedValue,
+} from 'react-native-reanimated';
 
 import type { DistanceUnit } from '@/core/travel';
 import { colors, continuous, radii, spacing } from '@/theme';
@@ -14,9 +20,9 @@ import { Icon, Text } from '@/ui';
 import type { ItineraryEntry } from '../itinerary';
 import { ItineraryRow } from '../ItineraryRow';
 import { TravelLeg } from '../TravelLeg';
-import { dragShift, dropIndex } from './drag';
+import { dragShift, dropIndex, HOLD_SLOP, holdMove } from './drag';
 
-/** Hold this long before a row lifts and follows the finger (iOS's own long-press time). */
+/** Hold this long before a row lifts and follows the finger. */
 export const LONG_PRESS_MS = 350;
 const ACTION_WIDTH = 72;
 /** The drag handle's column in Edit mode: a full 44 pt touch target. */
@@ -76,18 +82,76 @@ export const EditableRow = memo(function EditableRow({
 }: EditableRowProps) {
   const swipeable = useRef<SwipeableMethods>(null);
 
-  const pan = useMemo(
-    () =>
-      Gesture.Pan()
-        .enabled(!reordering)
-        .activateAfterLongPress(LONG_PRESS_MS)
-        .runOnJS(true)
-        .withTestId(`itinerary-drag-${entry.id}`)
-        .onStart(() => drag.start(index))
-        .onUpdate((e) => drag.move(e.translationY))
-        .onEnd((_e, success) => drag.end(success)),
-    [drag, index, entry.id, reordering],
-  );
+  // Touch and hold, then drag (TR-24 QA round 3). Two gestures that run together:
+  // - `hold`, iOS's own long press (UILongPressGestureRecognizer, timed by UIKit). When it fires,
+  //   the row lifts, and UIKit fails the sheet's pan, the list's scroll and the swipe for this
+  //   touch: none of them is simultaneous with it.
+  // - `follow`, a pan that only starts once the row is lifted (manual activation), then follows
+  //   the finger and drops the row when it lets go.
+  // Round 1 used a pan with `activateAfterLongPress`, which never lifted inside the Plan sheet on
+  // device; its hold timer is RNGH's own (`performSelector:afterDelay:`), not UIKit's.
+  const lifted = useSharedValue(false);
+  const dragging = useSharedValue(false);
+  /** The pan has finished with this touch: a hold that fires now would have nothing to drag. */
+  const followDone = useSharedValue(false);
+  const touchX = useSharedValue(0);
+  const touchY = useSharedValue(0);
+  const startY = useSharedValue(0);
+
+  const gesture = useMemo(() => {
+    const { start, move, end } = drag;
+    const hold = Gesture.LongPress()
+      .enabled(!reordering)
+      .minDuration(LONG_PRESS_MS)
+      .maxDistance(HOLD_SLOP)
+      .withTestId(`itinerary-hold-${entry.id}`)
+      .onStart((e) => {
+        if (followDone.get()) return;
+        lifted.set(true);
+        startY.set(e.absoluteY);
+        runOnJS(start)(index);
+      });
+    const follow = Gesture.Pan()
+      .enabled(!reordering)
+      .manualActivation(true)
+      .shouldCancelWhenOutside(false)
+      .withTestId(`itinerary-drag-${entry.id}`)
+      .onBegin(() => followDone.set(false))
+      .onTouchesDown((e) => {
+        touchX.set(e.changedTouches[0].absoluteX);
+        touchY.set(e.changedTouches[0].absoluteY);
+      })
+      .onTouchesMove((e, manager) => {
+        if (dragging.get()) return;
+        const touch = e.allTouches[0];
+        const next = holdMove(
+          lifted.get(),
+          touch.absoluteX - touchX.get(),
+          touch.absoluteY - touchY.get(),
+        );
+        if (next === 'drag') {
+          dragging.set(true);
+          manager.activate();
+        } else if (next === 'give-up') {
+          manager.fail();
+        }
+      })
+      .onStart(() => {
+        if (!lifted.get()) return;
+        dragging.set(true);
+      })
+      .onUpdate((e) => {
+        if (lifted.get()) runOnJS(move)(e.absoluteY - startY.get());
+      })
+      .onFinalize((_e, success) => {
+        // One place ends every lifted drag: a drop after a move, or a hold let go where it was.
+        if (lifted.get()) runOnJS(end)(success && dragging.get());
+        lifted.set(false);
+        dragging.set(false);
+        followDone.set(true);
+      });
+    return Gesture.Simultaneous(hold, follow);
+  }, [drag, index, entry.id, reordering, lifted, dragging, followDone, touchX, touchY, startY]);
 
   // The handle's drag starts on the first movement, like the swipe, so it's ahead of the sheet's
   // own pan and the list's scroll (which wait for about 10 pt) and needs no hold (TR-24 QA round 2:
@@ -105,7 +169,7 @@ export const EditableRow = memo(function EditableRow({
     [drag, index, entry.id],
   );
 
-  const lifted = useAnimatedStyle(() => {
+  const liftStyle = useAnimatedStyle(() => {
     const from = drag.from.get();
     if (from < 0) return { transform: [{ translateY: 0 }, { scale: 1 }], opacity: 1 };
     if (from === index) {
@@ -155,7 +219,7 @@ export const EditableRow = memo(function EditableRow({
   };
 
   return (
-    <Animated.View style={lifted}>
+    <Animated.View style={liftStyle}>
       <ReanimatedSwipeable
         ref={swipeable}
         enabled={!reordering}
@@ -186,7 +250,7 @@ export const EditableRow = memo(function EditableRow({
           </View>
         )}
       >
-        <GestureDetector gesture={pan}>
+        <GestureDetector gesture={gesture}>
           <View style={styles.row}>
             <View style={styles.main}>
               <ItineraryRow

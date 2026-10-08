@@ -140,22 +140,65 @@ describe('Editing the itinerary on vegas-plan-day-2', () => {
     expect(saved?.items.find((i) => i.id === BRUNCH)?.startTime).toBe('12:00');
   });
 
-  it('drags a row with a long press: a haptic on pick-up, and the drop reorders', async () => {
-    await openFriday();
-    const drag = getByGestureTestId(`itinerary-drag-${BRUNCH}`);
-
+  /** Touch and hold a row until it lifts, then drag it `dy` points and let go. */
+  const holdAndDrag = (id: string, dy: number) =>
     act(() => {
-      fireGestureHandler(drag, [
-        { state: State.BEGAN, translationY: 0 },
-        { state: State.ACTIVE, translationY: 0 },
-        { state: State.ACTIVE, translationY: 90 },
-        { state: State.END, translationY: 90 },
+      fireGestureHandler(getByGestureTestId(`itinerary-hold-${id}`), [
+        { state: State.BEGAN, absoluteY: 300 },
+        { state: State.ACTIVE, absoluteY: 300 },
+      ]);
+      fireGestureHandler(getByGestureTestId(`itinerary-drag-${id}`), [
+        { state: State.BEGAN, absoluteY: 300 },
+        { state: State.ACTIVE, absoluteY: 302 },
+        { state: State.ACTIVE, absoluteY: 300 + dy },
+        { state: State.END, absoluteY: 300 + dy },
       ]);
     });
+
+  it('touch and hold lifts a row with a haptic; dragging it and letting go reorders', async () => {
+    await openFriday();
+    holdAndDrag(BRUNCH, 90);
 
     expect(Haptics.impactAsync).toHaveBeenCalledWith('medium');
     expect(Haptics.selectionAsync).toHaveBeenCalled();
     await waitFor(() => expect(rows()[0]).toBe('10:00 AM Bellagio Fountains'));
+    expect(rows()[1]).toBe('12:00 PM Brunch at Mon Ami Gabi');
+  });
+
+  it('a hold let go without moving puts the row back where it was', async () => {
+    await openFriday();
+    const before = rows();
+    act(() => {
+      fireGestureHandler(getByGestureTestId(`itinerary-hold-${BRUNCH}`), [
+        { state: State.BEGAN, absoluteY: 300 },
+        { state: State.ACTIVE, absoluteY: 300 },
+      ]);
+    });
+    expect(Haptics.impactAsync).toHaveBeenCalledWith('medium');
+    // The finger lifts: the drag pan ends without having started.
+    act(() => {
+      fireGestureHandler(getByGestureTestId(`itinerary-drag-${BRUNCH}`), [
+        { state: State.BEGAN, absoluteY: 300 },
+        { state: State.FAILED, absoluteY: 300 },
+      ]);
+    });
+    expect(rows()).toEqual(before);
+    expect(Haptics.notificationAsync).not.toHaveBeenCalled();
+  });
+
+  it('without the hold, a drag on a row does nothing (it is a scroll or a swipe)', async () => {
+    await openFriday();
+    const before = rows();
+    act(() => {
+      fireGestureHandler(getByGestureTestId(`itinerary-drag-${BRUNCH}`), [
+        { state: State.BEGAN, absoluteY: 300 },
+        { state: State.ACTIVE, absoluteY: 302 },
+        { state: State.ACTIVE, absoluteY: 390 },
+        { state: State.END, absoluteY: 390 },
+      ]);
+    });
+    expect(Haptics.impactAsync).not.toHaveBeenCalled();
+    expect(rows()).toEqual(before);
   });
 
   it('Edit mode: the drag handles move a row without a hold, and Done hides them', async () => {
@@ -191,14 +234,7 @@ describe('Editing the itinerary on vegas-plan-day-2', () => {
 
   it('refuses a drag onto a fixed stop with a warning haptic', async () => {
     await openFriday();
-    act(() => {
-      fireGestureHandler(getByGestureTestId(`itinerary-drag-${FOUNTAINS}`), [
-        { state: State.BEGAN, translationY: 0 },
-        { state: State.ACTIVE, translationY: 0 },
-        { state: State.ACTIVE, translationY: 80 },
-        { state: State.END, translationY: 80 },
-      ]);
-    });
+    holdAndDrag(FOUNTAINS, 80);
     expect(Haptics.notificationAsync).toHaveBeenCalledWith('warning');
     expect(within(toast()).getByText('Overlaps Sphere Experience at 3:00 PM.')).toBeTruthy();
   });

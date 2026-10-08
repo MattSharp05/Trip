@@ -31,3 +31,13 @@ it. The map or globe is sized to the part the sheet leaves (`src/core/sheet.ts`)
 the sheet starts down and shrinks once the sheet has settled going up, so no gap shows. The map
 re-frames for its new height, and the globe raises its camera so the whole Earth still fits
 (`src/core/globe.ts`).
+
+**Update (TR-24 QA round 3, 2026-10-08).** Touch and hold to drag a stop inside the sheet. A
+gesture-handler pan with `activateAfterLongPress` never lifted a row on the iPhone. The likely reason
+(not reproduced: no device in the cloud) is that its hold timer is the library's own
+(`performSelector:afterDelay:`, default run-loop mode), not UIKit's. Each row now
+pairs iOS's own long press (`Gesture.LongPress`, a `UILongPressGestureRecognizer`) with a pan that
+only activates once the row has lifted (`manualActivation`), run together with
+`Gesture.Simultaneous`. When the long press fires, UIKit fails the sheet's pan, the list's scroll and
+the row's swipe for that touch, because none of them recognises with it. Before the lift, a finger
+that moves more than 10 pt fails both, so scrolling, swiping and dragging the sheet work as before.
