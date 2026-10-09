@@ -17,6 +17,7 @@ import {
   type Env,
   type ParseProvider,
 } from '../_shared/parse/provider.ts';
+import { normalizeAnswer } from '../_shared/parse/normalize.ts';
 import {
   PARSE_ERROR_COPY,
   readParseResult,
@@ -91,8 +92,13 @@ async function geocode(
   }
 }
 
-const locationQuery = (l: ParsedLocation) =>
-  [l.name, l.address ?? l.city, l.address ? null : l.country].filter(Boolean).join(', ');
+const mentions = (text: string, word: string) => text.toLowerCase().includes(word.toLowerCase());
+/** A street-only address still needs its city to find the right one. */
+const locationQuery = (l: ParsedLocation) => {
+  const address =
+    l.address && l.city && !mentions(l.address, l.city) ? `${l.address}, ${l.city}` : l.address;
+  return [l.name, address ?? l.city, l.address ? null : l.country].filter(Boolean).join(', ');
+};
 const airportQuery = (a: ParsedAirport) =>
   [`${a.code} airport`, a.city, a.country].filter(Boolean).join(', ');
 
@@ -197,10 +203,11 @@ export async function handle(req: Request, deps: Deps): Promise<Response> {
 
   try {
     const answer = await provider.parse({ name: path.split('/').pop() ?? path, mimeType, bytes });
-    const read = readParseResult(answer);
+    const read = readParseResult(normalizeAnswer(answer));
     if (!read.ok) {
       console.warn(`parse-booking: ${provider.name} answer failed validation`, read.issues);
-      return fail('unreadable');
+      // The issues name schema paths only (no booking content), so the accuracy run can say why.
+      return json({ error: 'unreadable', message: COPY.unreadable, issues: read.issues }, 422);
     }
     return json({ result: await geocodeResult(read.result, deps.fetch) });
   } catch (error) {

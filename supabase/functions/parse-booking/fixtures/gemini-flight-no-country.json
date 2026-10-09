@@ -1,0 +1,16 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "{\n \"booking\": {\n  \"type\": \"flight\",\n  \"confirmation\": \"QW7RT2\",\n  \"passenger\": \"Alex Example\",\n  \"legs\": [\n   {\n    \"airline\": \"Coral Air\",\n    \"airlineCode\": \"CL\",\n    \"flightNumber\": \"CL 88\",\n    \"from\": {\n     \"code\": \"JFK\",\n     \"city\": \"New York\",\n     \"country\": null\n    },\n    \"to\": {\n     \"code\": \"LIS\",\n     \"city\": null,\n     \"country\": null\n    },\n    \"departs\": {\n     \"date\": \"2026-05-03\",\n     \"time\": \"21:40\"\n    },\n    \"arrives\": {\n     \"date\": \"2026-05-04\",\n     \"time\": \"09:55\"\n    },\n    \"terminal\": null,\n    \"gate\": null,\n    \"seat\": null,\n    \"cabin\": \"Economy\"\n   },\n   {\n    \"airline\": \"Coral Air\",\n    \"airlineCode\": \"CL\",\n    \"flightNumber\": \"CL 89\",\n    \"from\": {\n     \"code\": \"LIS\",\n     \"city\": \"Lisbon\",\n     \"country\": null\n    },\n    \"to\": {\n     \"code\": \"XYZ\",\n     \"city\": null,\n     \"country\": null\n    },\n    \"departs\": {\n     \"date\": \"2026-05-10\",\n     \"time\": \"12:30\"\n    },\n    \"arrives\": {\n     \"date\": \"2026-05-10\",\n     \"time\": \"15:20\"\n    },\n    \"terminal\": null,\n    \"gate\": null,\n    \"seat\": null,\n    \"cabin\": \"Economy\"\n   }\n  ],\n  \"price\": {\n   \"amount\": 742.18,\n   \"currency\": \"USD\"\n  }\n },\n \"uncertain\": []\n}"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "modelVersion": "gemini-flash-latest"
+}
