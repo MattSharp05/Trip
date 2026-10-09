@@ -4,10 +4,8 @@
     "hotel": {
       "name": "Pensão Azul",
       "address": "Rua do Exemplo 12, 1100-001 Lisboa",
-      "city": "Lisbon",
-      "country": "Portugal",
-      "lat": null,
-      "lng": null
+      "city": "lisbon",
+      "country": "Portugal"
     },
     "checkIn": {
       "date": "2026-05-04",
@@ -23,7 +21,7 @@
     "website": null,
     "email": null,
     "price": {
-      "amount": 540,
+      "amount": 540.0,
       "currency": "EUR"
     }
   },

@@ -11,16 +11,12 @@
         "from": {
           "code": "JFK",
           "city": "New York",
-          "country": null,
-          "lat": 40.6429479,
-          "lng": -73.7793734
+          "country": "United States"
         },
         "to": {
           "code": "LIS",
           "city": "Lisbon",
-          "country": "Portugal",
-          "lat": 38.7670113,
-          "lng": -9.147477
+          "country": "Portugal"
         },
         "departs": {
           "date": "2026-05-03",
@@ -42,16 +38,12 @@
         "from": {
           "code": "LIS",
           "city": "Lisbon",
-          "country": null,
-          "lat": 38.7670113,
-          "lng": -9.147477
+          "country": "Portugal"
         },
         "to": {
           "code": "JFK",
           "city": "New York",
-          "country": "United States",
-          "lat": 40.6429479,
-          "lng": -73.7793734
+          "country": "United States"
         },
         "departs": {
           "date": "2026-05-10",
@@ -63,7 +55,7 @@
         },
         "terminal": "1",
         "gate": null,
-        "seat": "23C",
+        "seat": null,
         "cabin": "Economy"
       }
     ],

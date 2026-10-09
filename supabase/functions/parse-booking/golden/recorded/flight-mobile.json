@@ -11,16 +11,12 @@
         "from": {
           "code": "SEA",
           "city": "Seattle",
-          "country": null,
-          "lat": 47.4475673,
-          "lng": -122.3080159
+          "country": "United States"
         },
         "to": {
           "code": "SFO",
           "city": "San Francisco",
-          "country": null,
-          "lat": 37.6147772,
-          "lng": -122.3898504
+          "country": "United States"
         },
         "departs": {
           "date": "2026-08-21",
@@ -28,7 +24,7 @@
         },
         "arrives": {
           "date": "2026-08-21",
-          "time": "08:15"
+          "time": "08:51"
         },
         "terminal": null,
         "gate": "C14",

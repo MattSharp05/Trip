@@ -3,11 +3,9 @@
     "type": "hotel",
     "hotel": {
       "name": "Sunny loft near Zilker Park",
-      "address": null,
-      "city": "Austin",
-      "country": "United States",
-      "lat": null,
-      "lng": null
+      "address": "Zilker Park",
+      "city": "Austin, TX",
+      "country": "United States"
     },
     "checkIn": {
       "date": "2026-09-04",
@@ -18,7 +16,7 @@
       "time": "11:00"
     },
     "confirmation": "HMX4QZ8PL2",
-    "room": "Entire loft",
+    "room": null,
     "phone": null,
     "website": null,
     "email": null,
