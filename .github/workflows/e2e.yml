@@ -108,6 +108,17 @@ jobs:
           curl -fsSL "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
+      # Its own `maestro test` (TR-40): starts the XCTest driver once on the fresh simulator and
+      # accepts iOS's one-time "Open in Trip?" prompt for trip:// links, which took long enough on
+      # the runner to break the first flow and, with it, the driver for every later flow. Not a
+      # gate: if it fails, the flows still run and report.
+      - name: Warm up Maestro and accept the link prompt
+        env:
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: '360000'
+        run: |
+          maestro test --test-output-dir e2e-out/warm-up maestro/warm-up.yaml \
+            || echo "::warning title=E2E warm-up::maestro/warm-up.yaml failed; running the flows anyway."
+
       - name: Run the flows
         env:
           # The XCTest driver can take minutes to come up on a cold runner; Maestro's default

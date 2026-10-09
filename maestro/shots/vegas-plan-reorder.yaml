@@ -13,13 +13,17 @@ tags:
 - tapOn:
     id: day-header-reorder
 - extendedWaitUntil:
-    visible:
-      id: itinerary-handle-item-06
+    visible: Done reordering
     timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 5000
+# The handles are hidden from accessibility (VoiceOver reorders with the row's Move earlier / Move
+# later actions), so XCTest can't find itinerary-handle-item-06 by testID (TR-40). Drag from where
+# Bellagio Fountains' handle sits on the iPhone simulator (right edge, second row of the
+# half-height sheet) up past the first row.
 - swipe:
-    from:
-      id: itinerary-handle-item-06
-    direction: UP
+    start: '92%,83%'
+    end: '92%,68%'
     duration: 1500
 - waitForAnimationToEnd:
     timeout: 5000

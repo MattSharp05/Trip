@@ -8,8 +8,12 @@ env:
 tags:
   - smoke
 ---
+# Signed out without clearState: on iOS clearState reinstalls the app, which is slow on the runner
+# and forgets the accepted "Open in Trip?" confirmation (TR-40). The e2e run never signs in, so
+# clearing the keychain (where the session lives) is enough.
 - launchApp:
-    clearState: true
+    clearKeychain: true
+    stopApp: true
 - extendedWaitUntil:
     visible: 'Continue with email'
     timeout: 60000

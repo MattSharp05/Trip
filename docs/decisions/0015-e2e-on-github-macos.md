@@ -34,3 +34,9 @@ runners cost nothing.
   the free plan's queue). Both stay under the 30-minute limit for running on every push.
 - iOS asks "Open in Trip?" for `trip://` links: flows open links through `maestro/open-link.yaml`,
   which accepts it (and retries the link once a slow simulator times out).
+- TR-40 (2026-10-09): the prompt shows once per install and can take 10 s+ to appear on the
+  runner, and a link requested while it is up is usually lost. `maestro/warm-up.yaml` runs first in
+  its own `maestro test` (driver start, first launch, accepts the prompt); open-link.yaml opens
+  the link again after accepting; smoke clears the keychain instead of `clearState` (which
+  reinstalls the app on iOS and brings the prompt back). One broken flow early in the run used to
+  take the XCTest driver down with it, failing every later flow in seconds.

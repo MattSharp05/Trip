@@ -1,0 +1,23 @@
+# Run once by the e2e workflow before the flows, in its own `maestro test` (TR-40): it starts the
+# XCTest driver on the fresh simulator, gives the app its slow first launch, and accepts iOS's
+# "Open in Trip?" confirmation for trip:// links, which the simulator shows once per install. That
+# prompt can take 10 s or more to appear on the runner, longer than open-link.yaml waits for it.
+appId: com.mattsharp05.trip
+---
+- launchApp
+- openLink: trip://scenario/vegas-trips
+- extendedWaitUntil:
+    visible: 'Open in .*'
+    timeout: 60000
+    optional: true
+- runFlow:
+    when:
+      visible: 'Open in .*'
+    commands:
+      - tapOn: 'Open'
+      # The first request has usually timed out while the prompt was up.
+      - openLink: trip://scenario/vegas-trips
+- extendedWaitUntil:
+    visible:
+      id: trips-list
+    timeout: 60000
