@@ -16,10 +16,13 @@ tags:
     visible:
       id: itinerary-row-item-06
     timeout: 10000
+# A short swipe, not `direction: UP`: that one runs to the top of the screen (636 pt in 20 s, about
+# 11 pt in the first 350 ms), past the hold's 10 pt, so the sheet's pan took it (TR-40). 13% of the
+# screen in 20 s moves about 2 pt during the hold; Fountains' row is at 83% at the half-height
+# sheet, and 70% is above Brunch's.
 - swipe:
-    from:
-      id: itinerary-row-item-06
-    direction: UP
+    start: '50%,83%'
+    end: '50%,70%'
     duration: 20000
 - waitForAnimationToEnd:
     timeout: 5000

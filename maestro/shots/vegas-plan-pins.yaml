@@ -9,7 +9,18 @@ tags:
     env:
       SCENARIO: vegas-plan-day-2
       READY_ID: itinerary-list
-- tapOn: Sphere Experience
+# The Sphere row sits under the tab bar at the half-height sheet, and each row is one accessibility
+# element ("3:00 PM, Sphere Experience, …"), so drag the sheet up by its day header and tap the row
+# by testID (as plan-linking does). Tapping a row brings the sheet back down.
+- swipe:
+    from:
+      id: day-header
+    direction: UP
+- waitForAnimationToEnd
+- tapOn:
+    id: itinerary-row-item-07
+- assertVisible:
+    id: itinerary-node-selected
 - waitForAnimationToEnd:
     timeout: 5000
 - takeScreenshot: vegas-plan-pins

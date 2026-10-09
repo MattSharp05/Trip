@@ -92,6 +92,10 @@ export function Sheet({ open, onClose, title, children, testID }: SheetProps) {
   return (
     <BottomSheetModal
       ref={ref}
+      // gorhom makes the whole sheet one accessibility element ("Bottom Sheet") by default, which
+      // hides its title, buttons and fields from VoiceOver and from XCTest (TR-40: Maestro saw
+      // the sheet's testID but none of its content).
+      accessible={false}
       onDismiss={handleDismiss}
       onChange={handleChange}
       containerComponent={containerComponent}

@@ -108,9 +108,18 @@ appId: com.mattsharp05.trip
 - waitForAnimationToEnd:
     timeout: 8000
 - takeScreenshot: demo-7a-globe
-- tapOn:
-    id: flight-card
-- extendedWaitUntil:
-    visible: 'View boarding pass'
-    timeout: 10000
+# The globe keeps the simulator busy (software GL), so a tap can take 15 s and be lost; tap again
+# while the details haven't opened (TR-40).
+- retry:
+    maxRetries: 2
+    commands:
+      - runFlow:
+          when:
+            notVisible: 'View boarding pass'
+          commands:
+            - tapOn:
+                id: flight-card
+      - extendedWaitUntil:
+          visible: 'View boarding pass'
+          timeout: 20000
 - takeScreenshot: demo-7b-flight

@@ -10,8 +10,10 @@ tags:
     env:
       SCENARIO: vegas-bucket
       READY_ID: bucket-list
+# A point on open map, not the map's centre: the map fills the screen behind the sheet (TR-46),
+# so its centre lands on the Bucket List pins, and a long press on a pin drops nothing.
 - longPressOn:
-    id: trip-map
+    point: '25%,30%'
 - extendedWaitUntil:
     visible:
       id: bucket-add-sheet

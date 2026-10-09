@@ -2,6 +2,9 @@
 # Expo Go links too). Used by the other flows through runFlow; not run on its own. Retried because
 # a slow simulator can time out opening the link while that confirmation is up. Callers pass APP_ID
 # and LINK; no defaults here, since a subflow's env replaces the caller's (TR-41).
+# After accepting, the link is opened again: on a slow simulator the first request has often
+# timed out by the time "Open" is tapped, so the app never gets it (TR-40). Accepting is
+# remembered until the app is reinstalled, so the second open goes straight to the app.
 appId: ${APP_ID}
 ---
 - retry:
@@ -23,3 +26,4 @@ appId: ${APP_ID}
             visible: 'Open in .*'
           commands:
             - tapOn: 'Open'
+            - openLink: ${LINK}

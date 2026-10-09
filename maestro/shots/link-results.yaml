@@ -8,3 +8,5 @@ tags:
     env:
       SCENARIO: link-results
       READY_ID: link-save
+- assertVisible: 'From TikTok'
+- assertVisible: '.*Esther.s Kitchen.*'
