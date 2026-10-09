@@ -7,6 +7,7 @@ import { Text } from './Text';
 
 type MockModalProps = {
   children?: ReactNode;
+  accessible?: boolean;
   onChange?: (index: number) => void;
   onDismiss?: () => void;
 };
@@ -26,7 +27,7 @@ jest.mock('@gorhom/bottom-sheet', () => {
   /** The last modal's close, for a test to drag the sheet down. */
   const userClose = { current: () => {} };
   const BottomSheetModal = forwardRef(function BottomSheetModal(
-    { children, onChange, onDismiss }: MockModalProps,
+    { children, accessible, onChange, onDismiss }: MockModalProps,
     ref: unknown,
   ) {
     const status = useRef('initial');
@@ -50,7 +51,10 @@ jest.mock('@gorhom/bottom-sheet', () => {
         else close();
       },
     }));
-    return visible ? createElement(View, { testID: 'modal' }, children) : null;
+    // The library's default is one accessibility element for the whole sheet.
+    return visible
+      ? createElement(View, { testID: 'modal', accessible: accessible ?? true }, children)
+      : null;
   });
   return {
     __esModule: true,
@@ -86,6 +90,11 @@ describe('Sheet', () => {
     renderSheet(true);
     expect(screen.getByRole('header', { name: 'Fri, Nov 14' })).toBeOnTheScreen();
     expect(screen.getByText('Brunch at Mon Ami Gabi')).toBeOnTheScreen();
+  });
+
+  it("doesn't fold its content into one accessibility element (VoiceOver, XCTest)", () => {
+    renderSheet(true);
+    expect(screen.getByTestId('modal')).toHaveProp('accessible', false);
   });
 
   it('opens when it was mounted closed (Add a place, Edit, Add a stop, Organize +)', () => {
