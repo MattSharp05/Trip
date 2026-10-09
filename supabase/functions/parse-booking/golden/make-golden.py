@@ -124,8 +124,13 @@ def png(name, brand, colour, blocks, note="Sample screenshot made for testing.")
             top = y
             d.rounded_rectangle([24, top - 16, W - 24, top + 92 * len(rows)], radius=18, fill=(255, 255, 255))
             for row in rows:
+                column = 660 // len(row)
                 for i, (label, value) in enumerate(row):
-                    x = 48 + i * (660 // len(row))
+                    x = 48 + i * column
+                    # A value wider than its column is drawn over the next one and garbles both
+                    # (TR-49: "Tue 5 May 2026" was drawn over "21:00").
+                    if d.textlength(value, font=font(30, True)) > column:
+                        raise ValueError(f"{name}: '{value}' is too wide for a {len(row)}-column grid")
                     d.text((x, y), label, font=font(19), fill=(120, 120, 120))
                     d.text((x, y + 28), value, font=font(30, True), fill=(25, 25, 25))
                 y += 92
@@ -381,7 +386,7 @@ golden(
     },
     lambda: png("restaurant-app", "TableNow", (200, 120, 40), [
         ("big", "Tasca do Exemplo", "Rua da Amostra 5, Lisbon, Portugal"),
-        ("grid", [[("DATE", "Tue 5 May 2026"), ("TIME", "21:00"), ("GUESTS", "2")]]),
+        ("grid", [[("DATE", "Tue 5 May 2026"), ("TIME", "21:00")], [("GUESTS", "2")]]),
         ("text", "Reservation confirmed. See you soon!"),
     ]),
     [("confirmation", "TASCA")],

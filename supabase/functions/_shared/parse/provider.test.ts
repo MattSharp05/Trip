@@ -2,6 +2,7 @@ import gemini429 from '../../parse-booking/fixtures/gemini-429.json';
 import geminiFlight from '../../parse-booking/fixtures/gemini-flight.json';
 import gemini429Retry from './fixtures/gemini-429-retry.json';
 import gemini503 from './fixtures/gemini-503.json';
+import { bookingPrompt } from './prompts';
 import { chooseProvider, DEFAULT_FALLBACK_MODEL, DEFAULT_MODEL, geminiProvider } from './provider';
 
 // Recorded-format Gemini responses (fixtures/): no live model calls in CI.
@@ -110,5 +111,29 @@ describe('Gemini retries', () => {
       jest.useRealTimers();
     }
     expect(models.at(-1)).toBe('gemini-2.5-flash-lite');
+  });
+});
+
+describe('booking prompt (TR-49)', () => {
+  it("sends today's date for the year rule, with the booking file", async () => {
+    const { impl } = recorded(OK);
+    const gemini = geminiProvider('key', DEFAULT_MODEL, impl, undefined, {
+      now: () => new Date('2026-10-09T16:00:00Z'),
+    });
+    await gemini.parse({ name: 'ticket.png', mimeType: 'image/png', bytes: new Uint8Array([1]) });
+    const sent = JSON.parse(String((impl as jest.Mock).mock.calls[0][1].body));
+    const prompt: string = sent.contents[0].parts[1].text;
+    expect(prompt).toContain('today is 2026-10-09');
+    expect(prompt).not.toContain('{today}');
+    expect(prompt).toContain('Copy a printed year exactly');
+  });
+
+  it('says event tickets, e-tickets and wallet passes are "ticket" bookings', () => {
+    const prompt = bookingPrompt(new Date('2026-10-09'));
+    expect(prompt).toMatch(/a ticket for an event is a booking of type "ticket"/i);
+    for (const word of ['sports matches', 'concerts', 'e-ticket', 'wallet pass']) {
+      expect(prompt).toContain(word);
+    }
+    expect(prompt).toContain('"address" is the whole address as printed');
   });
 });

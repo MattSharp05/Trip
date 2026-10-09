@@ -1,9 +1,12 @@
 import { SAMPLE_PARSES } from '../_shared/parse/fixtures';
 import { readParseResult } from '../_shared/parse/schema';
 import gemini429 from './fixtures/gemini-429.json';
+import geminiFlightNoCountry from './fixtures/gemini-flight-no-country.json';
 import geminiFlight from './fixtures/gemini-flight.json';
 import geminiHotel from './fixtures/gemini-hotel.json';
 import geminiNotABooking from './fixtures/gemini-not-a-booking.json';
+import geminiTicketMatch from './fixtures/gemini-ticket-match.json';
+import geminiTicketUnwrapped from './fixtures/gemini-ticket-unwrapped.json';
 import photonAirport from './fixtures/photon-airport.json';
 import photonSilo from './fixtures/photon-silo-hotel.json';
 import { handle, mimeTypeFor, type Env } from './index';
@@ -128,7 +131,68 @@ describe('parse-booking', () => {
     const { impl } = fakeFetch({ body: geminiNotABooking });
     const res = await handle(request({ path: PATH }), { env: envOf(), fetch: impl });
     expect(res.status).toBe(422);
-    expect((await res.json()).error).toBe('unreadable');
+    const body = await res.json();
+    expect(body.error).toBe('unreadable');
+    // Which schema rule failed, so the accuracy run's report can say why (no booking content).
+    expect(body.issues).toEqual([expect.stringMatching(/^booking\.type: /)]);
+  });
+
+  describe('tidies the answer before validating it (TR-49)', () => {
+    const parse = async (body: unknown, path = 'user-1/imports/ticket.png') => {
+      const { impl } = fakeFetch({ body });
+      const res = await handle(request({ path }), { env: envOf(), fetch: impl });
+      return { res, json: await res.json() };
+    };
+
+    it('reads a sports e-ticket sent with numbers, an "event" type and "PT"', async () => {
+      const { res, json } = await parse(geminiTicketMatch);
+      expect(res.status).toBe(200);
+      expect(json.result.booking).toMatchObject({
+        type: 'ticket',
+        event: 'Lisboa Lions vs Porto Pilots',
+        venue: { name: 'Estádio do Exemplo', city: 'Lisbon', country: 'Portugal' },
+        starts: { date: '2026-05-08', time: '20:45' },
+        section: 'N3',
+        row: '12',
+        seats: '7',
+        price: { amount: 90, currency: 'EUR' },
+      });
+      expect(json.result.uncertain).toEqual([]);
+    });
+
+    it('reads a concert ticket sent without the { booking } wrapper', async () => {
+      const { res, json } = await parse(geminiTicketUnwrapped);
+      expect(res.status).toBe(200);
+      expect(json.result.booking).toMatchObject({
+        type: 'ticket',
+        seats: '11-12',
+        venue: {
+          address: '3780 Example Blvd S, Las Vegas, United States',
+          country: 'United States',
+        },
+      });
+    });
+
+    it("fills a leg's empty city and country from its airport code", async () => {
+      const { json } = await parse(geminiFlightNoCountry, 'user-1/imports/flight.pdf');
+      const [out, back] = json.result.booking.legs;
+      expect(out.from).toMatchObject({ code: 'JFK', city: 'New York', country: 'United States' });
+      expect(out.to).toMatchObject({ code: 'LIS', city: 'Lisbon', country: 'Portugal' });
+      expect(back.from).toMatchObject({ city: 'Lisbon', country: 'Portugal' });
+      // An airport outside the table keeps what the model read: nothing is guessed.
+      expect(back.to).toMatchObject({ code: 'XYZ', city: null, country: null });
+    });
+  });
+
+  it('geocodes a street-only address with its city', async () => {
+    const hotel = JSON.parse(geminiHotel.candidates[0].content.parts[0].text);
+    hotel.booking.hotel.address = '410 Example Street';
+    hotel.booking.hotel.city = 'San Diego';
+    const body = { candidates: [{ content: { parts: [{ text: JSON.stringify(hotel) }] } }] };
+    const { impl, calls } = fakeFetch({ body });
+    await handle(request({ path: PATH }), { env: envOf(), fetch: impl });
+    const photon = new URL(calls.find((c) => c.url.includes('photon'))!.url);
+    expect(photon.searchParams.get('q')).toBe('The Silo Hotel, 410 Example Street, San Diego');
   });
 
   it('uses the canned sample parses with PARSE_PROVIDER=fixture', async () => {

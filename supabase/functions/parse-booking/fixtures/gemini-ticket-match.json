@@ -1,0 +1,16 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "{\n \"booking\": {\n  \"type\": \"event\",\n  \"event\": \"Lisboa Lions vs Porto Pilots\",\n  \"venue\": {\n   \"name\": \"Estádio do Exemplo\",\n   \"address\": null,\n   \"city\": \"Lisbon\",\n   \"country\": \"PT\"\n  },\n  \"starts\": {\n   \"date\": \"2026-05-08\",\n   \"time\": \"20:45\"\n  },\n  \"section\": \"N3\",\n  \"row\": 12,\n  \"seats\": 7,\n  \"confirmation\": \"EX-99120\",\n  \"price\": {\n   \"amount\": \"90.00\",\n   \"currency\": \"€\"\n  }\n },\n \"uncertain\": null\n}"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "modelVersion": "gemini-flash-latest"
+}
