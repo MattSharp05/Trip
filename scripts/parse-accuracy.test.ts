@@ -103,6 +103,27 @@ describe('parse-accuracy', () => {
     expect(results[0]).toMatchObject({ right: 8, total: 8, misses: [] });
   });
 
+  it('accepts the expected street with the rest of the address after it, not another street', () => {
+    const hotel = (address: string) => ({
+      ...reservation,
+      venue: { ...reservation.venue, address },
+    });
+    const golden = goldenSet({
+      whole: {
+        expected: hotel('410 Example Street, San Diego, CA 92101'),
+        answer: hotel('410 Example Street'),
+      },
+      street: {
+        expected: hotel('221 Sample St'),
+        answer: hotel('221 Sample St., San Diego, United States'),
+      },
+      other: { expected: hotel('221 Sample St'), answer: hotel('22 Sample St, San Diego') },
+    });
+    const { results } = run(['--golden', golden]);
+    const misses = Object.fromEntries(results.map((r) => [r.name, r.misses.map((m) => m.path)]));
+    expect(misses).toEqual({ whole: [], street: [], other: ['venue.address'] });
+  });
+
   it('counts wrong values, missing values and extra fields as misses', () => {
     const golden = goldenSet({
       r: {

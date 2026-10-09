@@ -17,7 +17,8 @@
 // same value after normalising (case, accents, punctuation and spacing for text; HH:MM for times;
 // digits for phone numbers; no scheme or www. for websites; numbers to the cent). A field the
 // answer fills in that the booking doesn't have (expected null or absent) is an extra and counts
-// as a miss too: accuracy = right / (expected fields + extras). A failed parse gets 0.
+// as a miss too: accuracy = right / (expected fields + extras). A failed parse gets 0. An address
+// counts as right when it is the expected street with or without the rest of the address after it.
 
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, extname, join, relative, resolve } from 'node:path';
@@ -101,6 +102,22 @@ export function flatten(value, prefix = '', out = new Map()) {
   return out;
 }
 
+/**
+ * Addresses match when one is the other with more of the same address after it: "410 Example
+ * Street" and "410 Example Street, San Diego, CA 92101" are the same street, and the city and
+ * country are scored in their own fields (TR-49, ADR 0026).
+ */
+function sameAddress(expected, actual) {
+  const parts = (value) =>
+    String(value)
+      .split(',')
+      .map((part) => plain(part))
+      .filter(Boolean);
+  const [a, b] = [parts(expected), parts(actual)];
+  const [short, long] = a.length <= b.length ? [a, b] : [b, a];
+  return short.length > 0 && short.every((part, i) => part === long[i]);
+}
+
 /** Scores one answer against the expected booking. `actual` is null when the parse failed. */
 export function scoreBooking(expected, actual) {
   const want = flatten(expected);
@@ -109,7 +126,12 @@ export function scoreBooking(expected, actual) {
   let right = 0;
   for (const [path, value] of want) {
     const answer = got.get(path);
-    if (answer !== undefined && normalise(path, answer) === normalise(path, value)) right += 1;
+    const same =
+      answer !== undefined &&
+      (path.endsWith('.address')
+        ? sameAddress(value, answer)
+        : normalise(path, answer) === normalise(path, value));
+    if (same) right += 1;
     else misses.push({ path, expected: value, actual: answer ?? null });
   }
   const extras = [...got].filter(([path]) => !want.has(path));
@@ -225,9 +247,10 @@ async function liveProvider({ delay }) {
             await sleep(60_000);
             continue;
           }
+          const issues = Array.isArray(body.issues) ? ` (${body.issues.join('; ')})` : '';
           return {
             booking: null,
-            error: `${res.status} ${body.error ?? ''} ${body.message ?? ''}`,
+            error: `${res.status} ${body.error ?? ''} ${body.message ?? ''}${issues}`,
           };
         }
         return { booking: null, error: 'still rate limited after 4 tries' };

@@ -5,7 +5,7 @@
 
 import { SAMPLE_PARSES, sampleFor } from './fixtures.ts';
 import { LINK_SAMPLES } from './linkFixtures.ts';
-import { BOOKING_PROMPT, linkPrompt } from './prompts.ts';
+import { bookingPrompt, linkPrompt } from './prompts.ts';
 import { PARSE_ERROR_COPY, type ParseErrorCode } from './schema.ts';
 
 const GEMINI = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -31,6 +31,8 @@ export interface RetryOptions {
   fallbackModel?: string | null;
   sleep?: (ms: number) => Promise<void>;
   random?: () => number;
+  /** Today, for the booking prompt's year rule. */
+  now?: () => Date;
 }
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -69,7 +71,12 @@ export function geminiProvider(
   model: string,
   fetchImpl: typeof fetch,
   copy: Record<ParseErrorCode, string> = PARSE_ERROR_COPY,
-  { fallbackModel = DEFAULT_FALLBACK_MODEL, sleep = wait, random = Math.random }: RetryOptions = {},
+  {
+    fallbackModel = DEFAULT_FALLBACK_MODEL,
+    sleep = wait,
+    random = Math.random,
+    now = () => new Date(),
+  }: RetryOptions = {},
 ): ParseProvider {
   const call = (name: string, parts: Part[]) =>
     fetchImpl(`${GEMINI}/${name}:generateContent`, {
@@ -128,7 +135,7 @@ export function geminiProvider(
     parse: (file) =>
       generate([
         { inline_data: { mime_type: file.mimeType, data: toBase64(file.bytes) } },
-        { text: BOOKING_PROMPT },
+        { text: bookingPrompt(now()) },
       ]),
     extractPlaces: (text, city) => generate([{ text: linkPrompt(text, city) }]),
   };

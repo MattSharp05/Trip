@@ -1,0 +1,16 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "{\n \"type\": \"ticket\",\n \"event\": \"The Lanterns: Live in Concert\",\n \"venue\": {\n  \"name\": \"Desert Moon Arena\",\n  \"address\": \"3780 Example Blvd S, Las Vegas, United States\",\n  \"city\": \"Las Vegas\",\n  \"country\": \"USA\"\n },\n \"starts\": {\n  \"date\": \"2026-11-13\",\n  \"time\": \"20:00\"\n },\n \"section\": \"104\",\n \"row\": \"K\",\n \"seats\": \"11-12\",\n \"confirmation\": \"TKT-4410982\",\n \"price\": {\n  \"amount\": 238.5,\n  \"currency\": \"USD\"\n }\n}"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "modelVersion": "gemini-flash-latest"
+}
