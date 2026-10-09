@@ -5,7 +5,9 @@
       "name": "Ember & Oak",
       "address": "221 Sample St",
       "city": "San Diego",
-      "country": "United States"
+      "country": "United States",
+      "lat": 38.8735866,
+      "lng": -77.3454809
     },
     "starts": {
       "date": "2026-06-15",

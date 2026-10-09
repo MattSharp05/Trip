@@ -2,7 +2,7 @@
   "booking": {
     "type": "flight",
     "confirmation": "KXJ4PL",
-    "passenger": "MATTHEW SAMPLE",
+    "passenger": "Matthew Sample",
     "legs": [
       {
         "airline": "Bluejay Airways",
@@ -11,16 +11,20 @@
         "from": {
           "code": "TPA",
           "city": "Tampa",
-          "country": "United States"
+          "country": "United States",
+          "lat": 27.9791649,
+          "lng": -82.5349276
         },
         "to": {
           "code": "LAS",
           "city": "Las Vegas",
-          "country": "United States"
+          "country": "United States",
+          "lat": 36.2101116,
+          "lng": -115.1960241
         },
         "departs": {
           "date": "2026-11-12",
-          "time": "8:25"
+          "time": "08:25"
         },
         "arrives": {
           "date": "2026-11-12",

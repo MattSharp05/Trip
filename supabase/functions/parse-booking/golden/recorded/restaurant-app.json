@@ -5,14 +5,16 @@
       "name": "Tasca do Exemplo",
       "address": "Rua da Amostra 5",
       "city": "Lisbon",
-      "country": "Portugal"
+      "country": "Portugal",
+      "lat": 41.1616232,
+      "lng": -7.7902975
     },
     "starts": {
-      "date": "2026-05-05",
-      "time": "21:00"
+      "date": "2025-05-05",
+      "time": "19:00"
     },
     "partySize": 2,
-    "confirmation": "TASCA",
+    "confirmation": null,
     "price": null
   },
   "uncertain": []

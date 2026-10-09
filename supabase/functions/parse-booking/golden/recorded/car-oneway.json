@@ -6,13 +6,17 @@
       "name": "San Francisco Downtown",
       "address": "500 Sample Ave",
       "city": "San Francisco",
-      "country": "United States"
+      "country": "United States",
+      "lat": null,
+      "lng": null
     },
     "returnLocation": {
       "name": "Los Angeles Airport (LAX)",
       "address": null,
-      "city": null,
-      "country": "United States"
+      "city": "Los Angeles",
+      "country": "United States",
+      "lat": 33.9421675,
+      "lng": -118.4213591
     },
     "pickup": {
       "date": "2026-08-22",
@@ -25,7 +29,7 @@
     "confirmation": "CDC7781",
     "vehicle": "Ford Mustang Convertible",
     "price": {
-      "amount": 401.0,
+      "amount": 401,
       "currency": "USD"
     }
   },

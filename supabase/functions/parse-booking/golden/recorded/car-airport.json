@@ -6,7 +6,9 @@
       "name": "Las Vegas Airport (LAS) Rent-A-Car Center",
       "address": "7135 Example Rd",
       "city": "Las Vegas",
-      "country": "United States"
+      "country": "United States",
+      "lat": 36.0600487,
+      "lng": -115.164506
     },
     "returnLocation": null,
     "pickup": {
