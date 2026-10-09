@@ -1,14 +1,13 @@
 import { act, fireEvent, renderRouter, screen, waitFor, within } from 'expo-router/testing-library';
 import * as Haptics from 'expo-haptics';
-import { FlatList } from 'react-native';
-import { State } from 'react-native-gesture-handler';
-import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
+import { ScrollView } from 'react-native';
 
 import TabLayout from '../app/(tabs)/_layout';
 import PlanScreen from '../app/(tabs)/plan/index';
 import ScenarioRoute from '../app/scenario/[name]';
 import RootLayout from '../app/_layout';
 import { resetFakeAuth } from '@/features/auth/testing';
+import { LONG_PRESS_MS } from '@/features/plan/edit';
 import { exitScenario } from '@/scenarios';
 import { useActiveSource } from '@/services/data/active';
 import { useSelectionStore } from '@/stores/selection';
@@ -79,6 +78,7 @@ const routes = {
 const BRUNCH = 'item-05';
 const FOUNTAINS = 'item-06';
 const SPHERE = 'item-07';
+const DINNER = 'item-08';
 
 async function openFriday() {
   renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
@@ -105,16 +105,33 @@ const action = (itemId: string, actionName: string) =>
 
 const toast = () => screen.getByTestId('plan-toast');
 
-let scrollToIndex: jest.SpyInstance;
+/** The sortable list's latest props (the library's Jest mock in `jest.setup.ts`). */
+const grid = () => jest.requireMock('react-native-sortables').lastGrid();
+/** How many sortable lists have been built so far (a refused drop rebuilds it). */
+const gridMounts = (): number => jest.requireMock('react-native-sortables').mounts();
+
+/**
+ * Touch and hold the row at `from` until it lifts, drag it over the rows up to `to`, and let go:
+ * what the sortable list reports to the itinerary.
+ */
+const dragRow = (from: number, to: number) =>
+  act(() => {
+    const key = grid().data[from].id;
+    grid().onDragStart({ key, fromIndex: from });
+    if (to !== from) grid().onOrderChange({ key, fromIndex: from, toIndex: to });
+    grid().onDragEnd({ key, fromIndex: from, toIndex: to });
+  });
+
+let scrollTo: jest.SpyInstance;
 
 beforeEach(() => {
   resetFakeAuth(null);
   mockPick.time = null;
   jest.clearAllMocks();
-  scrollToIndex = jest.spyOn(FlatList.prototype, 'scrollToIndex').mockImplementation(() => {});
+  scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo').mockImplementation(() => {});
 });
 afterEach(() => {
-  scrollToIndex.mockRestore();
+  scrollTo.mockRestore();
   act(() => exitScenario());
 });
 
@@ -140,88 +157,75 @@ describe('Editing the itinerary on vegas-plan-day-2', () => {
     expect(saved?.items.find((i) => i.id === BRUNCH)?.startTime).toBe('12:00');
   });
 
-  /** Touch and hold a row until it lifts, then drag it `dy` points and let go. */
-  const holdAndDrag = (id: string, dy: number) =>
-    act(() => {
-      fireGestureHandler(getByGestureTestId(`itinerary-hold-${id}`), [
-        { state: State.BEGAN, absoluteY: 300 },
-        { state: State.ACTIVE, absoluteY: 300 },
-      ]);
-      fireGestureHandler(getByGestureTestId(`itinerary-drag-${id}`), [
-        { state: State.BEGAN, absoluteY: 300 },
-        { state: State.ACTIVE, absoluteY: 302 },
-        { state: State.ACTIVE, absoluteY: 300 + dy },
-        { state: State.END, absoluteY: 300 + dy },
-      ]);
+  it('the rows sit in a sortable list: touch and hold (350 ms, 10 pt of slack) lifts a row', async () => {
+    await openFriday();
+    expect(grid()).toMatchObject({
+      columns: 1,
+      customHandle: false,
+      dragActivationDelay: LONG_PRESS_MS,
+      dragActivationFailOffset: 10,
+      overDrag: 'vertical',
     });
+    expect(grid().data.map((e: { id: string }) => e.id)).toEqual([
+      BRUNCH,
+      FOUNTAINS,
+      SPHERE,
+      DINNER,
+    ]);
+  });
 
   it('touch and hold lifts a row with a haptic; dragging it and letting go reorders', async () => {
     await openFriday();
-    holdAndDrag(BRUNCH, 90);
+    dragRow(0, 1);
 
     expect(Haptics.impactAsync).toHaveBeenCalledWith('medium');
     expect(Haptics.selectionAsync).toHaveBeenCalled();
     await waitFor(() => expect(rows()[0]).toBe('10:00 AM Bellagio Fountains'));
     expect(rows()[1]).toBe('12:00 PM Brunch at Mon Ami Gabi');
+    expect(Haptics.notificationAsync).not.toHaveBeenCalled();
   });
 
-  it('a hold let go without moving puts the row back where it was', async () => {
+  it("the list doesn't scroll while a row is lifted", async () => {
+    await openFriday();
+    expect(screen.getByTestId('itinerary-list')).toHaveProp('scrollEnabled', true);
+    act(() => grid().onDragStart({ key: BRUNCH, fromIndex: 0 }));
+    expect(screen.getByTestId('itinerary-list')).toHaveProp('scrollEnabled', false);
+    act(() => grid().onDragEnd({ key: BRUNCH, fromIndex: 0, toIndex: 0 }));
+    expect(screen.getByTestId('itinerary-list')).toHaveProp('scrollEnabled', true);
+  });
+
+  it('a hold let go where it was keeps the order and saves nothing', async () => {
     await openFriday();
     const before = rows();
-    act(() => {
-      fireGestureHandler(getByGestureTestId(`itinerary-hold-${BRUNCH}`), [
-        { state: State.BEGAN, absoluteY: 300 },
-        { state: State.ACTIVE, absoluteY: 300 },
-      ]);
-    });
+    dragRow(0, 0);
     expect(Haptics.impactAsync).toHaveBeenCalledWith('medium');
-    // The finger lifts: the drag pan ends without having started.
-    act(() => {
-      fireGestureHandler(getByGestureTestId(`itinerary-drag-${BRUNCH}`), [
-        { state: State.BEGAN, absoluteY: 300 },
-        { state: State.FAILED, absoluteY: 300 },
-      ]);
-    });
     expect(rows()).toEqual(before);
     expect(Haptics.notificationAsync).not.toHaveBeenCalled();
   });
 
-  it('without the hold, a drag on a row does nothing (it is a scroll or a swipe)', async () => {
+  it('Edit mode: the handles drag a row without a hold, and Done hides them', async () => {
     await openFriday();
-    const before = rows();
-    act(() => {
-      fireGestureHandler(getByGestureTestId(`itinerary-drag-${BRUNCH}`), [
-        { state: State.BEGAN, absoluteY: 300 },
-        { state: State.ACTIVE, absoluteY: 302 },
-        { state: State.ACTIVE, absoluteY: 390 },
-        { state: State.END, absoluteY: 390 },
-      ]);
-    });
-    expect(Haptics.impactAsync).not.toHaveBeenCalled();
-    expect(rows()).toEqual(before);
-  });
-
-  it('Edit mode: the drag handles move a row without a hold, and Done hides them', async () => {
-    await openFriday();
-    expect(screen.queryByTestId(`itinerary-handle-${BRUNCH}`)).toBeNull();
+    expect(
+      screen.queryByTestId(`itinerary-handle-${BRUNCH}`, { includeHiddenElements: true }),
+    ).toBeNull();
 
     fireEvent.press(screen.getByTestId('day-header-reorder'));
     expect(within(screen.getByTestId('day-header-reorder')).getByText('Done')).toBeTruthy();
-    act(() => {
-      fireGestureHandler(getByGestureTestId(`itinerary-handle-${BRUNCH}`), [
-        { state: State.BEGAN, translationY: 0 },
-        { state: State.ACTIVE, translationY: 4 },
-        { state: State.ACTIVE, translationY: 90 },
-        { state: State.END, translationY: 90 },
-      ]);
-    });
+    expect(
+      screen.getByTestId(`itinerary-handle-${BRUNCH}`, { includeHiddenElements: true }),
+    ).toBeTruthy();
+    expect(grid()).toMatchObject({ customHandle: true, dragActivationDelay: 0 });
+    dragRow(0, 1);
 
     expect(Haptics.impactAsync).toHaveBeenCalledWith('medium');
     await waitFor(() => expect(rows()[0]).toBe('10:00 AM Bellagio Fountains'));
 
     fireEvent.press(screen.getByTestId('day-header-reorder'));
     expect(within(screen.getByTestId('day-header-reorder')).getByText('Edit')).toBeTruthy();
-    expect(screen.queryByTestId(`itinerary-handle-${BRUNCH}`)).toBeNull();
+    expect(
+      screen.queryByTestId(`itinerary-handle-${BRUNCH}`, { includeHiddenElements: true }),
+    ).toBeNull();
+    expect(grid()).toMatchObject({ customHandle: false, dragActivationDelay: LONG_PRESS_MS });
   });
 
   it('refuses dropping onto a fixed stop, with a message, and keeps the order', async () => {
@@ -232,11 +236,16 @@ describe('Editing the itinerary on vegas-plan-day-2', () => {
     expect(rows()[1]).toBe('12:00 PM Bellagio Fountains');
   });
 
-  it('refuses a drag onto a fixed stop with a warning haptic', async () => {
+  it('refuses a drag onto a fixed stop with a warning haptic, and puts the rows back', async () => {
     await openFriday();
-    holdAndDrag(FOUNTAINS, 80);
+    const before = rows();
+    const mounts = gridMounts();
+    dragRow(1, 2);
     expect(Haptics.notificationAsync).toHaveBeenCalledWith('warning');
     expect(within(toast()).getByText('Overlaps Sphere Experience at 3:00 PM.')).toBeTruthy();
+    expect(rows()).toEqual(before);
+    // The list is rebuilt from the day's order (it had moved the row itself).
+    expect(gridMounts()).toBe(mounts + 1);
   });
 
   it('deletes a stop with Undo, and Undo puts it back', async () => {

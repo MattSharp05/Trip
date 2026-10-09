@@ -1,6 +1,6 @@
 import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
 import { render } from '@testing-library/react-native';
-import { AccessibilityInfo, FlatList } from 'react-native';
+import { AccessibilityInfo, ScrollView } from 'react-native';
 
 import TabLayout from '../app/(tabs)/_layout';
 import OrganizeLayout from '../app/(tabs)/organize/_layout';
@@ -45,14 +45,14 @@ const near = (p: typeof TPA) => ({
   longitude: expect.closeTo(p.longitude, 9),
 });
 
-let scrollToIndex: jest.SpyInstance;
+let scrollTo: jest.SpyInstance;
 
 beforeEach(() => {
   resetFakeAuth(null);
-  scrollToIndex = jest.spyOn(FlatList.prototype, 'scrollToIndex').mockImplementation(() => {});
+  scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo').mockImplementation(() => {});
 });
 afterEach(() => {
-  scrollToIndex.mockRestore();
+  scrollTo.mockRestore();
   jest.restoreAllMocks();
   act(() => exitScenario());
 });

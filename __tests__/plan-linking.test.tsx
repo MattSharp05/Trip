@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react-native';
 import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
-import { FlatList } from 'react-native';
+import { ScrollView } from 'react-native';
 import * as maps from 'react-native-maps';
 
 import TabLayout from '../app/(tabs)/_layout';
@@ -8,7 +8,7 @@ import PlanScreen from '../app/(tabs)/plan/index';
 import ScenarioRoute from '../app/scenario/[name]';
 import RootLayout from '../app/_layout';
 import { resetFakeAuth } from '@/features/auth/testing';
-import { Itinerary } from '@/features/plan';
+import { Itinerary, LEG_HEIGHT, ROW_HEIGHT } from '@/features/plan';
 import { exitScenario } from '@/scenarios';
 import { useSelectionStore } from '@/stores/selection';
 
@@ -51,15 +51,15 @@ const rows = () =>
 
 const row = (itemId: string) => screen.getByTestId(`itinerary-row-${itemId}`);
 
-let scrollToIndex: jest.SpyInstance;
+let scrollTo: jest.SpyInstance;
 
 beforeEach(() => {
   calls.length = 0;
   resetFakeAuth(null);
-  scrollToIndex = jest.spyOn(FlatList.prototype, 'scrollToIndex').mockImplementation(() => {});
+  scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo').mockImplementation(() => {});
 });
 afterEach(() => {
-  scrollToIndex.mockRestore();
+  scrollTo.mockRestore();
   act(() => exitScenario());
 });
 
@@ -96,7 +96,7 @@ describe('Plan itinerary on vegas-plan-day-2', () => {
       },
     ]);
     // A tapped row is already in view: the list doesn't move.
-    expect(scrollToIndex).not.toHaveBeenCalled();
+    expect(scrollTo).not.toHaveBeenCalled();
 
     // Tapping it again (after panning away) brings the map back.
     fireEvent.press(row('item-07'));
@@ -113,7 +113,8 @@ describe('Plan itinerary on vegas-plan-day-2', () => {
     });
     expect(row('item-08')).toBeSelected();
     expect(within(row('item-08')).getByTestId('itinerary-node-selected')).toBeTruthy();
-    expect(scrollToIndex).toHaveBeenCalledWith(expect.objectContaining({ index: 3 }));
+    // Carbone is the 4th stop, under three rows that each have a travel leg.
+    expect(scrollTo).toHaveBeenCalledWith({ y: 3 * (ROW_HEIGHT + LEG_HEIGHT), animated: true });
     expect(calls[0].method).toBe('animateCamera');
   });
 
