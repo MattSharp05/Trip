@@ -40,7 +40,12 @@ describe('normalizeAnswer', () => {
     });
   });
 
-  it('takes the first of a list of bookings', () => {
+  it('rejects a list of several bookings rather than dropping all but one', () => {
+    const answer = normalizeAnswer({ bookings: [reservation, reservation] });
+    expect(readParseResult(answer).ok).toBe(false);
+  });
+
+  it('unwraps a list of one booking', () => {
     const answer = normalizeAnswer({ bookings: [reservation], uncertain: ['starts.time'] });
     expect(answer).toMatchObject({ booking: { type: 'reservation' }, uncertain: ['starts.time'] });
     expect(answer).not.toHaveProperty('bookings');

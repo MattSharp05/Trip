@@ -161,8 +161,8 @@ function booking(value: unknown): unknown {
 export function normalizeAnswer(answer: unknown): unknown {
   if (!isObject(answer)) return answer;
   let wrapped: Json = answer;
-  // A list of one booking, or the booking on its own without the { booking, uncertain } wrapper.
-  if (!('booking' in answer) && Array.isArray(answer.bookings) && answer.bookings.length > 0) {
+  // A list of exactly one booking (several stay invalid: one import is one booking), or the booking on its own without the { booking, uncertain } wrapper.
+  if (!('booking' in answer) && Array.isArray(answer.bookings) && answer.bookings.length === 1) {
     wrapped = { ...answer, booking: answer.bookings[0] };
     delete wrapped.bookings;
   } else if (!('booking' in answer)) {
