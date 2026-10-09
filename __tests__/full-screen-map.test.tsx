@@ -1,6 +1,6 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
-import { Dimensions, FlatList, StyleSheet } from 'react-native';
+import { Dimensions, ScrollView, StyleSheet } from 'react-native';
 import * as maps from 'react-native-maps';
 
 import TabLayout from '../app/(tabs)/_layout';
@@ -60,14 +60,14 @@ function measureBody(testID: string, height: number) {
   act(() => laidOut(testID).props.onLayout(layout(height)));
 }
 
-let scrollToIndex: jest.SpyInstance;
+let scrollTo: jest.SpyInstance;
 beforeEach(() => {
   calls.length = 0;
   resetFakeAuth(null);
-  scrollToIndex = jest.spyOn(FlatList.prototype, 'scrollToIndex').mockImplementation(() => {});
+  scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo').mockImplementation(() => {});
 });
 afterEach(() => {
-  scrollToIndex.mockRestore();
+  scrollTo.mockRestore();
   jest.restoreAllMocks();
   act(() => exitScenario());
 });

@@ -21,3 +21,37 @@ jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
     }) => createElement(Fragment, null, children, renderRightActions?.()),
   };
 });
+
+// The sortable list's drag is a worklet gesture on the UI thread, which Jest can't run: draw the
+// items in the data's order and keep the latest grid's props, so a test can drive a drag through
+// its callbacks (`dragRow` in `__tests__/itinerary-edit.test.tsx`).
+jest.mock('react-native-sortables', () => {
+  const { createElement, Fragment, useState } = require('react');
+  const { View } = require('react-native');
+  let last: any;
+  let mounts = 0;
+  const Grid = (props: any) => {
+    last = props;
+    useState(() => (mounts += 1));
+    return createElement(
+      View,
+      { testID: 'sortable-grid' },
+      props.data.map((item: unknown, index: number) =>
+        createElement(
+          Fragment,
+          { key: props.keyExtractor(item) },
+          props.renderItem({ item, index }),
+        ),
+      ),
+    );
+  };
+  const Handle = ({ children }: { children: unknown }) => createElement(Fragment, null, children);
+  return {
+    __esModule: true,
+    default: { Grid, Handle },
+    /** The props of the grid rendered last. */
+    lastGrid: () => last,
+    /** How many grids have mounted (a new `key` mounts a new one). */
+    mounts: () => mounts,
+  };
+});

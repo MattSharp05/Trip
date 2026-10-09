@@ -41,3 +41,8 @@ only activates once the row has lifted (`manualActivation`), run together with
 `Gesture.Simultaneous`. When the long press fires, UIKit fails the sheet's pan, the list's scroll and
 the row's swipe for that touch, because none of them recognises with it. Before the lift, a finger
 that moves more than 10 pt fails both, so scrolling, swiping and dragging the sheet work as before.
+
+**Update (TR-24 QA round 4, 2026-10-09).** Round 3's row lifted on the phone but never followed
+the finger. The itinerary is now a `react-native-sortables` list inside gorhom's
+`BottomSheetScrollView`, not a `BottomSheetFlatList`: see ADR 0024. A map pick scrolls the list
+with `scrollTo` and the rows' fixed heights.
