@@ -23,15 +23,15 @@ export function InviteButton({ tripId, city, testID = 'invite' }: InviteButtonPr
 
   const share = async () => {
     setNote(null);
-    let token: string;
+    let message: string;
     try {
-      token = await getToken({ tripId });
+      message = inviteMessage(city, inviteLink(await getToken({ tripId })));
     } catch {
       setNote("Couldn't make the invite link. Check your connection and try again.");
       return;
     }
     // Closing the share sheet without sending is fine; nothing to report.
-    await Share.share({ message: inviteMessage(city, inviteLink(token)) }).catch(() => {});
+    await Share.share({ message }).catch(() => {});
   };
 
   const reset = async () => {

@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -33,10 +33,12 @@ export function InvitePreview({ token, testID = 'invite-preview' }: InvitePrevie
   const valid = isInviteToken(token);
   const preview = useInvitePreview(token, valid);
   const { mutateAsync: accept, isPending: joining } = useAcceptInvite();
-  const { data: trips } = useTrips();
+  const trips = useTrips();
   const openTrip = useOpenTrip();
   const [joinedTripId, setJoinedTripId] = useState<string | null>(null);
   const [joinError, setJoinError] = useState<unknown>(null);
+  const opened = useRef(false);
+  const refreshed = useRef(false);
 
   useEffect(() => {
     // Back at the invite after signing in: it's done its job.
@@ -44,12 +46,24 @@ export function InvitePreview({ token, testID = 'invite-preview' }: InvitePrevie
     askForName();
   }, []);
 
-  // Open the trip once it is in the trips list (after Join's refresh), so Plan has it to show.
+  // Open the trip once it is in the trips list (after Join's refresh), so Plan has it to show;
+  // once, whatever refetches land before this screen closes.
   const target = joinedTripId ?? (preview.data?.alreadyMember ? preview.data.tripId : null);
-  const trip = target ? trips?.find((t) => t.id === target) : undefined;
+  const trip = target ? trips.data?.find((t) => t.id === target) : undefined;
   useEffect(() => {
-    if (trip) openTrip(trip, { leave: true });
+    if (!trip || opened.current) return;
+    opened.current = true;
+    openTrip(trip, { leave: true });
   }, [trip, openTrip]);
+  // A trips list from before joining (still fresh in the cache) is fetched again, once; still
+  // missing after a fetch of its own, the screen offers to try again.
+  const missing = !!target && !trip && !trips.isFetching;
+  const stillMissing = missing && trips.isFetchedAfterMount;
+  useEffect(() => {
+    if (!missing || stillMissing || refreshed.current) return;
+    refreshed.current = true;
+    void trips.refetch();
+  }, [missing, stillMissing, trips]);
 
   const join = async () => {
     setJoinError(null);
@@ -77,6 +91,14 @@ export function InvitePreview({ token, testID = 'invite-preview' }: InvitePrevie
       <LoadError
         message="Couldn't load this invite. Check your connection."
         onRetry={() => void preview.refetch()}
+        testID={`${testID}-error`}
+      />
+    );
+  } else if (stillMissing) {
+    body = (
+      <LoadError
+        message="Couldn't open the trip. Check your connection."
+        onRetry={() => void trips.refetch()}
         testID={`${testID}-error`}
       />
     );

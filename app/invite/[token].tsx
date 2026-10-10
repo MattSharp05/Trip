@@ -1,6 +1,7 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
 
+import { isInviteToken } from '@/core/inviteLink';
 import { rememberInvite, useAuth } from '@/features/auth';
 import { InvitePreview } from '@/features/members';
 import { useScenarioActive } from '@/scenarios';
@@ -18,7 +19,8 @@ export default function InviteRoute() {
   const signedOut = status !== 'signedIn' && !scenarioActive;
 
   useEffect(() => {
-    if (signedOut && token) rememberInvite(token);
+    // A malformed link isn't kept; signed in, the preview says it isn't active.
+    if (signedOut && token && isInviteToken(token)) rememberInvite(token);
   }, [signedOut, token]);
 
   if (signedOut) return <Redirect href="/auth" />;
