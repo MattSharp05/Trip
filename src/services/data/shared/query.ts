@@ -20,6 +20,7 @@ export const dataKeys = {
   members: (source: DataSource, tripId: string) =>
     ['data', source.id, 'trip', tripId, 'members'] as const,
   myProfile: (source: DataSource) => ['data', source.id, 'profile'] as const,
+  invite: (source: DataSource, token: string) => ['data', source.id, 'invite', token] as const,
 };
 
 /** A write through the active source that refreshes all of its queries when it succeeds. */

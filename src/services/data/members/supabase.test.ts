@@ -105,4 +105,49 @@ describe('supabase members', () => {
     mockAuth.userId = null;
     await expect(supabaseMembers.listMembers('t1')).rejects.toThrow('Not signed in');
   });
+
+  it('calls the invite RPCs', async () => {
+    mockTables['rpc:create_invite'] = { data: 'tok', error: null };
+    mockTables['rpc:reset_invite'] = { data: 'tok2', error: null };
+    mockTables['rpc:accept_invite'] = { data: 't1', error: null };
+    expect(await supabaseMembers.createInvite('t1')).toBe('tok');
+    expect(await supabaseMembers.resetInvite('t1')).toBe('tok2');
+    expect(await supabaseMembers.acceptInvite('tok2')).toBe('t1');
+    expect(mockCalls).toEqual([
+      ['rpc', 'create_invite', { trip: 't1' }],
+      ['rpc', 'reset_invite', { trip: 't1' }],
+      ['rpc', 'accept_invite', { invite: 'tok2' }],
+    ]);
+  });
+
+  it('maps an invite preview, with a fallback inviter name', async () => {
+    mockTables['rpc:invite_preview'] = {
+      data: {
+        trip_id: 't1',
+        city: 'Las Vegas',
+        start_date: '2026-11-12',
+        end_date: '2026-11-16',
+        cover_photo_url: null,
+        inviter_name: ' ',
+        member_count: 3,
+        already_member: false,
+      },
+      error: null,
+    };
+    expect(await supabaseMembers.previewInvite('tok')).toEqual({
+      tripId: 't1',
+      city: 'Las Vegas',
+      startDate: '2026-11-12',
+      endDate: '2026-11-16',
+      coverPhotoUrl: null,
+      inviterName: 'Traveller',
+      memberCount: 3,
+      alreadyMember: false,
+    });
+  });
+
+  it('passes on the inactive-link error', async () => {
+    mockTables['rpc:invite_preview'] = { data: null, error: { message: 'invite_inactive' } };
+    await expect(supabaseMembers.previewInvite('tok')).rejects.toThrow('invite_inactive');
+  });
 });

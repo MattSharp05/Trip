@@ -1,7 +1,8 @@
-import { sortMembers, toMember } from '@/core/members';
+import { FALLBACK_NAME, sortMembers, toMember } from '@/core/members';
 
+import type { Database } from '../../database.types';
 import { checkRow, client, currentUserId, type Row } from '../shared/supabase';
-import type { Member, MembersSource, Profile } from './types';
+import type { InvitePreview, Member, MembersSource, Profile } from './types';
 
 type MemberRow = Pick<Row<'trip_members'>, 'user_id' | 'role'> & {
   profiles: Pick<Row<'profiles'>, 'display_name'> | null;
@@ -21,6 +22,19 @@ export const toProfile = (r: Row<'profiles'>): Profile => ({
   ...(r.venmo ? { venmo: r.venmo } : {}),
   ...(r.cashapp ? { cashapp: r.cashapp } : {}),
   ...(r.zelle ? { zelle: r.zelle } : {}),
+});
+
+type PreviewRow = Database['public']['Functions']['invite_preview']['Returns'][number];
+
+export const toInvitePreview = (r: PreviewRow): InvitePreview => ({
+  tripId: r.trip_id,
+  city: r.city,
+  startDate: r.start_date,
+  endDate: r.end_date,
+  coverPhotoUrl: r.cover_photo_url ?? null,
+  inviterName: r.inviter_name?.trim() || FALLBACK_NAME,
+  memberCount: r.member_count,
+  alreadyMember: r.already_member,
 });
 
 /**
@@ -87,5 +101,20 @@ export const supabaseMembers: MembersSource = {
       userId,
       'Only the owner can remove a member, and only someone else on the trip',
     );
+  },
+  // The invite RPCs (0057_invites.sql) raise `invite_inactive` for an unknown or reset token.
+  async createInvite(tripId) {
+    return checkRow(await client().rpc('create_invite', { trip: tripId }));
+  },
+  async resetInvite(tripId) {
+    return checkRow(await client().rpc('reset_invite', { trip: tripId }));
+  },
+  async previewInvite(token) {
+    return toInvitePreview(
+      checkRow(await client().rpc('invite_preview', { invite: token }).single()),
+    );
+  },
+  async acceptInvite(token) {
+    return checkRow(await client().rpc('accept_invite', { invite: token }));
   },
 };

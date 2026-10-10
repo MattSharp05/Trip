@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { AuthProvider, useAuth } from '@/features/auth';
+import { AuthProvider, useAuth, useReturnToInvite } from '@/features/auth';
 import { NamePrompt } from '@/features/settings';
 import { useScenarioActive } from '@/scenarios';
 import { colors } from '@/theme';
@@ -45,13 +45,15 @@ export default function RootLayout() {
 
 /**
  * The auth gate: signed-in users get the tabs and Settings, signed-out users get Welcome. A loaded scenario's
- * demo session (TR-6) also opens the tabs, so QA links work signed out. Developer screens (`/dev/*`)
- * and scenario links (`/scenario/*`) are outside both guards.
+ * demo session (TR-6) also opens the tabs, so QA links work signed out. Developer screens (`/dev/*`),
+ * scenario links (`/scenario/*`) and invite links (`/invite/*`, TR-57) are outside both guards; an
+ * invite opened signed out is reopened once the traveller has signed in or signed up.
  */
 function RootStack() {
   const auth = useAuth();
   const scenarioActive = useScenarioActive();
   const signedIn = auth.status === 'signedIn';
+  useReturnToInvite(signedIn);
 
   useEffect(() => {
     if (auth.status !== 'loading') SplashScreen.hideAsync().catch(() => {});

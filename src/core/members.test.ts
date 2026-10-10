@@ -1,6 +1,7 @@
 import {
   avatarRow,
   initialOf,
+  inviteCompanyLine,
   type MemberLike,
   memberLabel,
   memberRoleLine,
@@ -104,5 +105,14 @@ describe('memberRoleLine', () => {
     expect(memberRoleLine({ name: 'Blake', role: 'owner', isMe: false })).toBe('Organizer');
     expect(memberRoleLine({ name: 'Willem', role: 'member', isMe: true })).toBe('You');
     expect(memberRoleLine({ name: 'Blake', role: 'member', isMe: false })).toBe('');
+  });
+});
+
+describe('inviteCompanyLine', () => {
+  it('names the inviter and counts everyone else on the trip', () => {
+    expect(inviteCompanyLine('Matthew', 1)).toBe('with Matthew');
+    expect(inviteCompanyLine('Matthew', 2)).toBe('with Matthew and 1 other');
+    expect(inviteCompanyLine('Matthew', 3)).toBe('with Matthew and 2 others');
+    expect(inviteCompanyLine('Matthew', 0)).toBe('with Matthew');
   });
 });

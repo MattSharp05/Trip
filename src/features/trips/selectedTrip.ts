@@ -44,18 +44,20 @@ export function useChooseTrip(): (tripId: string) => void {
 }
 
 /**
- * Open a trip (TR-56), the same from a trip card, a globe dot and the trip switcher: select it, start
- * a different trip on its own opening day, and land on Plan with the sheet at half and the map on
- * show.
+ * Open a trip (TR-56), the same from a trip card, a globe dot, the trip switcher and a joined invite
+ * (TR-57): select it, start a different trip on its own opening day, and land on Plan with the
+ * sheet at half and the map on show. `leave: true` closes the screen it's opened from (the
+ * invite), so going back doesn't return to it.
  */
-export function useOpenTrip(): (trip: SelectionTrip) => void {
+export function useOpenTrip(): (trip: SelectionTrip, options?: { leave?: boolean }) => void {
   const router = useRouter();
   const switchTrip = useSwitchTrip();
   return useCallback(
-    (trip: SelectionTrip) => {
+    (trip: SelectionTrip, { leave = false }: { leave?: boolean } = {}) => {
       if (useTripStore.getState().selectedTripId !== trip.id) switchTrip(trip);
       useTripStore.getState().countOpen();
-      router.navigate('/plan');
+      if (leave) router.dismissTo('/plan');
+      else router.navigate('/plan');
     },
     [switchTrip, router],
   );
