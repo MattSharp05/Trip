@@ -11,7 +11,10 @@ import { useTripStore } from '@/stores/trip';
 import { colors, screenPadding, spacing } from '@/theme';
 import { ListRow, Surface, Text } from '@/ui';
 
-const TOOLS: { title: string; href: Href }[] = [{ title: 'Design gallery', href: '/dev/gallery' }];
+const TOOLS: { title: string; href: Href }[] = [
+  { title: 'Design gallery', href: '/dev/gallery' },
+  { title: 'Push test', href: '/dev/push' },
+];
 
 /** Developer index: every scenario (tap to load it) and the developer screens. */
 export default function DevIndexScreen() {

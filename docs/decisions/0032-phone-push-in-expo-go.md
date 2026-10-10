@@ -19,3 +19,26 @@ service (`exp.host`) is free and reachable from the cloud.
   Fail → in-app only until Phase B.
 
 **Consequences.** Reminders never depend on push; push is an addition.
+
+**Spike build (TR-52).** Settings → Developer → Push test (`app/dev/push.tsx`) asks permission,
+shows the Expo push token (`getExpoPushTokenAsync({ projectId })`, or the exact error), and sends
+one push through the Expo Push API (`src/services/expoPush.ts`) straight from the phone. "Send when I
+lock" sends it the moment Trip leaves the foreground (a timer started before locking could stay
+frozen until the phone is unlocked, because iOS suspends a background app's JavaScript); "Send now"
+sends it with the app open. The screen shows when the push was sent and in which app state, whether
+a push arrived with the app open, and whether Trip was opened from this run's push.
+
+## Result
+
+Pending Matthew's device check (TR-52 QA, iPhone, Expo Go on the latest `main`). What each outcome
+means:
+- **Works:** a token appears and the push shows on the lock screen. Push is promised for payment
+  reminders: a follow-up ticket adds a `push_tokens (user_id, token, updated_at)` table (RLS: own
+  rows) and an Edge Function `notify` that sends the nudge's push through `exp.host` when a
+  `payment_nudges` row is inserted. The in-app banner stays as the baseline. This ADR becomes
+  Accepted.
+- **Partially:** a token appears but the push only shows with the app open, or only sometimes. Treat
+  as not working for reminders (in-app only until Phase B); record the exact behaviour here.
+- **Doesn't work:** no token (the error on screen is recorded here) or no push arrives. Reminders
+  are in-app only until Phase B, when a development build on the company's Apple account brings
+  real push. This ADR becomes Accepted with "in-app only".
