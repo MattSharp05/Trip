@@ -258,6 +258,41 @@ try {
   });
   check("items can't point at another trip's place they can't see", Boolean(crossBack.error));
 
+  // Review fixes: only a row's owner moves it to another trip; a member can't pull the owner's
+  // off-trip place onto the trip through the owner's row, or link the owner's private booking.
+  const bTrip = await insertOne(b.client, 'trips', {
+    city: 'Reno',
+    timezone: 'America/Los_Angeles',
+    start_date: '2026-12-01',
+    end_date: '2026-12-02',
+  });
+  const move = await b.client
+    .from('bookings')
+    .update({ trip_id: bTrip.id })
+    .eq('id', booking.id)
+    .select('id');
+  check("member can't move the owner's row to another trip", !move.data?.length);
+  const home = await insertOne(a.client, 'places', { name: 'Home' });
+  const claim = await b.client
+    .from('itinerary_items')
+    .update({ place_id: home.id })
+    .eq('id', rows.itinerary_items.id)
+    .select('id');
+  check("member can't pull the owner's off-trip place onto the trip", !claim.data?.length);
+  const linkPrivate = await b.client.from('expenses').insert({
+    trip_id: trip.id,
+    amount_minor: 1,
+    currency: 'USD',
+    booking_id: flight.id,
+  });
+  check("member can't link an expense to a private booking", Boolean(linkPrivate.error));
+  // C points a booking on C's own trip at A's file: that doesn't unlock it.
+  await insertOne(c.client, 'bookings', {
+    trip_id: cTrip.id,
+    type: 'hotel',
+    original_path: `${a.id}/rls-test-flight.txt`,
+  });
+
   // Profiles: yourself and the people you share a trip with.
   const profiles = await b.client.from('profiles').select('id, display_name');
   const visible = new Set(profiles.data?.map((p) => p.id));
