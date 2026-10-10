@@ -1,7 +1,10 @@
 #!/usr/bin/env node
-// Proves row-level security against the live project: two throwaway users, user A writes a row
-// in every table and a file in every bucket, and user B (and an anonymous client) can't read,
-// change or delete them, or point at them. The users and their data are deleted afterwards.
+// Proves row-level security against the live project with three throwaway users: A owns a trip
+// and writes a row in every table and a file in every bucket; B is a member of A's trip (added
+// with the service role, as the invite RPC will) and shares it; C (and an anonymous client) is on
+// no trip of A's and can't read, change or delete anything, or point at it. Private bookings and
+// passports stay A's until A shares them (TR-50, ADR 0027). The users and their data are deleted
+// afterwards.
 //
 //   SUPABASE_ACCESS_TOKEN=… node scripts/supabase-rls-test.mjs
 //
@@ -11,7 +14,7 @@ import { randomUUID } from 'node:crypto';
 
 import { createClient } from '@supabase/supabase-js';
 
-import { apiKeys, projectUrl } from './supabase-api.mjs';
+import { apiKeys, projectUrl, sql } from './supabase-api.mjs';
 
 const url = projectUrl();
 const { anon, service_role: serviceRole } = await apiKeys();
@@ -51,6 +54,7 @@ async function insertOne(client, table, row) {
 try {
   const a = await newUser();
   const b = await newUser();
+  const c = await newUser();
   const anonymous = createClient(url, anon, options);
 
   // User A: one row in every table.
@@ -61,7 +65,11 @@ try {
     end_date: '2026-11-04',
   });
   const place = await insertOne(a.client, 'places', { name: 'Bellagio Fountains' });
-  const booking = await insertOne(a.client, 'bookings', { trip_id: trip.id, type: 'hotel' });
+  const booking = await insertOne(a.client, 'bookings', {
+    trip_id: trip.id,
+    type: 'hotel',
+    original_path: `${a.id}/rls-test.txt`,
+  });
   const rows = {
     trips: trip,
     places: place,
@@ -75,7 +83,7 @@ try {
     documents: await insertOne(a.client, 'documents', {
       type: 'passport',
       number: 'X1234567',
-      image_paths: [`${a.id}/documents/rls-test.jpg`],
+      image_paths: [`${a.id}/documents/rls-test.txt`],
     }),
     bucket_items: await insertOne(a.client, 'bucket_items', { trip_id: trip.id }),
     expenses: await insertOne(a.client, 'expenses', {
@@ -87,22 +95,65 @@ try {
   };
   check('user_id defaults to auth.uid()', trip.user_id === a.id);
 
+  // TR-50: A's trip has A as its owner; B joins it the way an accepted invite will.
+  const owners = await a.client.from('trip_members').select('user_id, role').eq('trip_id', trip.id);
+  check(
+    'trip_members: creator added as owner',
+    owners.data?.length === 1 && owners.data[0].user_id === a.id && owners.data[0].role === 'owner',
+    owners.error?.message ?? JSON.stringify(owners.data),
+  );
+  const join = await admin.from('trip_members').insert({ trip_id: trip.id, user_id: b.id });
+  if (join.error) throw new Error(`add member: ${join.error.message}`);
+  const placeOnTrip = await a.client.from('places').select('trip_id').eq('id', place.id).single();
+  check(
+    'places: a place joins the trip of the first item that uses it',
+    placeOnTrip.data?.trip_id === trip.id,
+    placeOnTrip.error?.message,
+  );
+
+  // Rows the trip's members share, and rows that stay A's alone.
+  const shared = new Set([
+    'trips',
+    'places',
+    'bookings',
+    'itinerary_items',
+    'bucket_items',
+    'expenses',
+  ]);
   for (const [table, row] of Object.entries(rows)) {
     const own = await a.client.from(table).select('id').eq('id', row.id);
     check(`${table}: owner reads own row`, own.data?.length === 1, own.error?.message);
 
-    const read = await b.client.from(table).select('id').eq('id', row.id);
-    check(`${table}: other user can't read`, !read.error && read.data.length === 0);
+    if (shared.has(table)) {
+      const memberRead = await b.client.from(table).select('id').eq('id', row.id);
+      check(`${table}: member reads`, memberRead.data?.length === 1, memberRead.error?.message);
+      const memberUpdate = await b.client
+        .from(table)
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', row.id)
+        .select('id, user_id');
+      check(
+        `${table}: member edits, row stays A's`,
+        memberUpdate.data?.length === 1 && memberUpdate.data[0].user_id === a.id,
+        memberUpdate.error?.message,
+      );
+    } else {
+      const memberRead = await b.client.from(table).select('id').eq('id', row.id);
+      check(`${table}: member can't read A's own row`, !memberRead.data?.length);
+    }
 
-    const update = await b.client
+    const read = await c.client.from(table).select('id').eq('id', row.id);
+    check(`${table}: non-member can't read`, !read.error && read.data.length === 0);
+
+    const update = await c.client
       .from(table)
       .update({ updated_at: new Date().toISOString() })
       .eq('id', row.id)
       .select('id');
-    check(`${table}: other user can't update`, !update.data?.length);
+    check(`${table}: non-member can't update`, !update.data?.length);
 
-    const del = await b.client.from(table).delete().eq('id', row.id).select('id');
-    check(`${table}: other user can't delete`, !del.data?.length);
+    const del = await c.client.from(table).delete().eq('id', row.id).select('id');
+    check(`${table}: non-member can't delete`, !del.data?.length);
 
     const anonRead = await anonymous.from(table).select('id').eq('id', row.id);
     check(`${table}: anonymous can't read`, !anonRead.data?.length);
@@ -125,12 +176,152 @@ try {
     check(`${table}: anonymous can't insert`, Boolean(anonInsert.error));
   }
 
+  // TR-50: what a member adds, edits and deletes on the trip; C sees none of it.
+  const memberRows = {
+    places: { trip_id: trip.id, name: 'High Roller' },
+    itinerary_items: { trip_id: trip.id, day: '2026-11-03', kind: 'place', place_id: place.id },
+    bucket_items: { trip_id: trip.id, place_id: place.id },
+    bookings: { trip_id: trip.id, type: 'ticket' },
+    expenses: { trip_id: trip.id, amount_minor: 2500, currency: 'USD' },
+  };
+  for (const [table, row] of Object.entries(memberRows)) {
+    const added = await b.client.from(table).insert(row).select().single();
+    check(
+      `${table}: member adds`,
+      !added.error && added.data.user_id === b.id,
+      added.error?.message,
+    );
+    if (added.error) continue;
+    const seen = await a.client.from(table).select('id').eq('id', added.data.id);
+    check(`${table}: owner sees the member's row`, seen.data?.length === 1);
+    const hidden = await c.client.from(table).select('id').eq('id', added.data.id);
+    check(`${table}: non-member can't see the member's row`, !hidden.data?.length);
+    const disposable = await insertOne(a.client, table, row);
+    const del = await b.client.from(table).delete().eq('id', disposable.id).select('id');
+    check(`${table}: member deletes the owner's row`, del.data?.length === 1, del.error?.message);
+  }
+  const planned = await b.client
+    .from('itinerary_items')
+    .select('added_by')
+    .eq('trip_id', trip.id)
+    .eq('user_id', b.id)
+    .single();
+  check('itinerary_items: added_by defaults to user_id', planned.data?.added_by === b.id);
+
+  // Mine / Shared: flights default to private; a private booking is its owner's alone.
+  const flight = await insertOne(a.client, 'bookings', {
+    trip_id: trip.id,
+    type: 'flight',
+    original_path: `${a.id}/rls-test-flight.txt`,
+  });
+  check(
+    'bookings: flights default to private, others to shared',
+    flight.visibility === 'private' && booking.visibility === 'shared',
+  );
+  const privateRead = await b.client.from('bookings').select('id').eq('id', flight.id);
+  check("bookings: member can't read a private booking", !privateRead.data?.length);
+  const privateEdit = await b.client
+    .from('bookings')
+    .update({ data: { hacked: true } })
+    .eq('id', flight.id)
+    .select('id');
+  check("bookings: member can't edit a private booking", !privateEdit.data?.length);
+  const hide = await b.client
+    .from('bookings')
+    .update({ visibility: 'private' })
+    .eq('id', booking.id)
+    .select('id');
+  check('bookings: only the owner changes visibility', Boolean(hide.error) || !hide.data?.length);
+
+  // Pointing at other people's rows: never as someone else, never across trips.
+  const asA = await b.client
+    .from('expenses')
+    .insert({ user_id: a.id, trip_id: trip.id, amount_minor: 1, currency: 'USD' });
+  check("member can't insert a row as another user", Boolean(asA.error));
+  const cTrip = await insertOne(c.client, 'trips', {
+    city: 'Paris',
+    timezone: 'Europe/Paris',
+    start_date: '2026-12-01',
+    end_date: '2026-12-03',
+  });
+  const cPlace = await insertOne(c.client, 'places', { trip_id: cTrip.id, name: 'Louvre' });
+  const cross = await c.client.from('itinerary_items').insert({
+    trip_id: cTrip.id,
+    day: '2026-12-02',
+    kind: 'place',
+    place_id: place.id,
+  });
+  check("items can't point at a place on another trip", Boolean(cross.error));
+  const crossBack = await b.client.from('bucket_items').insert({
+    trip_id: trip.id,
+    place_id: cPlace.id,
+  });
+  check("items can't point at another trip's place they can't see", Boolean(crossBack.error));
+
+  // Review fixes: only a row's owner moves it to another trip; a member can't pull the owner's
+  // off-trip place onto the trip through the owner's row, or link the owner's private booking.
+  const bTrip = await insertOne(b.client, 'trips', {
+    city: 'Reno',
+    timezone: 'America/Los_Angeles',
+    start_date: '2026-12-01',
+    end_date: '2026-12-02',
+  });
+  const move = await b.client
+    .from('bookings')
+    .update({ trip_id: bTrip.id })
+    .eq('id', booking.id)
+    .select('id');
+  check("member can't move the owner's row to another trip", !move.data?.length);
+  const home = await insertOne(a.client, 'places', { name: 'Home' });
+  const claim = await b.client
+    .from('itinerary_items')
+    .update({ place_id: home.id })
+    .eq('id', rows.itinerary_items.id)
+    .select('id');
+  check("member can't pull the owner's off-trip place onto the trip", !claim.data?.length);
+  const linkPrivate = await b.client.from('expenses').insert({
+    trip_id: trip.id,
+    amount_minor: 1,
+    currency: 'USD',
+    booking_id: flight.id,
+  });
+  check("member can't link an expense to a private booking", Boolean(linkPrivate.error));
+  // C points a booking on C's own trip at A's file: that doesn't unlock it.
+  await insertOne(c.client, 'bookings', {
+    trip_id: cTrip.id,
+    type: 'hotel',
+    original_path: `${a.id}/rls-test-flight.txt`,
+  });
+
+  // Profiles: yourself and the people you share a trip with.
+  const profiles = await b.client.from('profiles').select('id, display_name');
+  const visible = new Set(profiles.data?.map((p) => p.id));
+  check(
+    'profiles: member sees self and co-members, not others',
+    visible.has(a.id) && visible.has(b.id) && !visible.has(c.id),
+    profiles.error?.message,
+  );
+  const rename = await b.client
+    .from('profiles')
+    .update({ display_name: 'Blake', venmo: 'blake-v' })
+    .eq('id', b.id)
+    .select('id');
+  check('profiles: edit your own', rename.data?.length === 1, rename.error?.message);
+  const renameA = await b.client
+    .from('profiles')
+    .update({ display_name: 'Hacked' })
+    .eq('id', a.id)
+    .select('id');
+  check("profiles: can't edit someone else's", !renameA.data?.length);
+  const anonProfiles = await anonymous.from('profiles').select('id').limit(1);
+  check("profiles: anonymous can't read", !anonProfiles.data?.length);
+
   // TR-20: a passport's number and photo paths stay with their owner.
   const passport = await b.client
     .from('documents')
     .select('number, image_paths')
     .eq('id', rows.documents.id);
-  check("documents: other user can't read number or photos", !passport.data?.length);
+  check("documents: member can't read an unshared passport", !passport.data?.length);
 
   // TR-34: other travellers see A's saved Las Vegas video through city_links, and nothing about A.
   const video = await insertOne(a.client, 'saved_links', {
@@ -148,7 +339,7 @@ try {
     title: 'Not a video',
     place_ids: [place.id],
   });
-  const pooled = await b.client.rpc('city_links', { p_city: ' las vegas ' });
+  const pooled = await c.client.rpc('city_links', { p_city: ' las vegas ' });
   const mine = pooled.data?.find((row) => row.url === video.url);
   check('city_links: other user sees the saved video', Boolean(mine), pooled.error?.message);
   check(
@@ -162,26 +353,26 @@ try {
   const leaked = JSON.stringify(pooled.data ?? []);
   check(
     'city_links: no user id, author, trip or link id',
-    ![a.id, b.id, 'rls-secret-author', trip.id, video.id].some((s) => leaked.includes(s)),
+    ![a.id, c.id, 'rls-secret-author', trip.id, video.id].some((s) => leaked.includes(s)),
   );
   check(
     'city_links: only TikTok and Instagram links',
     !pooled.data?.some((row) => row.url === 'https://example.com/not-a-video'),
   );
-  const elsewhere = await b.client.rpc('city_links', { p_city: 'Cape Town' });
+  const elsewhere = await c.client.rpc('city_links', { p_city: 'Cape Town' });
   check(
     'city_links: other cities stay apart',
     !elsewhere.error && !elsewhere.data.some((row) => row.url === video.url),
   );
   const anonLinks = await anonymous.rpc('city_links', { p_city: 'Las Vegas' });
   check("city_links: anonymous can't call it", Boolean(anonLinks.error));
-  const direct = await b.client.from('saved_links').select('id').eq('id', video.id);
+  const direct = await c.client.from('saved_links').select('id').eq('id', video.id);
   check("saved_links: still can't be read directly", !direct.error && direct.data.length === 0);
 
   const still = await a.client.from('trips').select('id').eq('id', trip.id);
-  check('trips: row survives the other user', still.data?.length === 1);
+  check('trips: row survives the other users', still.data?.length === 1);
 
-  const spoof = await b.client.from('trips').insert({
+  const spoof = await c.client.from('trips').insert({
     user_id: a.id,
     city: 'X',
     timezone: 'UTC',
@@ -190,12 +381,12 @@ try {
   });
   check("other user can't insert rows as the owner", Boolean(spoof.error));
 
-  const attach = await b.client.from('expenses').insert({
+  const attach = await c.client.from('expenses').insert({
     trip_id: trip.id,
     amount_minor: 1,
     currency: 'USD',
   });
-  check("other user can't attach rows to the owner's trip", Boolean(attach.error));
+  check("non-member can't attach rows to the owner's trip", Boolean(attach.error));
 
   // TR-26: the flight-status cache and allowance counter belong to the Edge Function alone.
   for (const table of ['flight_status_cache', 'flight_status_usage']) {
@@ -225,6 +416,7 @@ try {
 
   for (const [bucket, path] of [
     ['originals', `${a.id}/rls-test.txt`],
+    ['originals', `${a.id}/rls-test-flight.txt`],
     ['originals', `${a.id}/documents/rls-test.txt`],
     ['photos', `${a.id}/rls-test.txt`],
   ]) {
@@ -238,8 +430,17 @@ try {
     );
     if (!up.error) files.push({ bucket, path, client: a.client });
 
-    const down = await b.client.storage.from(bucket).download(path);
-    check(`${bucket} ${path.slice(a.id.length)}: other user can't download`, Boolean(down.error));
+    // The shared hotel's original is the trip's; the private flight's and the passport stay A's.
+    const memberDown = await b.client.storage.from(bucket).download(path);
+    const sharedFile = path === `${a.id}/rls-test.txt` && bucket === 'originals';
+    check(
+      `${bucket} ${path.slice(a.id.length)}: member ${sharedFile ? 'downloads' : "can't download"}`,
+      sharedFile ? !memberDown.error : Boolean(memberDown.error),
+      memberDown.error?.message,
+    );
+
+    const down = await c.client.storage.from(bucket).download(path);
+    check(`${bucket} ${path.slice(a.id.length)}: non-member can't download`, Boolean(down.error));
 
     const anonDown = await anonymous.storage.from(bucket).download(path);
     check(
@@ -247,22 +448,127 @@ try {
       Boolean(anonDown.error),
     );
 
-    const intrude = await b.client.storage
+    const intrude = await c.client.storage
       .from(bucket)
       .upload(`${a.id}/intruder.txt`, 'x', { contentType: 'text/plain' });
     check(
-      `${bucket} ${path.slice(a.id.length)}: other user can't upload into owner's folder`,
+      `${bucket} ${path.slice(a.id.length)}: non-member can't upload into owner's folder`,
       Boolean(intrude.error),
     );
     if (!intrude.error) files.push({ bucket, path: `${a.id}/intruder.txt`, client: admin });
 
-    const remove = await b.client.storage.from(bucket).remove([path]);
-    const kept = await a.client.storage.from(bucket).download(path);
-    check(
-      `${bucket} ${path.slice(a.id.length)}: other user can't delete`,
-      !remove.data?.length && !kept.error,
-    );
+    for (const [who, client] of [
+      ['member', b.client],
+      ['non-member', c.client],
+    ]) {
+      const remove = await client.storage.from(bucket).remove([path]);
+      const kept = await a.client.storage.from(bucket).download(path);
+      check(
+        `${bucket} ${path.slice(a.id.length)}: ${who} can't delete`,
+        !remove.data?.length && !kept.error,
+      );
+    }
   }
+
+  // Sharing a passport with the trip: B reads it and its photo; C still can't.
+  const passportPhoto = `${a.id}/documents/rls-test.txt`;
+  const cShare = await c.client
+    .from('document_shares')
+    .insert({ document_id: rows.documents.id, trip_id: cTrip.id });
+  check("document_shares: only the document's owner shares it", Boolean(cShare.error));
+  const share = await a.client
+    .from('document_shares')
+    .insert({ document_id: rows.documents.id, trip_id: trip.id });
+  check(
+    'document_shares: owner shares a passport with the trip',
+    !share.error,
+    share.error?.message,
+  );
+  const sharedPassport = await b.client
+    .from('documents')
+    .select('number')
+    .eq('id', rows.documents.id);
+  check('documents: member reads a shared passport', sharedPassport.data?.length === 1);
+  const sharedPhoto = await b.client.storage.from('originals').download(passportPhoto);
+  check("documents: member downloads a shared passport's photo", !sharedPhoto.error);
+  const editShared = await b.client
+    .from('documents')
+    .update({ number: 'HACKED' })
+    .eq('id', rows.documents.id)
+    .select('id');
+  check("documents: member can't edit a shared passport", !editShared.data?.length);
+  const cPassport = await c.client.from('documents').select('id').eq('id', rows.documents.id);
+  check("documents: non-member still can't read it", !cPassport.data?.length);
+  const cPhoto = await c.client.storage.from('originals').download(passportPhoto);
+  check("documents: non-member still can't download its photo", Boolean(cPhoto.error));
+
+  // Membership: B can't delete the trip, remove A or add people; A removes B; B leaves.
+  const bDeletesTrip = await b.client.from('trips').delete().eq('id', trip.id).select('id');
+  check("trips: member can't delete the trip", !bDeletesTrip.data?.length);
+  const bRemovesA = await b.client
+    .from('trip_members')
+    .delete()
+    .eq('trip_id', trip.id)
+    .eq('user_id', a.id)
+    .select('user_id');
+  check("trip_members: member can't remove the owner", !bRemovesA.data?.length);
+  const bAddsC = await b.client.from('trip_members').insert({ trip_id: trip.id, user_id: c.id });
+  check("trip_members: member can't add people", Boolean(bAddsC.error));
+  const cJoins = await c.client.from('trip_members').insert({ trip_id: trip.id, user_id: c.id });
+  check("trip_members: non-member can't join by insert", Boolean(cJoins.error));
+  const aLeaves = await a.client
+    .from('trip_members')
+    .delete()
+    .eq('trip_id', trip.id)
+    .eq('user_id', a.id)
+    .select('user_id');
+  check("trip_members: the owner can't leave", !aLeaves.data?.length);
+  const aRemovesB = await a.client
+    .from('trip_members')
+    .delete()
+    .eq('trip_id', trip.id)
+    .eq('user_id', b.id)
+    .select('user_id');
+  check(
+    'trip_members: owner removes a member',
+    aRemovesB.data?.length === 1,
+    aRemovesB.error?.message,
+  );
+  const afterRemoval = await b.client.from('trips').select('id').eq('id', trip.id);
+  check('trips: a removed member no longer sees the trip', !afterRemoval.data?.length);
+  const rejoin = await admin.from('trip_members').insert({ trip_id: trip.id, user_id: b.id });
+  if (rejoin.error) throw new Error(`re-add member: ${rejoin.error.message}`);
+  const bPrivate = await insertOne(b.client, 'bookings', { trip_id: trip.id, type: 'flight' });
+  const bLeaves = await b.client
+    .from('trip_members')
+    .delete()
+    .eq('trip_id', trip.id)
+    .eq('user_id', b.id)
+    .select('user_id');
+  check('trip_members: member leaves', bLeaves.data?.length === 1, bLeaves.error?.message);
+  const leftovers = await admin.from('bookings').select('id').eq('id', bPrivate.id);
+  check("leaving removes the member's private bookings", leftovers.data?.length === 0);
+  const kept = await a.client
+    .from('expenses')
+    .select('id')
+    .eq('trip_id', trip.id)
+    .eq('user_id', b.id);
+  check("leaving keeps the member's shared rows on the trip", kept.data?.length === 1);
+
+  // v1 data: every trip has exactly one owner and every user a profile.
+  const [integrity] = await sql(`
+    select
+      (select count(*) from public.trips t
+       where (select count(*) from public.trip_members m
+              where m.trip_id = t.id and m.role = 'owner') <> 1)::int as trips_without_one_owner,
+      (select count(*) from auth.users u
+       where not exists (select 1 from public.profiles p where p.id = u.id))::int
+        as users_without_profile`);
+  check(
+    'every trip has one owner and every user a profile',
+    integrity.trips_without_one_owner === 0 && integrity.users_without_profile === 0,
+    JSON.stringify(integrity),
+  );
 } catch (error) {
   check('setup', false, error instanceof Error ? error.message : String(error));
 } finally {

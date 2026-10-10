@@ -19,6 +19,7 @@ export type Database = {
           type: string;
           updated_at: string;
           user_id: string;
+          visibility: string;
         };
         Insert: {
           created_at?: string;
@@ -29,6 +30,7 @@ export type Database = {
           type: string;
           updated_at?: string;
           user_id?: string;
+          visibility?: string;
         };
         Update: {
           created_at?: string;
@@ -39,14 +41,15 @@ export type Database = {
           type?: string;
           updated_at?: string;
           user_id?: string;
+          visibility?: string;
         };
         Relationships: [
           {
-            foreignKeyName: 'bookings_trip_id_user_id_fkey';
-            columns: ['trip_id', 'user_id'];
+            foreignKeyName: 'bookings_trip_fkey';
+            columns: ['trip_id'];
             isOneToOne: false;
             referencedRelation: 'trips';
-            referencedColumns: ['id', 'user_id'];
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -101,25 +104,58 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: 'bucket_items_place_id_user_id_fkey';
-            columns: ['place_id', 'user_id'];
+            foreignKeyName: 'bucket_items_place_fkey';
+            columns: ['place_id'];
             isOneToOne: false;
             referencedRelation: 'places';
-            referencedColumns: ['id', 'user_id'];
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: 'bucket_items_saved_link_fk';
-            columns: ['saved_link_id', 'user_id'];
+            foreignKeyName: 'bucket_items_saved_link_fkey';
+            columns: ['saved_link_id'];
             isOneToOne: false;
             referencedRelation: 'saved_links';
-            referencedColumns: ['id', 'user_id'];
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: 'bucket_items_trip_id_user_id_fkey';
-            columns: ['trip_id', 'user_id'];
+            foreignKeyName: 'bucket_items_trip_fkey';
+            columns: ['trip_id'];
             isOneToOne: false;
             referencedRelation: 'trips';
-            referencedColumns: ['id', 'user_id'];
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      document_shares: {
+        Row: {
+          created_at: string;
+          document_id: string;
+          trip_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          document_id: string;
+          trip_id: string;
+        };
+        Update: {
+          created_at?: string;
+          document_id?: string;
+          trip_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'document_shares_document_id_fkey';
+            columns: ['document_id'];
+            isOneToOne: false;
+            referencedRelation: 'documents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'document_shares_trip_id_fkey';
+            columns: ['trip_id'];
+            isOneToOne: false;
+            referencedRelation: 'trips';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -205,17 +241,17 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: 'expenses_booking_fkey';
-            columns: ['booking_id', 'user_id'];
+            columns: ['booking_id'];
             isOneToOne: false;
             referencedRelation: 'bookings';
-            referencedColumns: ['id', 'user_id'];
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: 'expenses_trip_id_user_id_fkey';
-            columns: ['trip_id', 'user_id'];
+            foreignKeyName: 'expenses_trip_fkey';
+            columns: ['trip_id'];
             isOneToOne: false;
             referencedRelation: 'trips';
-            referencedColumns: ['id', 'user_id'];
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -254,6 +290,7 @@ export type Database = {
       };
       itinerary_items: {
         Row: {
+          added_by: string | null;
           booking_id: string | null;
           created_at: string;
           day: string;
@@ -270,6 +307,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          added_by?: string | null;
           booking_id?: string | null;
           created_at?: string;
           day: string;
@@ -286,6 +324,7 @@ export type Database = {
           user_id?: string;
         };
         Update: {
+          added_by?: string | null;
           booking_id?: string | null;
           created_at?: string;
           day?: string;
@@ -303,25 +342,32 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: 'itinerary_items_booking_id_user_id_fkey';
-            columns: ['booking_id', 'user_id'];
+            foreignKeyName: 'itinerary_items_added_by_fkey';
+            columns: ['added_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'itinerary_items_booking_fkey';
+            columns: ['booking_id'];
             isOneToOne: false;
             referencedRelation: 'bookings';
-            referencedColumns: ['id', 'user_id'];
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: 'itinerary_items_place_id_user_id_fkey';
-            columns: ['place_id', 'user_id'];
+            foreignKeyName: 'itinerary_items_place_fkey';
+            columns: ['place_id'];
             isOneToOne: false;
             referencedRelation: 'places';
-            referencedColumns: ['id', 'user_id'];
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: 'itinerary_items_trip_id_user_id_fkey';
-            columns: ['trip_id', 'user_id'];
+            foreignKeyName: 'itinerary_items_trip_fkey';
+            columns: ['trip_id'];
             isOneToOne: false;
             referencedRelation: 'trips';
-            referencedColumns: ['id', 'user_id'];
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -336,6 +382,7 @@ export type Database = {
           name: string;
           photo_url: string | null;
           source_url: string | null;
+          trip_id: string | null;
           updated_at: string;
           user_id: string;
         };
@@ -349,6 +396,7 @@ export type Database = {
           name: string;
           photo_url?: string | null;
           source_url?: string | null;
+          trip_id?: string | null;
           updated_at?: string;
           user_id?: string;
         };
@@ -362,8 +410,47 @@ export type Database = {
           name?: string;
           photo_url?: string | null;
           source_url?: string | null;
+          trip_id?: string | null;
           updated_at?: string;
           user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'places_trip_id_fkey';
+            columns: ['trip_id'];
+            isOneToOne: false;
+            referencedRelation: 'trips';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      profiles: {
+        Row: {
+          cashapp: string | null;
+          created_at: string;
+          display_name: string;
+          id: string;
+          updated_at: string;
+          venmo: string | null;
+          zelle: string | null;
+        };
+        Insert: {
+          cashapp?: string | null;
+          created_at?: string;
+          display_name: string;
+          id: string;
+          updated_at?: string;
+          venmo?: string | null;
+          zelle?: string | null;
+        };
+        Update: {
+          cashapp?: string | null;
+          created_at?: string;
+          display_name?: string;
+          id?: string;
+          updated_at?: string;
+          venmo?: string | null;
+          zelle?: string | null;
         };
         Relationships: [];
       };
@@ -409,11 +496,47 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: 'saved_links_trip_fk';
-            columns: ['trip_id', 'user_id'];
+            foreignKeyName: 'saved_links_trip_fkey';
+            columns: ['trip_id'];
             isOneToOne: false;
             referencedRelation: 'trips';
-            referencedColumns: ['id', 'user_id'];
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      trip_members: {
+        Row: {
+          joined_at: string;
+          role: string;
+          trip_id: string;
+          user_id: string;
+        };
+        Insert: {
+          joined_at?: string;
+          role?: string;
+          trip_id: string;
+          user_id: string;
+        };
+        Update: {
+          joined_at?: string;
+          role?: string;
+          trip_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'trip_members_trip_id_fkey';
+            columns: ['trip_id'];
+            isOneToOne: false;
+            referencedRelation: 'trips';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'trip_members_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -476,6 +599,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      can_read_original: { Args: { path: string }; Returns: boolean };
       city_links: {
         Args: { p_city: string };
         Returns: {
@@ -485,6 +609,14 @@ export type Database = {
           url: string;
         }[];
       };
+      is_co_member: { Args: { other: string }; Returns: boolean };
+      is_document_shared_with_me: {
+        Args: { document: string };
+        Returns: boolean;
+      };
+      is_trip_member: { Args: { trip: string }; Returns: boolean };
+      is_trip_owner: { Args: { trip: string }; Returns: boolean };
+      owns_document: { Args: { document: string }; Returns: boolean };
       reserve_flight_status_units: {
         Args: { p_limit: number; p_month: string; p_units: number };
         Returns: boolean;
