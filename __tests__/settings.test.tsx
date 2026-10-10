@@ -31,7 +31,15 @@ const mockUpdateUser = jest.fn();
 jest.mock('@/services/supabase', () => {
   const { fakeAuth: auth } = require('@/features/auth/testing');
   return {
-    supabase: { auth: { ...auth, updateUser: (...args: unknown[]) => mockUpdateUser(...args) } },
+    supabase: {
+      auth: { ...auth, updateUser: (...args: unknown[]) => mockUpdateUser(...args) },
+      // The real account's selected trip opens a live-updates channel (TR-54).
+      channel: () => {
+        const channel = { on: () => channel, subscribe: () => channel };
+        return channel;
+      },
+      removeChannel: async () => 'ok',
+    },
   };
 });
 
