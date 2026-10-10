@@ -1,14 +1,54 @@
 /**
- * Trip members (v2: Group trips, TDD → v2 → App; ADR 0027). An empty skeleton: the members
- * ticket fills this folder in, like every other domain here:
- * - `types.ts`: the models (e.g. `TripMember`) and `MembersSource`, this domain's slice of
- *   `DataSource` (it is already composed into `DataSource` in `../source.ts`);
- * - `demo.ts`: `demoMembers`, its slice of the in-memory demo source;
- * - `supabase.ts`: `supabaseMembers`, its slice of the Supabase source plus row mappers;
- * - `hooks.ts`: its React Query hooks (e.g. `useTripMembers`); add its `export *` line to
- *   `../hooks.ts` with the first hook;
- * - tests next to each file (`demo.test.ts`, `supabase.test.ts`).
+ * Trip members and profiles (v2: Group trips; TDD → v2 → App; ADR 0027). Everyone on a trip
+ * edits it equally; the owner (who created it) can also remove members and delete the trip.
  */
 
-/** The members slice of `DataSource`; no methods yet. */
-export type MembersSource = Record<never, never>;
+import type { MemberRole } from '@/core/members';
+
+export type { MemberRole };
+
+/** Someone on a trip, as screens show them (avatars, "Added by", the members sheet). */
+export interface Member {
+  /** Their profile id (`auth.users.id`). */
+  id: string;
+  name: string;
+  /** The letter on their avatar. */
+  initial: string;
+  role: MemberRole;
+  /** The signed-in traveller (in a demo session, the snapshot's `me`). */
+  isMe: boolean;
+}
+
+/** A traveller's name and payment handles (for Pay with Venmo / Cash App and Zelle details). */
+export interface Profile {
+  id: string;
+  displayName: string;
+  venmo?: string;
+  cashapp?: string;
+  zelle?: string;
+}
+
+/** What "save my profile" writes; the id is always the signed-in traveller's. */
+export type ProfileInput = Omit<Profile, 'id'>;
+
+/** One `trip_members` row, as a demo snapshot holds it. */
+export interface Membership {
+  tripId: string;
+  userId: string;
+  role: MemberRole;
+}
+
+/** The members slice of `DataSource`. */
+export interface MembersSource {
+  /** Everyone on the trip: you first, then the owner, then by name. */
+  listMembers(tripId: string): Promise<Member[]>;
+  getMyProfile(): Promise<Profile>;
+  saveMyProfile(profile: ProfileInput): Promise<Profile>;
+  /**
+   * Leave a trip. Your stops, Bucket List items and shared bookings stay on it, attributed to
+   * you; your private bookings for it are deleted. The owner can't leave (throws).
+   */
+  leaveTrip(tripId: string): Promise<void>;
+  /** The owner removes another member (same effect as them leaving). Throws for anyone else. */
+  removeMember(tripId: string, userId: string): Promise<void>;
+}

@@ -52,6 +52,9 @@ describe('demo source documents', () => {
     bucketItems: [],
     expenses: [],
     documents: [],
+    me: 'user-me',
+    members: [],
+    profiles: [],
   };
 
   it('adds, updates and deletes documents without touching the network', async () => {

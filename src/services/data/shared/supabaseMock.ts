@@ -7,15 +7,31 @@ export const mockTables: Record<string, { data: unknown; error: { message: strin
 export const mockUpserts: unknown[] = [];
 export const mockInserts: unknown[] = [];
 export const mockUpdates: unknown[] = [];
+/** Every filter and delete, in order, e.g. `['trip_members', 'eq', 'trip_id', 't1']`. */
+export const mockCalls: unknown[][] = [];
+/** The signed-in user `auth.getSession()` reports; null for signed out. */
+export const mockAuth: { userId: string | null } = { userId: 'u1' };
 
 export const mockSupabaseModule = {
   supabase: {
+    auth: {
+      getSession: async () => ({
+        data: { session: mockAuth.userId ? { user: { id: mockAuth.userId } } : null },
+        error: null,
+      }),
+    },
     from: (table: string) => {
       const builder: any = {
         then: (resolve: (v: unknown) => void) => resolve(mockTables[table]),
       };
-      for (const m of ['select', 'order', 'eq', 'in', 'delete', 'single', 'maybeSingle']) {
+      for (const m of ['select', 'order', 'in', 'single', 'maybeSingle']) {
         builder[m] = () => builder;
+      }
+      for (const m of ['eq', 'delete']) {
+        builder[m] = (...args: unknown[]) => {
+          mockCalls.push([table, m, ...args]);
+          return builder;
+        };
       }
       builder.insert = (row: unknown) => {
         mockInserts.push(row);

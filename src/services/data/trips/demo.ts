@@ -1,4 +1,5 @@
 import { bookingPlaceIds } from '../bookings/placeIds';
+import { bookingVisibility } from '../bookings/visibility';
 import type { ItineraryItem } from '../itinerary/types';
 import { copy, type DemoStore, upsert } from '../shared/demo';
 import type { Trip, TripsSource } from './types';
@@ -7,11 +8,13 @@ const byStart = (a: Trip, b: Trip) => a.startDate.localeCompare(b.startDate);
 const byTime = (a: ItineraryItem, b: ItineraryItem) =>
   a.day.localeCompare(b.day) || (a.startTime ?? '99:99').localeCompare(b.startTime ?? '99:99');
 
-/** The trips slice of the demo source. */
+/** The trips slice of the demo source. Like RLS, it shows only trips `me` is a member of. */
 export function demoTrips(store: DemoStore): TripsSource {
+  const isMember = (tripId: string) =>
+    store.db.members.some((m) => m.tripId === tripId && m.userId === store.db.me);
   return {
     async listTrips() {
-      return copy([...store.db.trips].sort(byStart));
+      return copy(store.db.trips.filter((t) => isMember(t.id)).sort(byStart));
     },
     async createTrip(input, id) {
       const { db } = store;
@@ -19,7 +22,12 @@ export function demoTrips(store: DemoStore): TripsSource {
         ...copy(input),
         id: id ?? `trip-${Date.now().toString(36)}-${db.trips.length}`,
       };
-      store.db = { ...db, trips: [...db.trips, trip] };
+      // The creator is the owner, as the database's trigger makes them.
+      store.db = {
+        ...db,
+        trips: [...db.trips, trip],
+        members: [...db.members, { tripId: trip.id, userId: db.me, role: 'owner' }],
+      };
       return copy(trip);
     },
     async deleteTrip(id) {
@@ -33,14 +41,20 @@ export function demoTrips(store: DemoStore): TripsSource {
         bookings: other(db.bookings),
         bucketItems: other(db.bucketItems),
         expenses: other(db.expenses),
+        members: other(db.members),
       };
     },
     async getTripData(tripId) {
       const { db } = store;
       const trip = db.trips.find((t) => t.id === tripId);
-      if (!trip) return null;
+      if (!trip || !isMember(tripId)) return null;
       const items = db.items.filter((i) => i.tripId === tripId).sort(byTime);
-      const bookings = db.bookings.filter((b) => b.tripId === tripId);
+      // Other members' private bookings stay hidden, as RLS hides them.
+      const bookings = db.bookings.filter(
+        (b) =>
+          b.tripId === tripId &&
+          (bookingVisibility(b) === 'shared' || (b.addedBy ?? db.me) === db.me),
+      );
       const bucketItems = db.bucketItems.filter((b) => b.tripId === tripId);
       const expenses = db.expenses.filter((e) => e.tripId === tripId);
       const placeIds = new Set<string>([

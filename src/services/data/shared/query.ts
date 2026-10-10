@@ -16,6 +16,10 @@ export const dataKeys = {
   trips: (source: DataSource) => ['data', source.id, 'trips'] as const,
   trip: (source: DataSource, tripId: string) => ['data', source.id, 'trip', tripId] as const,
   documents: (source: DataSource) => ['data', source.id, 'documents'] as const,
+  /** Under the trip's key, so refreshing a trip refreshes its members too. */
+  members: (source: DataSource, tripId: string) =>
+    ['data', source.id, 'trip', tripId, 'members'] as const,
+  myProfile: (source: DataSource) => ['data', source.id, 'profile'] as const,
 };
 
 /** A write through the active source that refreshes all of its queries when it succeeds. */

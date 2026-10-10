@@ -12,6 +12,7 @@ export const toItem = (r: Row<'itinerary_items'>): ItineraryItem => ({
   bookingId: r.booking_id,
   fixed: r.fixed,
   ...(r.title ? { title: r.title } : {}),
+  addedBy: r.added_by ?? r.user_id,
   notes: r.notes,
 });
 

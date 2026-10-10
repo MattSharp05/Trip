@@ -5,6 +5,8 @@ export const toBooking = (r: Row<'bookings'>): Booking =>
   ({
     id: r.id,
     tripId: r.trip_id,
+    addedBy: r.user_id,
+    visibility: r.visibility === 'private' ? 'private' : 'shared',
     originalPath: r.original_path,
     type: r.type,
     data: r.data,

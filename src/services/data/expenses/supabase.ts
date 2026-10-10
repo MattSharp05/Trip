@@ -9,6 +9,7 @@ export const toExpense = (r: Row<'expenses'>): Expense => ({
   category: r.category ?? 'Other',
   bookingId: r.booking_id,
   paidAt: r.paid_at,
+  addedBy: r.user_id,
   ...(r.description ? { description: r.description } : {}),
 });
 

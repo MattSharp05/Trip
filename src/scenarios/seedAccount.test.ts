@@ -19,6 +19,9 @@ const EMPTY: DataSnapshot = {
   bucketItems: [],
   expenses: [],
   documents: [],
+  me: 'user-me',
+  members: [],
+  profiles: [],
 };
 const USER = '6f1c2a9e-0000-4000-8000-000000000001';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;

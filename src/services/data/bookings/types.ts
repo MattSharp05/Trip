@@ -84,9 +84,16 @@ export interface TicketData {
   confirmation: string;
 }
 
+/** Mine / Shared (ADR 0027): a private booking is seen by the traveller who added it only. */
+export type BookingVisibility = 'shared' | 'private';
+
 interface BookingBase {
   id: string;
   tripId: string;
+  /** Who added it (profile id); absent in v1 fixtures, meaning you. */
+  addedBy?: string;
+  /** Absent in v1 fixtures: the default for its type (see `bookingVisibility`). */
+  visibility?: BookingVisibility;
   /**
    * Storage path of the original file (PDF, screenshot), if one was imported; `fixture:<name>` for
    * a scenario's bundled sample.

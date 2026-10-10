@@ -29,6 +29,9 @@ function emptyAccount(): DataSource {
     bucketItems: [],
     expenses: [],
     documents: [],
+    me: 'user-me',
+    members: [],
+    profiles: [],
   });
   return { ...demo, kind: 'supabase' };
 }

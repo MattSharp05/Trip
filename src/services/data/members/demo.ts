@@ -1,7 +1,85 @@
-import type { DemoStore } from '../shared/demo';
-import type { MembersSource } from './types';
+import { sortMembers, initialOf } from '@/core/members';
 
-/** The members slice of the demo source (see `./types.ts`); empty until the members ticket. */
-export function demoMembers(_store: DemoStore): MembersSource {
-  return {};
+import { bookingVisibility } from '../bookings/visibility';
+import { copy, type DemoStore, upsert } from '../shared/demo';
+import type { DataSnapshot } from '../types';
+import type { Member, MembersSource, Profile } from './types';
+
+/** A traveller with no profile row gets the database's fallback name. */
+const FALLBACK_NAME = 'Traveller';
+
+/**
+ * Takes `userId` off the trip, as the database does when a member leaves or is removed: their
+ * private bookings for the trip go; everything else they added stays, attributed to them.
+ */
+function withoutMember(db: DataSnapshot, tripId: string, userId: string): DataSnapshot {
+  const theirs = (addedBy: string | undefined) => (addedBy ?? db.me) === userId;
+  return {
+    ...db,
+    members: db.members.filter((m) => !(m.tripId === tripId && m.userId === userId)),
+    bookings: db.bookings.filter(
+      (b) => !(b.tripId === tripId && theirs(b.addedBy) && bookingVisibility(b) === 'private'),
+    ),
+  };
+}
+
+/** The members slice of the demo source: the snapshot's `members` and `profiles`, in memory. */
+export function demoMembers(store: DemoStore): MembersSource {
+  const myRow = (tripId: string) =>
+    store.db.members.find((m) => m.tripId === tripId && m.userId === store.db.me);
+
+  return {
+    async listMembers(tripId) {
+      const { db } = store;
+      const members = db.members
+        .filter((m) => m.tripId === tripId)
+        .map((m): Member => {
+          const name = db.profiles.find((p) => p.id === m.userId)?.displayName ?? FALLBACK_NAME;
+          return {
+            id: m.userId,
+            name,
+            initial: initialOf(name),
+            role: m.role,
+            isMe: m.userId === db.me,
+          };
+        });
+      return sortMembers(members);
+    },
+    async getMyProfile() {
+      const { db } = store;
+      return copy(
+        db.profiles.find((p) => p.id === db.me) ?? { id: db.me, displayName: FALLBACK_NAME },
+      );
+    },
+    async saveMyProfile(input) {
+      const displayName = input.displayName.trim();
+      if (!displayName) throw new Error('A name is required');
+      // Trimmed, and an empty handle is not set, as the Supabase source saves them.
+      const handle = (key: 'venmo' | 'cashapp' | 'zelle') => {
+        const value = input[key]?.trim();
+        return value ? { [key]: value } : {};
+      };
+      const profile: Profile = {
+        id: store.db.me,
+        displayName,
+        ...handle('venmo'),
+        ...handle('cashapp'),
+        ...handle('zelle'),
+      };
+      store.db = { ...store.db, profiles: upsert(store.db.profiles, profile) };
+      return copy(profile);
+    },
+    async leaveTrip(tripId) {
+      const row = myRow(tripId);
+      if (!row) throw new Error(`Not a member of trip ${tripId}`);
+      if (row.role === 'owner') throw new Error('The owner can’t leave the trip');
+      store.db = withoutMember(store.db, tripId, store.db.me);
+    },
+    async removeMember(tripId, userId) {
+      if (myRow(tripId)?.role !== 'owner') throw new Error('Only the owner can remove members');
+      const target = store.db.members.find((m) => m.tripId === tripId && m.userId === userId);
+      if (!target || target.role === 'owner') throw new Error(`Can’t remove ${userId}`);
+      store.db = withoutMember(store.db, tripId, userId);
+    },
+  };
 }
