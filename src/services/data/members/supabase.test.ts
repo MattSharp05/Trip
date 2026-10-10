@@ -87,10 +87,18 @@ describe('supabase members', () => {
 
   it('reports a delete RLS refused (nothing removed) as an error', async () => {
     mockTables.trip_members = { data: [], error: null };
-    await expect(supabaseMembers.leaveTrip('t1')).rejects.toThrow('The owner can’t leave the trip');
+    await expect(supabaseMembers.leaveTrip('t1')).rejects.toThrow('the owner can’t leave');
     await expect(supabaseMembers.removeMember('t1', 'u2')).rejects.toThrow(
-      'Only the owner can remove members',
+      'Only the owner can remove a member',
     );
+  });
+
+  it('rejects a blank name before it reaches the database', async () => {
+    const updates = mockUpdates.length;
+    await expect(supabaseMembers.saveMyProfile({ displayName: ' ' })).rejects.toThrow(
+      'A name is required',
+    );
+    expect(mockUpdates).toHaveLength(updates);
   });
 
   it('needs a signed-in user', async () => {

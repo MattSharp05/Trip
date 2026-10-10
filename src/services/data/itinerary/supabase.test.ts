@@ -44,5 +44,25 @@ describe('supabase itinerary', () => {
       title: 'Brunch',
       notes: 'Terrace table',
     });
+    expect(saved.addedBy).toBe('u1');
+    expect(mockUpserts.at(-1)).not.toHaveProperty('added_by');
+  });
+
+  it('reads and keeps who added a stop (a Bucket List item planned by someone else)', async () => {
+    mockTables.itinerary_items = { data: { ...itemRow, added_by: 'u2' }, error: null };
+    const saved = await supabaseItinerary.saveItineraryItem({
+      id: 'i1',
+      tripId: 't1',
+      day: '2026-11-13',
+      startTime: '10:00',
+      durationMinutes: 75,
+      placeId: 'p1',
+      kind: 'food',
+      bookingId: null,
+      fixed: false,
+      addedBy: 'u2',
+    });
+    expect(mockUpserts.at(-1)).toMatchObject({ added_by: 'u2' });
+    expect(saved.addedBy).toBe('u2');
   });
 });

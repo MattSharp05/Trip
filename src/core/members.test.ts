@@ -1,4 +1,4 @@
-import { initialOf, type MemberLike, memberLabel, sortMembers } from './members';
+import { initialOf, type MemberLike, memberLabel, sortMembers, toMember } from './members';
 
 const member = (name: string, extra: Partial<MemberLike> = {}): MemberLike => ({
   name,
@@ -18,6 +18,20 @@ describe('initialOf', () => {
     expect(initialOf('𝓩oe')).toBe('𝓩');
     expect(initialOf('')).toBe('?');
     expect(initialOf('   ')).toBe('?');
+  });
+});
+
+describe('toMember', () => {
+  it('names a member with their initial, or "Traveller" without a name', () => {
+    expect(toMember('u2', ' Blake ', 'member', false)).toEqual({
+      id: 'u2',
+      name: 'Blake',
+      initial: 'B',
+      role: 'member',
+      isMe: false,
+    });
+    expect(toMember('u3', null, 'owner', true)).toMatchObject({ name: 'Traveller', initial: 'T' });
+    expect(toMember('u4', '  ', 'member', false).name).toBe('Traveller');
   });
 });
 

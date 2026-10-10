@@ -1,31 +1,19 @@
-import { initialOf, type MemberRole, sortMembers } from '@/core/members';
+import { sortMembers, toMember } from '@/core/members';
 
-import { checkRow, client, type Row } from '../shared/supabase';
+import { checkRow, client, currentUserId, type Row } from '../shared/supabase';
 import type { Member, MembersSource, Profile } from './types';
-
-/** The signed-in user's id, from the session stored on the device (no network call). */
-async function myId(): Promise<string> {
-  const { data, error } = await client().auth.getSession();
-  if (error) throw new Error(error.message);
-  const id = data.session?.user.id;
-  if (!id) throw new Error('Not signed in');
-  return id;
-}
 
 type MemberRow = Pick<Row<'trip_members'>, 'user_id' | 'role'> & {
   profiles: Pick<Row<'profiles'>, 'display_name'> | null;
 };
 
-export const toMember = (r: MemberRow, me: string): Member => {
-  const name = r.profiles?.display_name ?? 'Traveller';
-  return {
-    id: r.user_id,
-    name,
-    initial: initialOf(name),
-    role: (r.role === 'owner' ? 'owner' : 'member') satisfies MemberRole,
-    isMe: r.user_id === me,
-  };
-};
+export const toTripMember = (r: MemberRow, me: string): Member =>
+  toMember(
+    r.user_id,
+    r.profiles?.display_name ?? null,
+    r.role === 'owner' ? 'owner' : 'member',
+    r.user_id === me,
+  );
 
 export const toProfile = (r: Row<'profiles'>): Profile => ({
   id: r.id,
@@ -54,26 +42,28 @@ async function deleteMembership(tripId: string, userId: string, refused: string)
 /** The members slice of the Supabase source: `trip_members` joined to `profiles`. */
 export const supabaseMembers: MembersSource = {
   async listMembers(tripId) {
-    const me = await myId();
+    const me = await currentUserId();
     const rows = checkRow(
       await client()
         .from('trip_members')
         .select('user_id, role, profiles(display_name)')
         .eq('trip_id', tripId),
     );
-    return sortMembers(rows.map((r) => toMember(r, me)));
+    return sortMembers(rows.map((r) => toTripMember(r, me)));
   },
   async getMyProfile() {
-    const id = await myId();
+    const id = await currentUserId();
     return toProfile(checkRow(await client().from('profiles').select('*').eq('id', id).single()));
   },
   async saveMyProfile(profile) {
-    const id = await myId();
+    const displayName = profile.displayName.trim();
+    if (!displayName) throw new Error('A name is required');
+    const id = await currentUserId();
     const row = checkRow(
       await client()
         .from('profiles')
         .update({
-          display_name: profile.displayName.trim(),
+          display_name: displayName,
           venmo: profile.venmo?.trim() || null,
           cashapp: profile.cashapp?.trim() || null,
           zelle: profile.zelle?.trim() || null,
@@ -85,9 +75,17 @@ export const supabaseMembers: MembersSource = {
     return toProfile(row);
   },
   async leaveTrip(tripId) {
-    await deleteMembership(tripId, await myId(), 'The owner can’t leave the trip');
+    await deleteMembership(
+      tripId,
+      await currentUserId(),
+      'You’re not on this trip, or you own it (the owner can’t leave)',
+    );
   },
   async removeMember(tripId, userId) {
-    await deleteMembership(tripId, userId, 'Only the owner can remove members');
+    await deleteMembership(
+      tripId,
+      userId,
+      'Only the owner can remove a member, and only someone else on the trip',
+    );
   },
 };

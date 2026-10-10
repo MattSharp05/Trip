@@ -15,6 +15,13 @@ describe('demo members', () => {
     ]);
   });
 
+  it('marks who added what in group-vegas', async () => {
+    const data = (await createDemoSource(groupSnapshot).getTripData(VEGAS))!;
+    expect(data.bucketItems.find((b) => b.id === 'bucket-golden-tiki')?.addedBy).toBe(BLAKE);
+    expect(data.items.find((i) => i.title === 'Dinner at Peppermill')?.addedBy).toBe(WILLEM);
+    expect(data.items.filter((i) => i.addedBy)).toHaveLength(1);
+  });
+
   it('reads and saves your profile', async () => {
     const source = createDemoSource(groupSnapshot);
     expect(await source.getMyProfile()).toEqual({ id: ME, displayName: 'Matthew' });
@@ -54,6 +61,7 @@ describe('demo members', () => {
     await asWillem.leaveTrip(VEGAS);
     expect(await asWillem.listTrips()).toEqual([]);
     expect(await asWillem.getTripData(VEGAS)).toBeNull();
+    expect(await asWillem.listMembers(VEGAS)).toEqual([]);
     await expect(asWillem.leaveTrip(VEGAS)).rejects.toThrow('Not a member');
   });
 

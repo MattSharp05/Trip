@@ -24,6 +24,15 @@ export function memberLabel(member: MemberLike): string {
   return member.isMe ? 'You' : member.name;
 }
 
+/** A traveller with no profile row (or no name) gets the database's fallback name. */
+export const FALLBACK_NAME = 'Traveller';
+
+/** A member as screens show them: their name (or the fallback) and avatar initial. */
+export function toMember(id: string, name: string | null, role: MemberRole, isMe: boolean) {
+  const shown = name?.trim() || FALLBACK_NAME;
+  return { id, name: shown, initial: initialOf(shown), role, isMe };
+}
+
 const rank = (m: MemberLike) => (m.isMe ? 0 : m.role === 'owner' ? 1 : 2);
 
 /** You first, then the owner, then everyone else by name. Returns a new array. */

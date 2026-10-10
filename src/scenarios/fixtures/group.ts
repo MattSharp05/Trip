@@ -25,7 +25,7 @@ const members: Membership[] = [
 
 /** Who added what, beyond Matthew's own (unmarked) items. */
 const BUCKET_ADDED_BY: Record<string, string> = { 'bucket-golden-tiki': BLAKE };
-const STOP_ADDED_BY: Record<string, string> = { 'Dinner at Peppermill': WILLEM };
+const STOP_ADDED_BY: Record<string, string> = { 'item-04': WILLEM }; // Dinner at Peppermill, Nov 12
 
 export const groupSnapshot: DataSnapshot = {
   ...vegasSnapshot,
@@ -35,6 +35,6 @@ export const groupSnapshot: DataSnapshot = {
     BUCKET_ADDED_BY[b.id] ? { ...b, addedBy: BUCKET_ADDED_BY[b.id] } : b,
   ),
   items: vegasSnapshot.items.map((i) =>
-    i.title && STOP_ADDED_BY[i.title] ? { ...i, addedBy: STOP_ADDED_BY[i.title] } : i,
+    STOP_ADDED_BY[i.id] ? { ...i, addedBy: STOP_ADDED_BY[i.id] } : i,
   ),
 };

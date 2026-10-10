@@ -35,6 +35,8 @@ export const supabaseItinerary: ItinerarySource = {
           fixed: item.fixed,
           title: item.title || null,
           notes: item.notes || null,
+          // Unset, the database makes it the saver (new rows) or keeps it (existing ones).
+          ...(item.addedBy ? { added_by: item.addedBy } : {}),
         })
         .select()
         .single(),

@@ -1,12 +1,9 @@
-import { sortMembers, initialOf } from '@/core/members';
+import { FALLBACK_NAME, sortMembers, toMember } from '@/core/members';
 
 import { bookingVisibility } from '../bookings/visibility';
 import { copy, type DemoStore, upsert } from '../shared/demo';
 import type { DataSnapshot } from '../types';
-import type { Member, MembersSource, Profile } from './types';
-
-/** A traveller with no profile row gets the database's fallback name. */
-const FALLBACK_NAME = 'Traveller';
+import type { MembersSource, Profile } from './types';
 
 /**
  * Takes `userId` off the trip, as the database does when a member leaves or is removed: their
@@ -31,19 +28,15 @@ export function demoMembers(store: DemoStore): MembersSource {
   return {
     async listMembers(tripId) {
       const { db } = store;
-      const members = db.members
-        .filter((m) => m.tripId === tripId)
-        .map((m): Member => {
-          const name = db.profiles.find((p) => p.id === m.userId)?.displayName ?? FALLBACK_NAME;
-          return {
-            id: m.userId,
-            name,
-            initial: initialOf(name),
-            role: m.role,
-            isMe: m.userId === db.me,
-          };
-        });
-      return sortMembers(members);
+      // Like RLS: only members see a trip's members.
+      if (!myRow(tripId)) return [];
+      const name = (userId: string) =>
+        db.profiles.find((p) => p.id === userId)?.displayName ?? null;
+      return sortMembers(
+        db.members
+          .filter((m) => m.tripId === tripId)
+          .map((m) => toMember(m.userId, name(m.userId), m.role, m.userId === db.me)),
+      );
     },
     async getMyProfile() {
       const { db } = store;
