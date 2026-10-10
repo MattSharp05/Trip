@@ -12,7 +12,7 @@ import { useTrips, type Trip } from '@/services/data';
 import { colors, radii, screenPadding, spacing } from '@/theme';
 import { Button, IconButton, Segmented, Skeleton, Text, useTabBarInset } from '@/ui';
 
-import { useChooseTrip, useRestoreSelectedTrip } from './selectedTrip';
+import { useOpenTrip, useRestoreSelectedTrip } from './selectedTrip';
 import { TRIP_CARD_HEIGHT, TripCard } from './TripCard';
 import { TripsGlobe } from './TripsGlobe';
 
@@ -46,14 +46,10 @@ export function TripsScreen() {
   const { height } = useWindowDimensions();
   const { data: trips, isPending, isError, refetch } = useTrips();
   const [filter, setFilter] = useState<TripFilter>('upcoming');
-  const chooseTrip = useChooseTrip();
+  const open = useOpenTrip();
   useRestoreSelectedTrip(trips);
 
   const create = () => router.push('/trips/new');
-  const open = (trip: Trip) => {
-    chooseTrip(trip.id);
-    router.navigate('/plan');
-  };
 
   const hasTrips = !!trips && trips.length > 0;
 

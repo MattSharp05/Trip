@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { tabTitle } from '@/core/tabs';
 import { AddBookingSheet } from '@/features/import';
+import { MemberAvatars } from '@/features/members';
 import { TripTitle } from '@/features/trips/TripTitle';
 import { useTripData } from '@/services/data';
 import { useImportStore } from '@/stores/import';
@@ -73,7 +74,12 @@ export function OrganizeScreen() {
             />
           </View>
           {trip ? (
-            <TripTitle trip={trip} variant="inline" testID="organize-trip-title" />
+            <View style={styles.tripRow}>
+              <View style={styles.tripTitle}>
+                <TripTitle trip={trip} variant="inline" testID="organize-trip-title" />
+              </View>
+              <MemberAvatars tripId={trip.id} testID="organize-members" />
+            </View>
           ) : tripId ? (
             <Skeleton width={220} height={22} testID="organize-trip-title-loading" />
           ) : null}
@@ -98,4 +104,12 @@ const styles = StyleSheet.create({
   header: { gap: spacing.md, paddingHorizontal: screenPadding },
   title: { gap: spacing.xxs },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  // The trip line with its members on the right (TR-56); a long city shortens, not the avatars.
+  tripRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  tripTitle: { flexShrink: 1 },
 });

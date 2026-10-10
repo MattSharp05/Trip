@@ -1,0 +1,34 @@
+# TR-56 on device: the organizer removes Blake from his row's menu (an action sheet, then a
+# confirm), and he leaves the sheet and the header. A plain menu, not a swipe: v1's gestures passed
+# in Jest and failed on the phone, so the device check is this flow.
+appId: com.mattsharp05.trip
+tags:
+  - shots
+---
+- runFlow:
+    file: ../scenario.yaml
+    env:
+      SCENARIO: group-vegas
+      READY_ID: plan-members
+- tapOn:
+    id: plan-members
+- extendedWaitUntil:
+    visible:
+      id: plan-members-sheet-user-blake-menu
+    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn:
+    id: plan-members-sheet-user-blake-menu
+- tapOn: Remove from trip
+- extendedWaitUntil:
+    visible: Remove Blake from the trip\?
+    timeout: 10000
+- tapOn: Remove
+- extendedWaitUntil:
+    notVisible:
+      id: plan-members-sheet-user-blake
+    timeout: 10000
+- assertVisible:
+    id: plan-members-sheet-user-willem
+- takeScreenshot: group-members-remove

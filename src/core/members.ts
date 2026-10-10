@@ -41,3 +41,29 @@ export function sortMembers<T extends MemberLike>(members: readonly T[]): T[] {
     (a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'en-US', { sensitivity: 'base' }),
   );
 }
+
+/** The most avatars a header shows before "+n" (TR-56). */
+export const MAX_AVATARS = 4;
+
+/**
+ * The header's avatar row (TR-56): everyone else in list order, then you last, at most `max`
+ * circles (you always among them), and how many more there are for "+n". Empty when you're alone
+ * on the trip: the row is hidden.
+ */
+export function avatarRow<T extends MemberLike>(
+  members: readonly T[],
+  max = MAX_AVATARS,
+): { shown: T[]; more: number } {
+  if (members.length <= 1) return { shown: [], more: 0 };
+  const me = members.filter((m) => m.isMe);
+  const others = members.filter((m) => !m.isMe);
+  const room = Math.max(max - me.length, 0);
+  return { shown: [...others.slice(0, room), ...me], more: Math.max(others.length - room, 0) };
+}
+
+/** Under a name in the members sheet: "Organizer" for the trip's creator, "You" for yourself. */
+export function memberRoleLine(member: MemberLike): string {
+  return [member.role === 'owner' ? 'Organizer' : null, member.isMe ? 'You' : null]
+    .filter(Boolean)
+    .join(' · ');
+}

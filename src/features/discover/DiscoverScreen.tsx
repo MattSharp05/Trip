@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { tabTitle } from '@/core/tabs';
 import { LinkResultsSheet, useLinkFlow } from '@/features/links';
+import { MemberAvatars } from '@/features/members';
 import { TripTitle } from '@/features/trips/TripTitle';
 import type { CityReel } from '@/services/cityLinks';
 import { useTripData, type Trip } from '@/services/data';
@@ -88,12 +89,17 @@ export function DiscoverScreen() {
             {tabTitle('discover')}
           </Text>
           {trip ? (
-            <TripTitle
-              trip={trip}
-              variant="inline"
-              allUpcoming={{ selected: discoverAll, onChange: setDiscoverAll }}
-              testID="discover-trip-title"
-            />
+            <View style={styles.tripRow}>
+              <View style={styles.tripTitle}>
+                <TripTitle
+                  trip={trip}
+                  variant="inline"
+                  allUpcoming={{ selected: discoverAll, onChange: setDiscoverAll }}
+                  testID="discover-trip-title"
+                />
+              </View>
+              {discoverAll ? null : <MemberAvatars tripId={trip.id} testID="discover-members" />}
+            </View>
           ) : tripId ? (
             <Skeleton width={220} height={22} testID="discover-trip-title-loading" />
           ) : null}
@@ -216,6 +222,14 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { gap: spacing.lg, paddingHorizontal: screenPadding },
   header: { gap: spacing.xxs },
+  // The trip line with its members on the right (TR-56); a long city shortens, not the avatars.
+  tripRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  tripTitle: { flexShrink: 1 },
   field: {
     flexDirection: 'row',
     alignItems: 'center',

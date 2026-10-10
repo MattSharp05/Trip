@@ -38,3 +38,13 @@ export const groupSnapshot: DataSnapshot = {
     STOP_ADDED_BY[i.id] ? { ...i, addedBy: STOP_ADDED_BY[i.id] } : i,
   ),
 };
+
+/**
+ * `group-vegas` seen by Willem, a member, not the organizer (TR-56): no Remove, and Leave trip. He
+ * is also on Matthew's Cape Town trip, so leaving Vegas selects it.
+ */
+export const groupMemberSnapshot: DataSnapshot = {
+  ...groupSnapshot,
+  me: WILLEM,
+  members: [...members, { tripId: 'trip-cape-town', userId: WILLEM, role: 'member' }],
+};

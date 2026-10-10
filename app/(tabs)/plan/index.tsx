@@ -67,6 +67,7 @@ export default function PlanScreen() {
   const router = useRouter();
   const { height } = useWindowDimensions();
   const tripId = useTripStore((s) => s.selectedTripId);
+  const opens = useTripStore((s) => s.opens);
   const trip = useTripData(tripId);
   const info = trip.data?.trip;
   const selection = useTripSelection(info);
@@ -89,6 +90,12 @@ export default function PlanScreen() {
   const [globeDay, setGlobeDay] = useState<string | null>(null);
   const showFlight = useCallback(() => setGlobeDay(selectedDay), [selectedDay]);
   const showMap = useCallback(() => setGlobeDay(null), []);
+  // A trip opened from Trips or the switcher shows its city map, not a flight's globe (TR-56).
+  const [seenOpens, setSeenOpens] = useState(opens);
+  if (seenOpens !== opens) {
+    setSeenOpens(opens);
+    setGlobeDay(null);
+  }
 
   // Every pick, from the list or the map, flies the map to the item's place.
   const flown = useRef(picks);
@@ -348,6 +355,7 @@ export default function PlanScreen() {
           bottomInset={sheetBottom}
           onCoverChange={setSheetCover}
           collapseKey={picks}
+          halfKey={opens}
           mode={selection.planMode}
           onModeChange={selection.setPlanMode}
           bucketCount={bucketCount}
