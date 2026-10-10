@@ -4,8 +4,9 @@
 // with the service role, as the invite RPC will) and shares it; C (and an anonymous client) is on
 // no trip of A's and can't read, change or delete anything, or point at it. Private bookings and
 // passports stay A's until A shares them (TR-50, ADR 0027). Realtime follows the same rules: B
-// hears A's changes live, C doesn't (TR-54, ADR 0028). The users and their data are deleted
-// afterwards.
+// hears A's changes live, C doesn't (TR-54, ADR 0028). Finally C joins through A's invite link,
+// and a reset link stops working for a fourth user, D (TR-57, ADR 0029). The users and their data
+// are deleted afterwards.
 //
 //   SUPABASE_ACCESS_TOKEN=… node scripts/supabase-rls-test.mjs
 //
@@ -673,6 +674,75 @@ try {
     .eq('trip_id', trip.id)
     .eq('user_id', b.id);
   check("leaving keeps the member's shared rows on the trip", kept.data?.length === 1);
+
+  // TR-57 (ADR 0029): invite links. C (a non-member) previews A's active link, which shows only
+  // the trip's summary, and joins with it; a reset link stops working.
+  const inactive = (result) => result.error?.message === 'invite_inactive';
+  const cCreates = await c.client.rpc('create_invite', { trip: trip.id });
+  check("invites: non-member can't make a link", Boolean(cCreates.error));
+  const made = await a.client.rpc('create_invite', { trip: trip.id });
+  const token = made.data;
+  check(
+    'invites: member makes a 22-character link',
+    typeof token === 'string' && /^[A-Za-z0-9_-]{22}$/.test(token),
+    made.error?.message ?? JSON.stringify(made.data),
+  );
+  const again = await a.client.rpc('create_invite', { trip: trip.id });
+  check('invites: the active link is reused', again.data === token, again.error?.message);
+  const cTable = await c.client.from('trip_invites').select('token');
+  check("invites: the table can't be read directly", !cTable.data?.length);
+  const anonPreview = await anonymous.rpc('invite_preview', { invite: token });
+  check("invites: signed-out clients can't preview", Boolean(anonPreview.error));
+  const preview = await c.client.rpc('invite_preview', { invite: token }).single();
+  const aName = await a.client.from('profiles').select('display_name').eq('id', a.id).single();
+  check(
+    'invites: non-member previews the trip summary and nothing else',
+    preview.data?.trip_id === trip.id &&
+      preview.data.city === 'Las Vegas' &&
+      preview.data.start_date === '2026-11-01' &&
+      preview.data.inviter_name === aName.data?.display_name &&
+      preview.data.member_count === 1 &&
+      preview.data.already_member === false &&
+      Object.keys(preview.data).sort().join() ===
+        'already_member,city,cover_photo_url,end_date,inviter_name,member_count,start_date,trip_id',
+    preview.error?.message ?? JSON.stringify(preview.data),
+  );
+  const accepted = await c.client.rpc('accept_invite', { invite: token });
+  check('invites: accepting returns the trip', accepted.data === trip.id, accepted.error?.message);
+  const acceptedAgain = await c.client.rpc('accept_invite', { invite: token });
+  const cRows = await admin
+    .from('trip_members')
+    .select('role')
+    .eq('trip_id', trip.id)
+    .eq('user_id', c.id);
+  check(
+    'invites: accepting twice keeps one member row',
+    acceptedAgain.data === trip.id && cRows.data?.length === 1 && cRows.data[0].role === 'member',
+    acceptedAgain.error?.message ?? JSON.stringify(cRows.data),
+  );
+  const cSees = await c.client.from('trips').select('id').eq('id', trip.id);
+  check('invites: the new member sees the trip', cSees.data?.length === 1);
+  const reset = await a.client.rpc('reset_invite', { trip: trip.id });
+  check(
+    'invites: reset makes a new link',
+    typeof reset.data === 'string' && reset.data !== token,
+    reset.error?.message,
+  );
+  const d = await newUser();
+  check(
+    'invites: a reset link no longer previews',
+    inactive(await d.client.rpc('invite_preview', { invite: token })),
+  );
+  check(
+    'invites: a reset link no longer joins',
+    inactive(await d.client.rpc('accept_invite', { invite: token })),
+  );
+  check(
+    'invites: an unknown link is inactive',
+    inactive(await d.client.rpc('invite_preview', { invite: 'x'.repeat(22) })),
+  );
+  const dSees = await d.client.from('trips').select('id').eq('id', trip.id);
+  check("invites: a refused join doesn't add the user", !dSees.data?.length);
 
   // v1 data: every trip has exactly one owner and every user a profile.
   const [integrity] = await sql(`

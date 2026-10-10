@@ -504,6 +504,45 @@ export type Database = {
           },
         ];
       };
+      trip_invites: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          revoked_at: string | null;
+          token: string;
+          trip_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          revoked_at?: string | null;
+          token: string;
+          trip_id: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          revoked_at?: string | null;
+          token?: string;
+          trip_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'trip_invites_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'trip_invites_trip_id_fkey';
+            columns: ['trip_id'];
+            isOneToOne: false;
+            referencedRelation: 'trips';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       trip_members: {
         Row: {
           joined_at: string;
@@ -599,6 +638,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      accept_invite: { Args: { invite: string }; Returns: string };
       can_read_original: { Args: { path: string }; Returns: boolean };
       city_links: {
         Args: { p_city: string };
@@ -607,6 +647,20 @@ export type Database = {
           thumbnail_url: string;
           title: string;
           url: string;
+        }[];
+      };
+      create_invite: { Args: { trip: string }; Returns: string };
+      invite_preview: {
+        Args: { invite: string };
+        Returns: {
+          already_member: boolean;
+          city: string;
+          cover_photo_url: string;
+          end_date: string;
+          inviter_name: string;
+          member_count: number;
+          start_date: string;
+          trip_id: string;
         }[];
       };
       is_co_member: { Args: { other: string }; Returns: boolean };
@@ -621,6 +675,7 @@ export type Database = {
         Args: { p_limit: number; p_month: string; p_units: number };
         Returns: boolean;
       };
+      reset_invite: { Args: { trip: string }; Returns: string };
     };
     Enums: {
       [_ in never]: never;
