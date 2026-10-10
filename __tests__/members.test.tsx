@@ -58,11 +58,17 @@ const avatars = (testID: string) =>
     .getAllByTestId(new RegExp(`^${testID}-user-[a-z]+$`))
     .map((a) => a.props.testID.replace(`${testID}-`, ''));
 
-/** Taps the button of the latest Alert labelled `text`. */
-function pressAlert(text: string) {
+/**
+ * Taps the button of the latest Alert labelled `text`, then lets the write's refetch land: React
+ * Query batches its updates on a timer, and renderRouter's fake timers only move when told to.
+ */
+async function pressAlert(text: string) {
   const alert = jest.mocked(Alert.alert).mock.calls.at(-1)!;
   const buttons = alert[2] as AlertButton[];
-  act(() => buttons.find((b) => b.text === text)!.onPress!());
+  await act(async () => buttons.find((b) => b.text === text)!.onPress!());
+  await act(async () => {
+    jest.advanceTimersByTime(100);
+  });
 }
 
 async function openSheet() {
@@ -136,7 +142,7 @@ describe('Members sheet', () => {
       destructiveButtonIndex: 0,
     });
     expect(jest.mocked(Alert.alert).mock.calls[0][0]).toBe('Remove Blake from the trip?');
-    pressAlert('Remove');
+    await pressAlert('Remove');
 
     await waitFor(() => expect(sheet.queryByTestId('plan-members-sheet-user-blake')).toBeNull());
     expect(avatars('plan-members')).toEqual(['user-willem', 'user-matthew']);
@@ -179,7 +185,7 @@ describe('Members sheet', () => {
     const sheet = await openSheet();
     fireEvent.press(sheet.getByTestId('plan-members-sheet-leave'));
     expect(jest.mocked(Alert.alert).mock.calls[0][0]).toBe('Leave Las Vegas?');
-    pressAlert('Leave');
+    await pressAlert('Leave');
 
     await waitFor(() => expect(useTripStore.getState().selectedTripId).toBe('trip-cape-town'));
     expect(useSelectionStore.getState().tripId).toBe('trip-cape-town');
