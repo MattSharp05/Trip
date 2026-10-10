@@ -13,16 +13,19 @@ import {
 // Under Jest there is no app manifest for expo-linking to read the scheme from.
 jest.mock('expo-linking', () => ({ createURL: (path: string) => `trip://${path}` }));
 const mockProfileUpdate = jest.fn();
-const mockEq = jest.fn();
+const mockProfileRow = jest.fn();
 jest.mock('@/services/supabase', () => ({
   supabase: {
     from: (table: string) => ({
-      update: (values: unknown) => {
-        mockProfileUpdate(table, values);
-        return { eq: (...args: unknown[]) => mockEq(...args) };
-      },
+      update: (values: unknown) => ({
+        eq: (column: string, id: string) => {
+          mockProfileUpdate(table, values, column, id);
+          return { select: () => ({ single: () => mockProfileRow() }) };
+        },
+      }),
     }),
     auth: {
+      getSession: async () => ({ data: { session: { user: { id: 'u1' } } }, error: null }),
       updateUser: jest.fn(),
       signUp: jest.fn(),
       signInWithPassword: jest.fn(),
@@ -36,7 +39,10 @@ const auth = supabase.auth as unknown as Record<string, jest.Mock>;
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockEq.mockResolvedValue({ error: null });
+  mockProfileRow.mockResolvedValue({
+    data: { id: 'u1', display_name: 'Matthew', venmo: null, cashapp: null, zelle: null },
+    error: null,
+  });
 });
 
 describe('auth api', () => {
@@ -52,14 +58,19 @@ describe('auth api', () => {
       password: 'longenough',
       options: { data: { name_prompt: 'saved' } },
     });
-    expect(mockProfileUpdate).toHaveBeenCalledWith('profiles', { display_name: 'Matthew' });
-    expect(mockEq).toHaveBeenCalledWith('id', 'u1');
+    expect(mockProfileUpdate).toHaveBeenCalledWith(
+      'profiles',
+      { display_name: 'Matthew', venmo: null, cashapp: null, zelle: null },
+      'id',
+      'u1',
+    );
     expect(auth.updateUser).not.toHaveBeenCalled();
   });
 
   it('lets the name sheet ask later when saving the name fails', async () => {
     auth.signUp.mockResolvedValue({ data: { session }, error: null });
-    mockEq.mockResolvedValue({ error: { message: 'offline' } });
+    // No row came back: the name wasn't written.
+    mockProfileRow.mockResolvedValue({ data: null, error: { message: 'no rows' } });
     await expect(signUpWithEmail('Matthew', 'new@example.com', 'longenough')).resolves.toEqual({
       error: null,
     });

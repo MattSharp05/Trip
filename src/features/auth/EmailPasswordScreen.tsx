@@ -9,13 +9,7 @@ import { AuthLayout } from './AuthLayout';
 import { FormMessage } from './FormMessage';
 import { TextField } from './TextField';
 import { TextLink } from './TextLink';
-import {
-  emailError,
-  MIN_PASSWORD_LENGTH,
-  NAME_MAX_LENGTH,
-  nameError,
-  passwordError,
-} from './validation';
+import { emailError, MIN_PASSWORD_LENGTH, nameError, passwordError } from './validation';
 
 type Mode = 'sign-up' | 'sign-in';
 
@@ -104,7 +98,6 @@ export function EmailPasswordScreen({ mode }: { mode: Mode }) {
           }}
           error={errors.name}
           hint="Friends on your trips see this name."
-          maxLength={NAME_MAX_LENGTH}
           autoCapitalize="words"
           autoComplete="name"
           textContentType="name"

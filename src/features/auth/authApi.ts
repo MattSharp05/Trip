@@ -1,5 +1,7 @@
 import * as Linking from 'expo-linking';
 
+import { supabaseSource } from '@/services/data/source';
+import { dataKeys, queryClient } from '@/services/data/shared/query';
 import { supabase } from '@/services/supabase';
 
 import { authErrorMessage, authMessages } from './errors';
@@ -43,18 +45,19 @@ export async function signUpWithEmail(
   if (result.error) return result;
   // Only if email confirmation is ever switched back on: the account exists but has no session yet.
   if (!created.userId) return { error: authMessages.confirmEmail };
-  await saveName(created.userId, name);
+  await saveName(name);
   return result;
 }
 
-/** Writes the name over the one the database made up from the email. Never throws. */
-async function saveName(userId: string, name: string): Promise<void> {
+/**
+ * Writes the name over the one the database made up from the email, and refreshes a profile the
+ * app may already have read. Never throws.
+ */
+async function saveName(name: string): Promise<void> {
   try {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ display_name: name.trim() })
-      .eq('id', userId);
-    if (!error) return;
+    await supabaseSource.saveMyProfile({ displayName: name });
+    await queryClient.invalidateQueries({ queryKey: dataKeys.myProfile(supabaseSource) });
+    return;
   } catch {
     // Handled below.
   }

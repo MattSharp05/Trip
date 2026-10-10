@@ -85,7 +85,6 @@ function PaymentForm({ profile }: { profile: Profile }) {
             error={errors.zelle}
             placeholder="Email or phone"
             autoCapitalize="none"
-            keyboardType="email-address"
             testID="payment-zelle"
           />
         </SettingsGroup>

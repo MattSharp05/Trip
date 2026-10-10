@@ -33,9 +33,13 @@ jest.mock('@/services/supabase', () => {
       auth: { ...auth, updateUser: (...args: unknown[]) => mockUpdateUser(...args) },
       from: (table: string) => ({
         update: (values: unknown) => ({
-          eq: async (column: string, value: string) => {
+          eq: (column: string, value: string) => {
             mockProfileWrite(table, values, column, value);
-            return { error: null };
+            return {
+              select: () => ({
+                single: async () => ({ data: { id: value, display_name: 'x' }, error: null }),
+              }),
+            };
           },
         }),
       }),
@@ -122,7 +126,7 @@ describe('your name at sign-up', () => {
     });
     expect(mockProfileWrite).toHaveBeenCalledWith(
       'profiles',
-      { display_name: 'Matthew' },
+      { display_name: 'Matthew', venmo: null, cashapp: null, zelle: null },
       'id',
       testSession.user.id,
     );

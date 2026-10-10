@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { create } from 'zustand';
 
@@ -11,7 +11,6 @@ import { spacing } from '@/theme';
 import { Button, Sheet, Text } from '@/ui';
 
 import {
-  NAME_MAX_LENGTH,
   nameError,
   parseNamePromptState,
   shouldAskForName,
@@ -70,6 +69,9 @@ function AskForName({ email, stored }: { email?: string; stored: NamePromptState
   const open =
     !!profile && shouldAskForName(profile.displayName, email, state, fromGroup ? 'group' : 'open');
 
+  // A group feature's ask is for this account only.
+  useEffect(() => () => useNamePromptStore.setState({ fromGroup: false }), []);
+
   // Mounted from the first time it opens, so it can animate away; never before (most accounts).
   const [mounted, setMounted] = useState(false);
   if (open && !mounted) setMounted(true);
@@ -108,7 +110,6 @@ function AskForName({ email, stored }: { email?: string; stored: NamePromptState
             setError(null);
           }}
           error={error}
-          maxLength={NAME_MAX_LENGTH}
           autoCapitalize="words"
           autoComplete="name"
           textContentType="name"

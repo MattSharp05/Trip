@@ -6,7 +6,7 @@ import { type Profile, useSaveMyProfile } from '@/services/data';
 import { Button, Toast } from '@/ui';
 
 import { WithMyProfile } from './WithMyProfile';
-import { NAME_MAX_LENGTH, nameError, withName } from './profileForm';
+import { nameError, withName } from './profileForm';
 import { SAVE_FAILED } from './usePreferences';
 import { FieldRow, SettingsGroup, SettingsScroll } from './SettingsList';
 
@@ -52,7 +52,6 @@ function NameForm({ profile }: { profile: Profile }) {
             }}
             error={error}
             placeholder="Your name"
-            maxLength={NAME_MAX_LENGTH}
             autoCapitalize="words"
             autoComplete="name"
             textContentType="name"
