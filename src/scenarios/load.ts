@@ -2,8 +2,7 @@ import { setNow } from '@/core/clock';
 import type { TabName } from '@/core/tabs';
 import { queryClient } from '@/services/data/hooks';
 import { useActiveSource } from '@/services/data/active';
-import { createDemoSource } from '@/services/data/source';
-import { supabaseSource } from '@/services/data/supabaseSource';
+import { createDemoSource, supabaseSource } from '@/services/data/source';
 import { useScenarioStore } from '@/stores/scenario';
 import { useTripStore } from '@/stores/trip';
 

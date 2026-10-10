@@ -5,8 +5,7 @@ import RootLayout from '../app/_layout';
 import { resetFakeAuth, testSession } from '@/features/auth/testing';
 import { addSampleData, sampleVegasTripId } from '@/scenarios';
 import { useActiveSource } from '@/services/data/active';
-import { createDemoSource, type DataSource } from '@/services/data/source';
-import { supabaseSource } from '@/services/data/supabaseSource';
+import { createDemoSource, type DataSource, supabaseSource } from '@/services/data/source';
 import { useTripStore } from '@/stores/trip';
 
 jest.mock('@/services/supabase', () => ({

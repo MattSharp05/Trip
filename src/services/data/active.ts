@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 
-import type { DataSource } from './source';
-import { supabaseSource } from './supabaseSource';
+import { type DataSource, supabaseSource } from './source';
 
 interface ActiveSourceState {
   source: DataSource;
