@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import type { TemperatureUnit } from '@/core/weather';
 import { signOut, useAuth } from '@/features/auth';
 import { scenariosEnabled } from '@/scenarios';
+import { useMyProfile } from '@/services/data';
 import { queryClient } from '@/services/data/hooks';
 import { useScenarioStore } from '@/stores/scenario';
 import { useTripStore } from '@/stores/trip';
@@ -13,6 +14,7 @@ import { spacing } from '@/theme';
 import { Button, ListRow, Segmented, Sheet, Text, Toast } from '@/ui';
 
 import type { DistanceUnit } from './preferences';
+import { paymentSummary } from './profileForm';
 import { ActionRow, SettingRow, SettingsGroup, SettingsScroll } from './SettingsList';
 import { clearPreferenceCache, usePreferences } from './usePreferences';
 
@@ -36,12 +38,16 @@ async function signOutAndForget(): Promise<string | null> {
   return null;
 }
 
-/** Settings (TR-11): account, units, home currency, Terms, Privacy, Developer, version. */
+/**
+ * Settings (TR-11): account, profile (TR-55), units, home currency, Terms, Privacy, Developer,
+ * version.
+ */
 export function SettingsScreen() {
   const router = useRouter();
   const auth = useAuth();
   const scenario = useScenarioStore((s) => s.active);
   const { preferences, setPreference } = usePreferences();
+  const profile = useMyProfile().data;
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -88,6 +94,22 @@ export function SettingsScreen() {
               />
             </>
           )}
+        </SettingsGroup>
+
+        <SettingsGroup title="Profile">
+          <ListRow
+            title="Name"
+            value={profile?.displayName}
+            onPress={() => router.push('/settings/profile')}
+            separator
+            testID="settings-name"
+          />
+          <ListRow
+            title="Payment info"
+            value={profile ? paymentSummary(profile) : undefined}
+            onPress={() => router.push('/settings/payment')}
+            testID="settings-payment"
+          />
         </SettingsGroup>
 
         <SettingsGroup title="Units">

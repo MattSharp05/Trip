@@ -28,3 +28,16 @@ export function passwordError(password: string, mode: 'sign-up' | 'sign-in'): st
   }
   return null;
 }
+
+/** Names show on avatars and in lists, so they stay short (TR-55). */
+export const NAME_MAX_LENGTH = 30;
+
+/** The inline error for a traveller's name, or null when it's fine. */
+export function nameError(name: string): string | null {
+  const value = name.trim();
+  if (!value) return 'Enter your name.';
+  if (Array.from(value).length > NAME_MAX_LENGTH) {
+    return `Use ${NAME_MAX_LENGTH} characters or fewer.`;
+  }
+  return null;
+}

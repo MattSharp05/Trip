@@ -9,7 +9,7 @@ import { AuthLayout } from './AuthLayout';
 import { FormMessage } from './FormMessage';
 import { TextField } from './TextField';
 import { TextLink } from './TextLink';
-import { emailError, MIN_PASSWORD_LENGTH, passwordError } from './validation';
+import { emailError, MIN_PASSWORD_LENGTH, nameError, passwordError } from './validation';
 
 type Mode = 'sign-up' | 'sign-in';
 
@@ -39,25 +39,35 @@ const copy = {
 export function EmailPasswordScreen({ mode }: { mode: Mode }) {
   const router = useRouter();
   const text = copy[mode];
+  const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<{ email?: string | null; password?: string | null }>({});
+  const [errors, setErrors] = useState<{
+    name?: string | null;
+    email?: string | null;
+    password?: string | null;
+  }>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function submit() {
     if (busy) return;
-    const next = { email: emailError(email), password: passwordError(password, mode) };
+    const next = {
+      name: mode === 'sign-up' ? nameError(name) : null,
+      email: emailError(email),
+      password: passwordError(password, mode),
+    };
     setErrors(next);
     setFormError(null);
-    if (next.email || next.password) return;
+    if (next.name || next.email || next.password) return;
 
     setBusy(true);
-    const { error } = await (mode === 'sign-up' ? signUpWithEmail : signInWithEmail)(
-      email,
-      password,
-    );
+    const { error } =
+      mode === 'sign-up'
+        ? await signUpWithEmail(name, email, password)
+        : await signInWithEmail(email, password);
     // On success the auth gate swaps this screen for Trips.
     setFormError(error);
     setBusy(false);
@@ -78,7 +88,28 @@ export function EmailPasswordScreen({ mode }: { mode: Mode }) {
         </>
       }
     >
+      {mode === 'sign-up' ? (
+        <TextField
+          label="Your name"
+          value={name}
+          onChangeText={(value) => {
+            setName(value);
+            setErrors((prev) => ({ ...prev, name: null }));
+          }}
+          error={errors.name}
+          hint="Friends on your trips see this name."
+          autoCapitalize="words"
+          autoComplete="name"
+          textContentType="name"
+          returnKeyType="next"
+          submitBehavior="submit"
+          onSubmitEditing={() => emailRef.current?.focus()}
+          editable={!busy}
+          testID="auth-name"
+        />
+      ) : null}
       <TextField
+        ref={emailRef}
         label="Email"
         value={email}
         onChangeText={(value) => {

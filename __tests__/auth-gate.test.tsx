@@ -98,11 +98,13 @@ describe('auth gate', () => {
     expect(fakeAuth.signUp).not.toHaveBeenCalled();
 
     await fill('New@Example.com', 'long enough');
+    fireEvent.changeText(screen.getByTestId('auth-name'), 'Matthew');
     await act(async () => fireEvent.press(screen.getByTestId('auth-submit')));
 
     expect(fakeAuth.signUp).toHaveBeenCalledWith({
       email: 'new@example.com',
       password: 'long enough',
+      options: { data: { name_prompt: 'saved' } },
     });
     expect(await screen.findByRole('header', { name: 'My Trips' })).toBeOnTheScreen();
     expect(router.getPathname()).toBe('/trips');
@@ -117,6 +119,7 @@ describe('auth gate', () => {
     renderRouter(routes, { initialUrl: '/auth/sign-up' });
 
     await fill('taken@example.com', 'long enough');
+    fireEvent.changeText(screen.getByTestId('auth-name'), 'Matthew');
     await act(async () => fireEvent.press(await screen.findByTestId('auth-submit')));
     expect(screen.getByTestId('auth-form-error')).toHaveTextContent(
       'There is already an account with this email. Sign in instead.',
