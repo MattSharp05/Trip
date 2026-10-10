@@ -49,7 +49,7 @@ export interface UsePreferences {
   ) => Promise<{ error: string | null }>;
 }
 
-const SAVE_FAILED = "Couldn't save that. Check your connection and try again.";
+export const SAVE_FAILED = "Couldn't save that. Check your connection and try again.";
 
 /**
  * The one way to read and change preferences. A real account reads its auth `user_metadata` (kept

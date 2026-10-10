@@ -20,17 +20,49 @@ async function run(
   }
 }
 
-/** Creates the account and signs in straight away (email confirmation is off, TR-4). */
-export async function signUpWithEmail(email: string, password: string): Promise<AuthResult> {
-  let signedIn = true;
+/**
+ * Creates the account and signs in straight away (email confirmation is off, TR-4), then saves the
+ * traveller's name to their profile (TR-55). The account remembers it was named at sign-up, so the
+ * one-time name sheet stays away; if saving the name fails, that is undone and the sheet asks later.
+ */
+export async function signUpWithEmail(
+  name: string,
+  email: string,
+  password: string,
+): Promise<AuthResult> {
+  const created: { userId?: string } = {};
   const result = await run('sign-up', async () => {
-    const { data, error } = await supabase.auth.signUp({ email: normalizeEmail(email), password });
-    signedIn = !!data?.session;
+    const { data, error } = await supabase.auth.signUp({
+      email: normalizeEmail(email),
+      password,
+      options: { data: { name_prompt: 'saved' } },
+    });
+    created.userId = data?.session?.user.id;
     return { error };
   });
+  if (result.error) return result;
   // Only if email confirmation is ever switched back on: the account exists but has no session yet.
-  if (!result.error && !signedIn) return { error: authMessages.confirmEmail };
+  if (!created.userId) return { error: authMessages.confirmEmail };
+  await saveName(created.userId, name);
   return result;
+}
+
+/** Writes the name over the one the database made up from the email. Never throws. */
+async function saveName(userId: string, name: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ display_name: name.trim() })
+      .eq('id', userId);
+    if (!error) return;
+  } catch {
+    // Handled below.
+  }
+  try {
+    await supabase.auth.updateUser({ data: { name_prompt: null } });
+  } catch {
+    // Offline as well: the name stays the placeholder until it is changed in Settings.
+  }
 }
 
 export function signInWithEmail(email: string, password: string): Promise<AuthResult> {

@@ -12,9 +12,18 @@ import {
 
 // Under Jest there is no app manifest for expo-linking to read the scheme from.
 jest.mock('expo-linking', () => ({ createURL: (path: string) => `trip://${path}` }));
+const mockProfileUpdate = jest.fn();
+const mockEq = jest.fn();
 jest.mock('@/services/supabase', () => ({
   supabase: {
+    from: (table: string) => ({
+      update: (values: unknown) => {
+        mockProfileUpdate(table, values);
+        return { eq: (...args: unknown[]) => mockEq(...args) };
+      },
+    }),
     auth: {
+      updateUser: jest.fn(),
       signUp: jest.fn(),
       signInWithPassword: jest.fn(),
       resetPasswordForEmail: jest.fn(),
@@ -25,20 +34,41 @@ jest.mock('@/services/supabase', () => ({
 
 const auth = supabase.auth as unknown as Record<string, jest.Mock>;
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockEq.mockResolvedValue({ error: null });
+});
 
 describe('auth api', () => {
-  it('signs up with a normalised email', async () => {
-    auth.signUp.mockResolvedValue({ data: { session: { access_token: 't' } }, error: null });
-    await expect(signUpWithEmail(' New@Example.com ', 'longenough')).resolves.toEqual({
+  const session = { access_token: 't', user: { id: 'u1' } };
+
+  it('signs up with a normalised email and saves the name to the profile', async () => {
+    auth.signUp.mockResolvedValue({ data: { session }, error: null });
+    await expect(signUpWithEmail(' Matthew ', ' New@Example.com ', 'longenough')).resolves.toEqual({
       error: null,
     });
-    expect(auth.signUp).toHaveBeenCalledWith({ email: 'new@example.com', password: 'longenough' });
+    expect(auth.signUp).toHaveBeenCalledWith({
+      email: 'new@example.com',
+      password: 'longenough',
+      options: { data: { name_prompt: 'saved' } },
+    });
+    expect(mockProfileUpdate).toHaveBeenCalledWith('profiles', { display_name: 'Matthew' });
+    expect(mockEq).toHaveBeenCalledWith('id', 'u1');
+    expect(auth.updateUser).not.toHaveBeenCalled();
+  });
+
+  it('lets the name sheet ask later when saving the name fails', async () => {
+    auth.signUp.mockResolvedValue({ data: { session }, error: null });
+    mockEq.mockResolvedValue({ error: { message: 'offline' } });
+    await expect(signUpWithEmail('Matthew', 'new@example.com', 'longenough')).resolves.toEqual({
+      error: null,
+    });
+    expect(auth.updateUser).toHaveBeenCalledWith({ data: { name_prompt: null } });
   });
 
   it('asks to confirm the email if sign-up returns no session', async () => {
     auth.signUp.mockResolvedValue({ data: { user: {}, session: null }, error: null });
-    await expect(signUpWithEmail('new@example.com', 'longenough')).resolves.toEqual({
+    await expect(signUpWithEmail('Matthew', 'new@example.com', 'longenough')).resolves.toEqual({
       error: 'Check your email to confirm your account, then sign in.',
     });
   });
