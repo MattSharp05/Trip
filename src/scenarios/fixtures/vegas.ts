@@ -4,7 +4,9 @@ import type {
   DataSnapshot,
   Expense,
   ItineraryItem,
+  Membership,
   Place,
+  Profile,
   TravelDocument,
   Trip,
 } from '@/services/data/types';
@@ -522,6 +524,17 @@ export const documents: TravelDocument[] = [
   },
 ];
 
+/** The demo session's "you": Matthew, who owns every trip in the sample account. */
+export const ME = 'user-matthew';
+
+export const profiles: Profile[] = [{ id: ME, displayName: 'Matthew' }];
+
+export const members: Membership[] = trips.map((t) => ({
+  tripId: t.id,
+  userId: ME,
+  role: 'owner',
+}));
+
 /** The whole sample account. */
 export const vegasSnapshot: DataSnapshot = {
   trips,
@@ -531,6 +544,9 @@ export const vegasSnapshot: DataSnapshot = {
   bucketItems,
   expenses,
   documents,
+  me: ME,
+  members,
+  profiles,
 };
 
 export const VEGAS_TRIP_ID = VEGAS;

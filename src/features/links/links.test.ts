@@ -29,6 +29,9 @@ const EMPTY = {
   bucketItems: [],
   expenses: [],
   documents: [],
+  me: 'user-me',
+  members: [],
+  profiles: [],
 };
 
 describe('link rows', () => {

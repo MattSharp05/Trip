@@ -12,8 +12,8 @@ import ScenarioRoute from '../app/scenario/[name]';
 import RootLayout from '../app/_layout';
 import Index from '../app/index';
 import { resetFakeAuth } from '@/features/auth/testing';
-import { exitScenario } from '@/scenarios';
-import { useTrips } from '@/services/data';
+import { exitScenario, SCENARIOS } from '@/scenarios';
+import { useTripData, useTripMembers, useTrips } from '@/services/data';
 import { useScenarioStore } from '@/stores/scenario';
 import { useTripStore } from '@/stores/trip';
 
@@ -71,6 +71,41 @@ describe('scenario deep links', () => {
     const { result } = renderHook(() => useTrips());
     await waitFor(() => expect(result.current.data).toHaveLength(4));
   });
+
+  it('group-vegas lands on Plan, Nov 12, with Matthew (you), Blake and Willem on the trip', async () => {
+    const router = renderRouter(routes, { initialUrl: '/scenario/group-vegas' });
+    await act(async () => {});
+    expect(router.getPathname()).toBe('/plan');
+    expect(useScenarioStore.getState().view.day).toBe('2026-11-12');
+    const { result } = renderHook(() => useTripMembers('trip-vegas'));
+    await waitFor(() => expect(result.current.data).toBeDefined());
+    expect(result.current.data).toEqual([
+      { id: 'user-matthew', name: 'Matthew', initial: 'M', role: 'owner', isMe: true },
+      { id: 'user-blake', name: 'Blake', initial: 'B', role: 'member', isMe: false },
+      { id: 'user-willem', name: 'Willem', initial: 'W', role: 'member', isMe: false },
+    ]);
+  });
+
+  it('vegas-plan-day-2 has one member: you, the owner', async () => {
+    renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
+    await act(async () => {});
+    const { result } = renderHook(() => useTripMembers('trip-vegas'));
+    await waitFor(() => expect(result.current.data).toBeDefined());
+    expect(result.current.data).toEqual([
+      { id: 'user-matthew', name: 'Matthew', initial: 'M', role: 'owner', isMe: true },
+    ]);
+  });
+
+  it.each(SCENARIOS.filter((s) => s.tripId).map((s) => [s.name, s.tripId!]))(
+    '%s still loads its trip',
+    async (name, tripId) => {
+      renderRouter(routes, { initialUrl: `/scenario/${name}` });
+      await act(async () => {});
+      const { result } = renderHook(() => useTripData(tripId));
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(result.current.data?.trip.id).toBe(tripId);
+    },
+  );
 });
 
 describe('/dev index', () => {

@@ -83,6 +83,16 @@ describe('Smart Add on the Vegas trip', () => {
     expect(byId(restored.bucketItems)).toEqual(byId(data.bucketItems));
   });
 
+  it('keeps who saved the Bucket List item as the new stop’s adder', () => {
+    const blakes = { ...bucket('bucket-golden-tiki'), addedBy: 'user-blake' };
+    const plan = planBucketSmartAdd(vegas, blakes, 'new-item');
+    if (!('change' in plan)) throw new Error(plan.message);
+    expect(plan.change.save[0]).toMatchObject({ id: 'new-item', addedBy: 'user-blake' });
+    const mine = planBucketSmartAdd(vegas, bucket('bucket-golden-tiki'), 'new-item');
+    if (!('change' in mine)) throw new Error(mine.message);
+    expect(mine.change.save[0]).not.toHaveProperty('addedBy');
+  });
+
   it('gives a flexible place its kind and no fixed time', () => {
     const plan = planBucketSmartAdd(vegas, bucket('bucket-lotus-of-siam'), 'x');
     if (!('change' in plan)) throw new Error(plan.message);

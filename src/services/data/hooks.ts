@@ -7,5 +7,6 @@ export * from './documents/hooks';
 export * from './expenses/hooks';
 export * from './itinerary/hooks';
 export * from './links/hooks';
+export * from './members/hooks';
 export * from './places/hooks';
 export * from './trips/hooks';

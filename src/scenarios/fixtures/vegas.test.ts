@@ -13,9 +13,18 @@ const vegas = tripFor(VEGAS_TRIP_ID)!;
 
 describe('Vegas fixtures', () => {
   it('has unique ids in every collection', () => {
-    for (const rows of Object.values(db) as { id: string }[][]) {
+    const { me: _me, members, ...tables } = db;
+    for (const rows of Object.values(tables) as { id: string }[][]) {
       expect(new Set(rows.map((r) => r.id)).size).toBe(rows.length);
     }
+    expect(new Set(members.map((m) => `${m.tripId}/${m.userId}`)).size).toBe(members.length);
+  });
+
+  it('makes Matthew ("you") the owner of every trip', () => {
+    expect(db.profiles.find((p) => p.id === db.me)?.displayName).toBe('Matthew');
+    expect(db.members).toEqual(
+      db.trips.map((t) => ({ tripId: t.id, userId: db.me, role: 'owner' })),
+    );
   });
 
   it('has the four trips from the mockup, in date order', () => {

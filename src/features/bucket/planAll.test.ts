@@ -86,6 +86,21 @@ describe('Plan my bucket list on vegas-bucket', () => {
     expect(byId(undone.bucketItems)).toEqual(byId(vegas.bucketItems));
   });
 
+  it('keeps who saved each Bucket List item as its new stop’s adder', () => {
+    const data: TripData = {
+      ...vegas,
+      bucketItems: vegas.bucketItems.map((b) =>
+        b.id === 'bucket-golden-tiki' ? { ...b, addedBy: 'user-blake' } : b,
+      ),
+    };
+    const added = planBucketAll(data, counter()).change!.save.filter((i) =>
+      i.id.startsWith('new-'),
+    );
+    expect(added.filter((i) => i.addedBy === 'user-blake')).toHaveLength(1);
+    expect(added.filter((i) => i.addedBy === 'user-blake')[0].placeId).toBe('place-golden-tiki');
+    expect(added.filter((i) => i.addedBy === undefined)).toHaveLength(added.length - 1);
+  });
+
   it('opens on the earliest new stop', () => {
     const plan = planBucketAll(vegas, counter());
     const added = plan.change!.save.filter((i) => i.id.startsWith('new-'));

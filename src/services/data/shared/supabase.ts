@@ -8,6 +8,15 @@ export const client = (): (typeof import('../../supabase'))['supabase'] =>
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require('../../supabase').supabase;
 
+/** The signed-in user's id, from the session stored on the device (no network call). */
+export async function currentUserId(): Promise<string> {
+  const { data, error } = await client().auth.getSession();
+  if (error) throw new Error(error.message);
+  const id = data.session?.user.id;
+  if (!id) throw new Error('Not signed in');
+  return id;
+}
+
 /** Postgres `time` comes back as `HH:MM:SS`; the app uses `HH:MM`. */
 export const hhmm = (t: string | null) => (t ? t.slice(0, 5) : null);
 

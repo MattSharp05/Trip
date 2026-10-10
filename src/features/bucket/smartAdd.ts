@@ -114,6 +114,8 @@ export function planBucketSmartAdd(
     bookingId: null,
     fixed: fixedTime,
     ...(bucketItem.title ? { title: bucketItem.title } : {}),
+    // Planning someone's Bucket List item keeps them as its adder (ADR 0027).
+    ...(bucketItem.addedBy ? { addedBy: bucketItem.addedBy } : {}),
   };
   const before = moved.map((m) => data.items.find((item) => item.id === m.id)!);
   const after = moved.map((m, i) => ({ ...before[i], day: m.day, startTime: m.startTime }));

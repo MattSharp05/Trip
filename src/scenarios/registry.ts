@@ -2,7 +2,8 @@ import type { TabName } from '@/core/tabs';
 import type { DataSnapshot } from '@/services/data/types';
 import type { ScenarioView } from '@/stores/scenario';
 
-import { VEGAS_TRIP_ID, vegasSnapshot } from './fixtures/vegas';
+import { groupSnapshot } from './fixtures/group';
+import { ME, VEGAS_TRIP_ID, vegasSnapshot } from './fixtures/vegas';
 import { vegasCrowdedSnapshot } from './fixtures/vegasCrowded';
 
 /** "Today" for every scenario unless it sets its own: Fri, Nov 13 2026, 9:00 AM in Las Vegas. */
@@ -28,6 +29,9 @@ const EMPTY: DataSnapshot = {
   bucketItems: [],
   expenses: [],
   documents: [],
+  me: ME,
+  members: [],
+  profiles: vegasSnapshot.profiles,
 };
 
 /** The Vegas trip with Saturday, Nov 14 left free (its gondola and Forum Shops removed). */
@@ -263,6 +267,13 @@ export const SCENARIOS: readonly Scenario[] = [
     description: 'Import before the Gemini key is set: the "not set up yet" message.',
     tab: 'organize',
     view: { organizeView: 'wallet', importSample: 'not-configured' },
+  }),
+  vegas({
+    name: 'group-vegas',
+    data: groupSnapshot,
+    description: 'Plan tab, Las Vegas, Thu Nov 12, as a group trip with Blake and Willem.',
+    tab: 'plan',
+    view: { day: '2026-11-12', planMode: 'itinerary' },
   }),
   {
     name: 'empty-account',

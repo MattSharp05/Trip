@@ -15,6 +15,7 @@ import type { BucketItem } from './bucket/types';
 import type { TravelDocument } from './documents/types';
 import type { Expense } from './expenses/types';
 import type { ItineraryItem } from './itinerary/types';
+import type { Membership, Profile } from './members/types';
 import type { Place } from './places/types';
 import type { Trip } from './trips/types';
 
@@ -48,4 +49,9 @@ export interface DataSnapshot {
   bucketItems: BucketItem[];
   expenses: Expense[];
   documents: TravelDocument[];
+  /** The demo session's "you": a profile id, the signed-in user's stand-in. */
+  me: string;
+  /** Who is on each trip; a trip without a row for `me` is hidden, as RLS hides it. */
+  members: Membership[];
+  profiles: Profile[];
 }

@@ -13,6 +13,7 @@ export const toBucket = (r: Row<'bucket_items'>): BucketItem => ({
   fixedDate: r.fixed_date,
   fixedTime: hhmm(r.fixed_time),
   ...(r.title ? { title: r.title } : {}),
+  addedBy: r.user_id,
 });
 
 /** The Bucket List slice of the Supabase source. */

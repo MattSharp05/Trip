@@ -12,6 +12,7 @@ export const toItem = (r: Row<'itinerary_items'>): ItineraryItem => ({
   bookingId: r.booking_id,
   fixed: r.fixed,
   ...(r.title ? { title: r.title } : {}),
+  addedBy: r.added_by ?? r.user_id,
   notes: r.notes,
 });
 
@@ -34,6 +35,8 @@ export const supabaseItinerary: ItinerarySource = {
           fixed: item.fixed,
           title: item.title || null,
           notes: item.notes || null,
+          // Unset, the database makes it the saver (new rows) or keeps it (existing ones).
+          ...(item.addedBy ? { added_by: item.addedBy } : {}),
         })
         .select()
         .single(),

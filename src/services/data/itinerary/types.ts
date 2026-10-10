@@ -13,6 +13,11 @@ export interface ItineraryItem {
   fixed: boolean;
   /** Display title; without one, screens show the place's name. */
   title?: string;
+  /**
+   * Who added it (profile id); kept when a Bucket List item is planned by someone else. Absent in
+   * v1 fixtures, meaning you.
+   */
+  addedBy?: string;
   /** The traveller's own notes (detail sheet); absent in fixtures. */
   notes?: string | null;
 }

@@ -90,6 +90,8 @@ export function planBucketAll(data: TripData, ids: () => string = newId): PlanAl
       bookingId: null,
       fixed: fixedTime,
       ...(bucketItem.title ? { title: bucketItem.title } : {}),
+      // Planning someone's Bucket List item keeps them as its adder (ADR 0027).
+      ...(bucketItem.addedBy ? { addedBy: bucketItem.addedBy } : {}),
     };
   });
   const movedIds = new Set(result.moved.map((m) => m.id));
