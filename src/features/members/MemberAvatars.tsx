@@ -5,7 +5,7 @@ import { avatarRow, memberLabel } from '@/core/members';
 import { askForName } from '@/features/settings';
 import { useTripMembers, type Member } from '@/services/data';
 import { colors, radii, spacing } from '@/theme';
-import { Text } from '@/ui';
+import { IconButton, Text } from '@/ui';
 
 import { MembersSheet } from './MembersSheet';
 
@@ -56,9 +56,9 @@ export interface MemberAvatarsProps {
 
 /**
  * Who is on the trip (TR-56), next to the trip title on Plan, Organize and Discover: up to four
- * overlapping initials, you last with the orange ring, then "+n". Hidden while you're alone on the
- * trip (and while the members load: there's nothing to hold room for). Tapping opens the members
- * sheet.
+ * overlapping initials, you last with the orange ring, then "+n". Tapping opens the members sheet.
+ * While you're alone on the trip an invite icon takes its place and opens the same sheet, with
+ * Invite friends at the top (TR-57). Nothing shows while the members load.
  */
 export function MemberAvatars({ tripId, testID = 'member-avatars' }: MemberAvatarsProps) {
   const { data: members } = useTripMembers(tripId);
@@ -67,22 +67,23 @@ export function MemberAvatars({ tripId, testID = 'member-avatars' }: MemberAvata
   const [used, setUsed] = useState(false);
   const { shown, more } = avatarRow(members ?? []);
   const names = (members ?? []).map(memberLabel).join(', ');
+  const openSheet = () => {
+    setUsed(true);
+    setOpen(true);
+    // A traveller still on the name made up from their email is asked for one (TR-55).
+    askForName();
+  };
 
   return (
     <>
-      {/* The row hides once you're alone (the last member removed), but an open sheet stays. */}
+      {/* Alone on the trip (or the last member removed), the invite icon; an open sheet stays. */}
       {shown.length > 0 ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Trip members: ${names}`}
           accessibilityHint="Shows who is on the trip"
           hitSlop={spacing.sm}
-          onPress={() => {
-            setUsed(true);
-            setOpen(true);
-            // A traveller still on the name made up from their email is asked for one (TR-55).
-            askForName();
-          }}
+          onPress={openSheet}
           style={({ pressed }) => [styles.row, pressed && styles.pressed]}
           testID={testID}
         >
@@ -97,6 +98,14 @@ export function MemberAvatars({ tripId, testID = 'member-avatars' }: MemberAvata
             </Text>
           ) : null}
         </Pressable>
+      ) : members?.length === 1 ? (
+        <IconButton
+          icon="person.badge.plus"
+          label="Invite friends"
+          variant="plain"
+          onPress={openSheet}
+          testID={`${testID}-invite`}
+        />
       ) : null}
       {used ? (
         <MembersSheet

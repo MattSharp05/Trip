@@ -33,9 +33,10 @@ export function inviteLink(token: string, scheme: LinkScheme = 'expo-go'): strin
  * `trip://invite/<token>`); null for anything else.
  */
 export function parseInviteLink(link: string): string | null {
-  const m = /^(?:exp:\/\/u\.expo\.dev\/[0-9a-f-]+\/--\/|trip:\/\/)invite\/([^/?#]+)\/?(?:[?#].*)?$/.exec(
-    link.trim(),
-  );
+  const m =
+    /^(?:exp:\/\/u\.expo\.dev\/[0-9a-f-]+\/--\/|trip:\/\/)invite\/([^/?#]+)\/?(?:[?#].*)?$/.exec(
+      link.trim(),
+    );
   return m && isInviteToken(m[1]) ? m[1] : null;
 }
 

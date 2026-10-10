@@ -2,14 +2,15 @@ import { Link, Redirect, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { findScenario, loadScenario, scenariosEnabled, TAB_HREF } from '@/scenarios';
+import { findScenario, loadScenario, scenarioHref, scenariosEnabled } from '@/scenarios';
 import { useScenarioStore } from '@/stores/scenario';
 import { colors, spacing } from '@/theme';
 import { Button, Text } from '@/ui';
 
 /**
  * Deep link into a scenario: `exp://u.expo.dev/<project>/--/scenario/<name>?runtime-version=exposdk:57.0.0&channel-name=main`
- * (Expo Go) or `trip://scenario/<name>`. Loads the demo session, then opens the scenario's tab.
+ * (Expo Go) or `trip://scenario/<name>`. Loads the demo session, then opens the scenario's tab (or
+ * its own screen, e.g. `group-invite`'s invite).
  */
 export default function ScenarioRoute() {
   const { name } = useLocalSearchParams<{ name: string }>();
@@ -22,7 +23,7 @@ export default function ScenarioRoute() {
   }, [enabled, scenario]);
 
   if (!enabled) return <Redirect href="/trips" />;
-  if (scenario && active === scenario.name) return <Redirect href={TAB_HREF[scenario.tab]} />;
+  if (scenario && active === scenario.name) return <Redirect href={scenarioHref(scenario)} />;
   return (
     <View style={styles.screen}>
       {scenario ? null : (

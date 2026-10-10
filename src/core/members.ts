@@ -67,3 +67,10 @@ export function memberRoleLine(member: MemberLike): string {
     .filter(Boolean)
     .join(' · ');
 }
+
+/** Who an invite says you'd join (TR-57): "with Matthew", "with Matthew and 2 others". */
+export function inviteCompanyLine(inviterName: string, memberCount: number): string {
+  const others = Math.max(memberCount - 1, 0);
+  if (others === 0) return `with ${inviterName}`;
+  return `with ${inviterName} and ${others} ${others === 1 ? 'other' : 'others'}`;
+}

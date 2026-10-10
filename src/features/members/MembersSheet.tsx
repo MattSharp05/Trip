@@ -15,6 +15,7 @@ import {
 import { colors, spacing } from '@/theme';
 import { Button, IconButton, LoadError, Sheet, Skeleton, Text } from '@/ui';
 
+import { InviteButton } from './InviteButton';
 import { MemberAvatar } from './MemberAvatars';
 
 /** The sheet's avatars: a size up from the header's. */
@@ -47,7 +48,8 @@ export function MembersSheet({
 
   const me = members?.find((m) => m.isMe);
   const iAmOrganizer = me?.role === 'owner';
-  const city = trips?.find((t) => t.id === tripId)?.city ?? 'this trip';
+  const trip = trips?.find((t) => t.id === tripId);
+  const city = trip?.city ?? 'this trip';
 
   const confirmRemove = (member: Member) =>
     Alert.alert(`Remove ${member.name} from the trip?`, 'What they added stays on the trip.', [
@@ -101,7 +103,9 @@ export function MembersSheet({
   return (
     <Sheet open={open} onClose={onClose} title="Trip members">
       <View style={styles.body} testID={testID}>
-        {/* TR-57: the invite button goes here, above the list. */}
+        {trip ? (
+          <InviteButton tripId={tripId} city={trip.city} testID={`${testID}-invite`} />
+        ) : null}
         {isPending ? (
           <View style={styles.list}>
             {[0, 1, 2].map((i) => (

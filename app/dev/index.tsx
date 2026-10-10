@@ -4,7 +4,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { now } from '@/core/clock';
 import { DeveloperAccount } from '@/features/settings';
-import { exitScenario, loadScenario, SCENARIOS, scenariosEnabled, TAB_HREF } from '@/scenarios';
+import {
+  exitScenario,
+  findScenario,
+  loadScenario,
+  SCENARIOS,
+  scenarioHref,
+  scenariosEnabled,
+} from '@/scenarios';
 import { useTripData, useTrips } from '@/services/data';
 import { useScenarioStore } from '@/stores/scenario';
 import { useTripStore } from '@/stores/trip';
@@ -26,8 +33,8 @@ function DevIndex() {
   const insets = useSafeAreaInsets();
 
   const open = (name: string) => {
-    const tab = loadScenario(name);
-    if (tab) router.replace(TAB_HREF[tab]);
+    const scenario = findScenario(name);
+    if (scenario && loadScenario(name)) router.replace(scenarioHref(scenario));
   };
 
   return (

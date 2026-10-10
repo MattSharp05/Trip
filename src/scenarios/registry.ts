@@ -1,8 +1,15 @@
+import type { Href } from 'expo-router';
+
 import type { TabName } from '@/core/tabs';
 import type { DataSnapshot } from '@/services/data/types';
 import type { ScenarioView } from '@/stores/scenario';
 
-import { groupMemberSnapshot, groupSnapshot } from './fixtures/group';
+import {
+  groupInviteSnapshot,
+  groupMemberSnapshot,
+  groupSnapshot,
+  VEGAS_INVITE_TOKEN,
+} from './fixtures/group';
 import { ME, VEGAS_TRIP_ID, vegasSnapshot } from './fixtures/vegas';
 import { vegasCrowdedSnapshot } from './fixtures/vegasCrowded';
 
@@ -17,6 +24,8 @@ export interface Scenario {
   /** Instant "today" is pinned to (ISO with offset). */
   today: string;
   tab: TabName;
+  /** A screen to open instead of the tab (e.g. an invite link). */
+  href?: Href;
   tripId: string | null;
   view: ScenarioView;
 }
@@ -282,6 +291,17 @@ export const SCENARIOS: readonly Scenario[] = [
     tab: 'plan',
     view: { day: '2026-11-12', planMode: 'itinerary' },
   }),
+  {
+    name: 'group-invite',
+    description:
+      "Matthew's invite to Las Vegas, opened by a friend: preview, then Join opens Plan.",
+    data: groupInviteSnapshot,
+    today: DEFAULT_TODAY,
+    tab: 'plan',
+    href: `/invite/${VEGAS_INVITE_TOKEN}`,
+    tripId: null,
+    view: {},
+  },
   {
     name: 'empty-account',
     description: 'A new account with no trips: Trips tab empty state.',
