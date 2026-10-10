@@ -8,6 +8,7 @@ import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AuthProvider, useAuth } from '@/features/auth';
+import { NamePrompt } from '@/features/settings';
 import { useScenarioActive } from '@/scenarios';
 import { colors } from '@/theme';
 
@@ -61,23 +62,27 @@ function RootStack() {
   if (auth.status === 'loading') return null;
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={signedIn || scenarioActive}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="settings" />
-      </Stack.Protected>
-      <Stack.Protected guard={!signedIn && !scenarioActive}>
-        <Stack.Screen name="auth" />
-      </Stack.Protected>
-      <Stack.Screen
-        name="dev/gallery"
-        options={{ headerShown: true, title: 'Gallery', headerBackTitle: 'Trips' }}
-      />
-      <Stack.Screen
-        name="dev/push"
-        options={{ headerShown: true, title: 'Push test', headerBackTitle: 'Developer' }}
-      />
-    </Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Protected guard={signedIn || scenarioActive}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="settings" />
+        </Stack.Protected>
+        <Stack.Protected guard={!signedIn && !scenarioActive}>
+          <Stack.Screen name="auth" />
+        </Stack.Protected>
+        <Stack.Screen
+          name="dev/gallery"
+          options={{ headerShown: true, title: 'Gallery', headerBackTitle: 'Trips' }}
+        />
+        <Stack.Screen
+          name="dev/push"
+          options={{ headerShown: true, title: 'Push test', headerBackTitle: 'Developer' }}
+        />
+      </Stack>
+      {/* The one-time "What should friends call you?" sheet (TR-55). */}
+      <NamePrompt />
+    </>
   );
 }
 

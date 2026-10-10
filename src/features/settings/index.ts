@@ -9,6 +9,9 @@ export {
   type Preferences,
 } from './preferences';
 export { DeveloperAccount } from './DeveloperAccount';
+export { askForName, NamePrompt } from './NamePrompt';
+export { PaymentInfoScreen } from './PaymentInfoScreen';
+export { ProfileScreen } from './ProfileScreen';
 export { SettingsScreen } from './SettingsScreen';
 export {
   clearPreferenceCache,
