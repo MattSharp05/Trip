@@ -1,6 +1,6 @@
 /**
  * Test helper: a chainable stand-in for supabase-js. Every builder call returns itself; awaiting
- * it resolves to the table's canned response in `mockTables`. Domain tests install it with
+ * it resolves to the table's canned response in `mockTables` (`rpc:<name>` for an RPC). Domain tests install it with
  * `jest.mock('../../supabase', () => jest.requireActual('../shared/supabaseMock').mockSupabaseModule)`.
  */
 export const mockTables: Record<string, { data: unknown; error: { message: string } | null }> = {};
@@ -19,6 +19,10 @@ export const mockSupabaseModule = {
         data: { session: mockAuth.userId ? { user: { id: mockAuth.userId } } : null },
         error: null,
       }),
+    },
+    rpc: (fn: string, args: unknown) => {
+      mockCalls.push(['rpc', fn, args]);
+      return mockSupabaseModule.supabase.from(`rpc:${fn}`);
     },
     from: (table: string) => {
       const builder: any = {

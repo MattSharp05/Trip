@@ -38,6 +38,28 @@ export interface Membership {
   role: MemberRole;
 }
 
+/** An invite link in a demo snapshot (`trip_invites`). */
+export interface Invite {
+  token: string;
+  tripId: string;
+  createdBy: string;
+  revoked?: boolean;
+}
+
+/** What someone opening an invite link sees before joining (ADR 0029), and nothing more. */
+export interface InvitePreview {
+  tripId: string;
+  city: string;
+  startDate: string;
+  endDate: string;
+  coverPhotoUrl: string | null;
+  /** Who made the link. */
+  inviterName: string;
+  memberCount: number;
+  /** You're on the trip already: the link just opens it. */
+  alreadyMember: boolean;
+}
+
 /** The members slice of `DataSource`. */
 export interface MembersSource {
   /** Everyone on the trip: you first, then the owner, then by name. */
@@ -51,4 +73,12 @@ export interface MembersSource {
   leaveTrip(tripId: string): Promise<void>;
   /** The owner removes another member (same effect as them leaving). Throws for anyone else. */
   removeMember(tripId: string, userId: string): Promise<void>;
+  /** The trip's invite token, made on first use (members only). */
+  createInvite(tripId: string): Promise<string>;
+  /** Revokes the trip's invite link (it stops working) and returns a new token. */
+  resetInvite(tripId: string): Promise<string>;
+  /** Throws `INVITE_INACTIVE` for an unknown or reset link. */
+  previewInvite(token: string): Promise<InvitePreview>;
+  /** Joins the trip (nothing changes if you're on it) and returns its id; `INVITE_INACTIVE` as above. */
+  acceptInvite(token: string): Promise<string>;
 }

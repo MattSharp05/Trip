@@ -48,3 +48,19 @@ export const groupMemberSnapshot: DataSnapshot = {
   me: WILLEM,
   members: [...members, { tripId: 'trip-cape-town', userId: WILLEM, role: 'member' }],
 };
+
+/** A friend Matthew invites to Vegas (TR-57): on no trip yet. */
+export const ALEX = 'user-alex';
+/** Matthew's invite link to the Vegas trip in `group-invite`. */
+export const VEGAS_INVITE_TOKEN = 'demo-vegas-invite';
+
+/**
+ * `group-vegas` seen by Alex, who opened Matthew's invite link (TR-57): the preview shows "with
+ * Matthew and 2 others", and Join adds Alex to the trip in memory.
+ */
+export const groupInviteSnapshot: DataSnapshot = {
+  ...groupSnapshot,
+  me: ALEX,
+  profiles: [...profiles, { id: ALEX, displayName: 'Alex' }],
+  invites: [{ token: VEGAS_INVITE_TOKEN, tripId: VEGAS_TRIP_ID, createdBy: vegasSnapshot.me }],
+};

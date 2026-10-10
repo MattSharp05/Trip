@@ -1,4 +1,10 @@
-import { BLAKE, groupSnapshot, WILLEM } from '@/scenarios/fixtures/group';
+import {
+  BLAKE,
+  groupInviteSnapshot,
+  groupSnapshot,
+  VEGAS_INVITE_TOKEN,
+  WILLEM,
+} from '@/scenarios/fixtures/group';
 import { ME, vegasSnapshot } from '@/scenarios/fixtures/vegas';
 
 import { createDemoSource } from '../source';
@@ -107,5 +113,55 @@ describe('demo members', () => {
     ]);
     await source.deleteTrip(trip.id);
     expect(await source.listMembers(trip.id)).toEqual([]);
+  });
+
+  describe('invites', () => {
+    it('previews an invite with the trip summary only', async () => {
+      const source = createDemoSource(groupInviteSnapshot);
+      expect(await source.previewInvite(VEGAS_INVITE_TOKEN)).toEqual({
+        tripId: VEGAS,
+        city: 'Las Vegas',
+        startDate: '2026-11-12',
+        endDate: '2026-11-16',
+        coverPhotoUrl: expect.any(String),
+        inviterName: 'Matthew',
+        memberCount: 3,
+        alreadyMember: false,
+      });
+      expect(await source.listTrips()).toEqual([]);
+    });
+
+    it('joins the trip once, then shows it', async () => {
+      const source = createDemoSource(groupInviteSnapshot);
+      expect(await source.acceptInvite(VEGAS_INVITE_TOKEN)).toBe(VEGAS);
+      expect(await source.acceptInvite(VEGAS_INVITE_TOKEN)).toBe(VEGAS);
+      expect((await source.listTrips()).map((t) => t.id)).toEqual([VEGAS]);
+      const members = await source.listMembers(VEGAS);
+      expect(members.map((m) => [m.name, m.role, m.isMe])).toEqual([
+        ['Alex', 'member', true],
+        ['Matthew', 'owner', false],
+        ['Blake', 'member', false],
+        ['Willem', 'member', false],
+      ]);
+      expect((await source.previewInvite(VEGAS_INVITE_TOKEN)).alreadyMember).toBe(true);
+    });
+
+    it('makes one link per trip, and a reset link stops working', async () => {
+      const source = createDemoSource(groupSnapshot);
+      const token = await source.createInvite(VEGAS);
+      expect(await source.createInvite(VEGAS)).toBe(token);
+      const fresh = await source.resetInvite(VEGAS);
+      expect(fresh).not.toBe(token);
+      await expect(source.previewInvite(token)).rejects.toThrow('invite_inactive');
+      await expect(source.acceptInvite(token)).rejects.toThrow('invite_inactive');
+      expect((await source.previewInvite(fresh)).city).toBe('Las Vegas');
+    });
+
+    it('refuses unknown links and non-members making links', async () => {
+      const source = createDemoSource(groupInviteSnapshot);
+      await expect(source.previewInvite('nope-nope-nope')).rejects.toThrow('invite_inactive');
+      await expect(source.createInvite(VEGAS)).rejects.toThrow('Not a member');
+      await expect(source.resetInvite(VEGAS)).rejects.toThrow('Not a member');
+    });
   });
 });
