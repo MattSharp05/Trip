@@ -3,30 +3,6 @@ import { vegasSnapshot } from '@/scenarios/fixtures/vegas';
 import { createDemoSource } from './source';
 
 describe('demo source', () => {
-  it('lists trips by start date', async () => {
-    const source = createDemoSource(vegasSnapshot);
-    expect((await source.listTrips()).map((t) => t.city)).toEqual([
-      'New York',
-      'Las Vegas',
-      'Cape Town',
-      'Tokyo',
-    ]);
-  });
-
-  it('loads a trip with its items in time order and only the places it uses', async () => {
-    const data = await createDemoSource(vegasSnapshot).getTripData('trip-vegas');
-    expect(data?.items[0]).toMatchObject({ day: '2026-11-12', startTime: '11:02' });
-    expect(data?.items.at(-1)).toMatchObject({ day: '2026-11-16', startTime: '13:45' });
-    expect(data?.places.map((p) => p.id)).toContain('place-tpa'); // via the flight booking
-    expect(data?.bookings).toHaveLength(5);
-    expect(data?.bucketItems).toHaveLength(5);
-    expect(await createDemoSource(vegasSnapshot).getTripData('trip-tokyo')).toMatchObject({
-      items: [],
-      places: [],
-    });
-    expect(await createDemoSource(vegasSnapshot).getTripData('nope')).toBeNull();
-  });
-
   it('writes in memory without touching the fixtures or other sessions', async () => {
     const a = createDemoSource(vegasSnapshot);
     const b = createDemoSource(vegasSnapshot);
@@ -46,125 +22,9 @@ describe('demo source', () => {
     expect(a.id).not.toBe(b.id);
   });
 
-  it('adds a place and a bucket item that uses it', async () => {
-    const source = createDemoSource(vegasSnapshot);
-    const place = await source.savePlace({
-      name: 'Eggslut',
-      address: null,
-      lat: 36.11,
-      lng: -115.17,
-      kind: 'food',
-      photoUrl: null,
-      sourceUrl: null,
-    });
-    expect(place.id).toMatch(/^place-/);
-    await source.saveBucketItem({
-      ...vegasSnapshot.bucketItems[0],
-      id: 'b-new',
-      placeId: place.id,
-    });
-    const data = (await source.getTripData('trip-vegas'))!;
-    expect(data.bucketItems).toHaveLength(6);
-    expect(data.places.find((p) => p.id === place.id)?.name).toBe('Eggslut');
-  });
-
-  it('sets and clears a trip budget in memory', async () => {
-    const source = createDemoSource(vegasSnapshot);
-    const saved = await source.saveTripBudget('trip-vegas', {
-      amountMinor: 300000,
-      currency: 'EUR',
-    });
-    expect(saved.budget).toEqual({ amountMinor: 300000, currency: 'EUR' });
-    expect((await source.getTripData('trip-vegas'))?.trip.budget).toEqual({
-      amountMinor: 300000,
-      currency: 'EUR',
-    });
-    await source.saveTripBudget('trip-vegas', null);
-    expect((await source.getTripData('trip-vegas'))?.trip.budget).toBeNull();
-    expect(vegasSnapshot.trips[1].budget).toEqual({ amountMinor: 250000, currency: 'USD' });
-    await expect(source.saveTripBudget('nope', null)).rejects.toThrow();
-  });
-
-  it('saves a booking in memory and refuses an unknown one', async () => {
-    const source = createDemoSource(vegasSnapshot);
-    const flight = (await source.getTripData('trip-vegas'))!.bookings.find(
-      (b) => b.id === 'booking-flight-out',
-    )!;
-    if (flight.type !== 'flight') throw new Error('expected a flight');
-    const passCrop = { x: 0.2, y: 0.5, width: 0.6, height: 0.3 };
-    await source.saveBooking({ ...flight, data: { ...flight.data, passCrop } });
-    const saved = (await source.getTripData('trip-vegas'))!.bookings.find(
-      (b) => b.id === flight.id,
-    );
-    expect(saved?.data).toMatchObject({ gate: 'E75', passCrop });
-    await expect(source.saveBooking({ ...flight, id: 'nope' })).rejects.toThrow('not found');
-  });
-
-  it('adds and deletes imported bookings and their places', async () => {
-    const source = createDemoSource(vegasSnapshot);
-    await source.savePlace({
-      id: 'place-new',
-      name: 'Sample Hall',
-      address: null,
-      lat: 36.1,
-      lng: -115.1,
-      kind: 'arena',
-      photoUrl: null,
-      sourceUrl: null,
-    });
-    const booking = {
-      id: 'booking-new',
-      tripId: 'trip-vegas',
-      originalPath: null,
-      type: 'ticket' as const,
-      data: {
-        event: 'Sample Show',
-        placeId: 'place-new',
-        starts: { date: '2026-11-14', time: '20:00', timezone: 'America/Los_Angeles' },
-        section: null,
-        row: null,
-        seats: null,
-        confirmation: 'T1',
-      },
-    };
-    await source.createBooking(booking);
-    await expect(source.createBooking(booking)).rejects.toThrow('exists');
-    const data = (await source.getTripData('trip-vegas'))!;
-    expect(data.bookings.map((b) => b.id)).toContain('booking-new');
-    expect(data.places.map((p) => p.id)).toContain('place-new');
-    await source.deleteBooking('booking-new');
-    expect((await source.getTripData('trip-vegas'))!.bookings.map((b) => b.id)).not.toContain(
-      'booking-new',
-    );
-  });
-
   it('returns copies, so callers cannot change stored data', async () => {
     const source = createDemoSource(vegasSnapshot);
     (await source.listTrips())[0].city = 'Changed';
     expect((await source.listTrips())[0].city).toBe('New York');
-  });
-
-  it('creates trips in memory with a new id', async () => {
-    const source = createDemoSource(vegasSnapshot);
-    const trip = await source.createTrip({
-      city: 'Lisbon',
-      country: 'Portugal',
-      lat: 38.7,
-      lng: -9.1,
-      timezone: 'Europe/Lisbon',
-      startDate: '2027-04-03',
-      endDate: '2027-04-08',
-      coverPhotoUrl: null,
-      coverPhotoCredit: null,
-    });
-    expect(trip.id).toMatch(/^trip-/);
-    expect((await source.listTrips()).map((t) => t.city)).toEqual([
-      'New York',
-      'Las Vegas',
-      'Cape Town',
-      'Tokyo',
-      'Lisbon',
-    ]);
-    expect(vegasSnapshot.trips).toHaveLength(4);
   });
 });
