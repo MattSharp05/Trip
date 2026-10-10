@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { avatarRow, memberLabel } from '@/core/members';
+import { askForName } from '@/features/settings';
 import { useTripMembers, type Member } from '@/services/data';
 import { colors, radii, spacing } from '@/theme';
 import { Text } from '@/ui';
@@ -79,6 +80,8 @@ export function MemberAvatars({ tripId, testID = 'member-avatars' }: MemberAvata
           onPress={() => {
             setUsed(true);
             setOpen(true);
+            // A traveller still on the name made up from their email is asked for one (TR-55).
+            askForName();
           }}
           style={({ pressed }) => [styles.row, pressed && styles.pressed]}
           testID={testID}
