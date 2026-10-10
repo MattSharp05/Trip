@@ -73,6 +73,10 @@ function RootStack() {
         name="dev/gallery"
         options={{ headerShown: true, title: 'Gallery', headerBackTitle: 'Trips' }}
       />
+      <Stack.Screen
+        name="dev/push"
+        options={{ headerShown: true, title: 'Push test', headerBackTitle: 'Developer' }}
+      />
     </Stack>
   );
 }
