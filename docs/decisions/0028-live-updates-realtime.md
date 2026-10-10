@@ -27,7 +27,9 @@ refresh (PRD v2: "map and itinerary update for everyone"). The app reads through
   anyone who knew a trip's id heard its rows' deletes (primary keys only), member or not. The
   publication carries inserts and updates only (`0054_realtime_no_deletes.sql`); a statement-level
   `after delete` trigger on each trip-scoped table touches the trip's `updated_at`, and members
-  hear that `trips` update (RLS applies). A deleted trip itself isn't announced; members see it gone
-  on their next trips refetch. New trip-scoped tables add the same trigger.
+  hear that `trips` update (RLS applies). Realtime also checks filters and RLS against the new row
+  only, so a row moved to another trip and a booking made private touch the old trip the same way
+  (`0054_realtime_moves.sql`). A deleted trip itself isn't announced; members see it gone on their
+  next trips refetch. New trip-scoped tables add the same triggers.
 - Live updates are tested with two real accounts (Matthew's phone + a second account) and in
   `db:test-rls` (a member receives a change, a non-member doesn't).

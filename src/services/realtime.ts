@@ -18,6 +18,9 @@ export const LIVE_TABLES = [
 /** A burst of changes (a Smart Add plan, a reorder) refetches once. */
 export const LIVE_DEBOUNCE_MS = 300;
 
+/** Each open gets its own topic: realtime-js hands back a still-closing channel of the same name. */
+let opened = 0;
+
 /**
  * Every query about the trip: its data (`dataKeys.trip`), and any other key under the source that
  * names the trip (members, expenses). Plus the trips list, since the trip's own row may have
@@ -51,12 +54,18 @@ export function useTripLiveUpdates(tripId: string | null): void {
     let channel: ReturnType<typeof supabase.channel> | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
+    // While this phone is still saving (an optimistic reorder), a refetch would show the edit half
+    // applied: wait for it (its own refetch follows), then refetch for the other member's change.
     const changed = () => {
       clearTimeout(timer);
-      timer = setTimeout(() => refetchTrip(source, tripId), LIVE_DEBOUNCE_MS);
+      timer = setTimeout(() => {
+        if (queryClient.isMutating() > 0) changed();
+        else refetchTrip(source, tripId);
+      }, LIVE_DEBOUNCE_MS);
     };
     const open = () => {
-      channel = supabase.channel(`trip:${tripId}`);
+      opened += 1;
+      channel = supabase.channel(`trip:${tripId}:${opened}`);
       for (const table of LIVE_TABLES) {
         channel.on(
           'postgres_changes',
@@ -77,7 +86,8 @@ export function useTripLiveUpdates(tripId: string | null): void {
       channel = null;
     };
 
-    open();
+    // Launched into the background: open on the first foreground instead (with its refetch).
+    if (AppState.currentState !== 'background') open();
     const appState = AppState.addEventListener('change', (state) => {
       if (state === 'background') {
         close();

@@ -69,7 +69,7 @@ describe('useTripLiveUpdates', () => {
 
     expect(channels).toHaveLength(1);
     const [channel] = channels;
-    expect(channel.name).toBe('trip:trip-1');
+    expect(channel.name).toMatch(/^trip:trip-1:\d+$/);
     expect(channel.subscribed).toBe(true);
     expect(channel.bindings.map((b) => b.filter)).toEqual([
       ...LIVE_TABLES.map((table) => ({
@@ -112,6 +112,36 @@ describe('useTripLiveUpdates', () => {
     expect(invalidated(documentsKey)).toBe(false);
   });
 
+  it('waits for a save in progress before refetching', () => {
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    const isMutating = jest.spyOn(queryClient, 'isMutating').mockReturnValue(1);
+    renderHook(() => useTripLiveUpdates('trip-1'));
+
+    act(() => channels[0].bindings[0].callback());
+    act(() => jest.advanceTimersByTime(LIVE_DEBOUNCE_MS * 3));
+    expect(invalidate).not.toHaveBeenCalled();
+
+    isMutating.mockReturnValue(0);
+    act(() => jest.advanceTimersByTime(LIVE_DEBOUNCE_MS));
+    expect(invalidate).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens on the first foreground when mounted in the background', () => {
+    const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+    const currentState = AppState.currentState;
+    AppState.currentState = 'background';
+    try {
+      renderHook(() => useTripLiveUpdates('trip-1'));
+      expect(channels).toHaveLength(0);
+
+      act(() => appStateListener?.('active'));
+      expect(channels).toHaveLength(1);
+      expect(invalidate).toHaveBeenCalledTimes(1);
+    } finally {
+      AppState.currentState = currentState;
+    }
+  });
+
   it('unsubscribes on unmount, without a pending refetch', () => {
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
     const { unmount } = renderHook(() => useTripLiveUpdates('trip-1'));
@@ -133,7 +163,10 @@ describe('useTripLiveUpdates', () => {
 
     rerender({ tripId: 'trip-2' });
     expect(removedChannels()).toEqual([channels[0]]);
-    expect(channels.map((c) => c.name)).toEqual(['trip:trip-1', 'trip:trip-2']);
+    expect(channels.map((c) => c.name.replace(/:\d+$/, ''))).toEqual([
+      'trip:trip-1',
+      'trip:trip-2',
+    ]);
 
     rerender({ tripId: null });
     expect(removedChannels()).toEqual([channels[0], channels[1]]);
@@ -151,7 +184,10 @@ describe('useTripLiveUpdates', () => {
     expect(invalidate).not.toHaveBeenCalled();
 
     act(() => appStateListener?.('active'));
-    expect(channels.map((c) => c.name)).toEqual(['trip:trip-1', 'trip:trip-1']);
+    expect(channels).toHaveLength(2);
+    // A fresh topic: realtime-js would hand back the old channel while it is still closing.
+    expect(channels[1].name).toMatch(/^trip:trip-1:\d+$/);
+    expect(channels[1].name).not.toBe(channels[0].name);
     expect(invalidate).toHaveBeenCalledTimes(1);
 
     // Already open: coming back from `inactive` (Control Center) changes nothing.

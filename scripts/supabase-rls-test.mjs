@@ -54,7 +54,14 @@ async function listen(client, tripId) {
   const events = [];
   await client.realtime.setAuth();
   const channel = client.channel(`trip:${tripId}:${randomUUID()}`);
-  for (const table of ['itinerary_items', 'trip_members']) {
+  for (const table of [
+    'trip_members',
+    'itinerary_items',
+    'bucket_items',
+    'bookings',
+    'expenses',
+    'places',
+  ]) {
     channel.on(
       'postgres_changes',
       { event: '*', schema: 'public', table, filter: `trip_id=eq.${tripId}` },
@@ -162,10 +169,13 @@ try {
     placeOnTrip.error?.message,
   );
 
-  // TR-54: live updates. B (member) hears A's new stop within 5 s, and A's delete through the
-  // trip's touched `trips` row; C (non-member) hears nothing on the same filters.
+  // TR-54: live updates. B (member) hears A's new stop within 5 s, and hears through the trip's
+  // touched `trips` row what Realtime can't send B: a delete, a row moved to another trip, a
+  // booking made private. C (non-member) hears nothing on the same filters.
   const bLive = await listen(b.client, trip.id);
   const cLive = await listen(c.client, trip.id);
+  const tripTouched = (e) =>
+    e.table === 'trips' && e.eventType === 'UPDATE' && e.new?.id === trip.id;
   const liveStop = await insertOne(a.client, 'itinerary_items', {
     trip_id: trip.id,
     day: '2026-11-04',
@@ -178,13 +188,40 @@ try {
     5_000,
   );
   check('realtime: member receives an insert on the trip within 5 s', Boolean(heard));
+
+  bLive.events.length = 0;
   await a.client.from('itinerary_items').delete().eq('id', liveStop.id);
-  const touched = await waitFor(
-    bLive.events,
-    (e) => e.table === 'trips' && e.eventType === 'UPDATE' && e.new?.id === trip.id,
-    5_000,
+  check(
+    "realtime: member hears a delete through the trip's update",
+    Boolean(await waitFor(bLive.events, tripTouched, 5_000)),
   );
-  check("realtime: member hears a delete through the trip's update", Boolean(touched));
+
+  const otherTrip = await insertOne(a.client, 'trips', {
+    city: 'Reno',
+    timezone: 'America/Los_Angeles',
+    start_date: '2026-12-01',
+    end_date: '2026-12-02',
+  });
+  const movingItem = await insertOne(a.client, 'bucket_items', { trip_id: trip.id });
+  bLive.events.length = 0;
+  await a.client.from('bucket_items').update({ trip_id: otherTrip.id }).eq('id', movingItem.id);
+  check(
+    "realtime: member hears a row moved to another trip through the trip's update",
+    Boolean(await waitFor(bLive.events, tripTouched, 5_000)),
+  );
+
+  const hiding = await insertOne(a.client, 'bookings', { trip_id: trip.id, type: 'ticket' });
+  bLive.events.length = 0;
+  await a.client.from('bookings').update({ visibility: 'private' }).eq('id', hiding.id);
+  check(
+    "realtime: member hears a booking made private through the trip's update",
+    Boolean(await waitFor(bLive.events, tripTouched, 5_000)),
+  );
+  await a.client.from('bookings').delete().eq('id', hiding.id);
+  await a.client.from('trips').delete().eq('id', otherTrip.id);
+
+  // Give C's channel as long as B's had to receive anything that leaked.
+  await new Promise((resolve) => setTimeout(resolve, 2_000));
   check(
     'realtime: non-member receives nothing',
     cLive.events.length === 0,
