@@ -34,6 +34,8 @@ export interface SheetProps {
   open: boolean;
   /** Called when the user drags the sheet down or taps the backdrop; set `open` to false. */
   onClose: () => void;
+  /** Called once the sheet is off screen, however it closed: then a native dialog can show. */
+  onClosed?: () => void;
   title?: string;
   children: ReactNode;
   testID?: string;
@@ -42,8 +44,12 @@ export interface SheetProps {
 /**
  * A bottom sheet over the current screen (wraps `@gorhom/bottom-sheet`). Sized to its content;
  * needs `BottomSheetModalProvider` at the root (app/_layout.tsx).
+ *
+ * On iOS nothing native can be presented from inside it: `Alert`, `ActionSheetIOS`, `Share` and
+ * compact date pickers open behind the overlay, out of reach (TR-56). Ask in the sheet with
+ * `SheetConfirm`, or close the sheet and present from `onClosed`.
  */
-export function Sheet({ open, onClose, title, children, testID }: SheetProps) {
+export function Sheet({ open, onClose, onClosed, title, children, testID }: SheetProps) {
   const ref = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
 
@@ -80,7 +86,8 @@ export function Sheet({ open, onClose, title, children, testID }: SheetProps) {
   const handleDismiss = useCallback(() => {
     shown.current = false;
     if (openRef.current) onClose();
-  }, [onClose]);
+    onClosed?.();
+  }, [onClose, onClosed]);
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (

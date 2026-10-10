@@ -1,5 +1,6 @@
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
-import { Alert, Share, type AlertButton } from 'react-native';
+import { Alert, Share } from 'react-native';
 
 import TabLayout from '../app/(tabs)/_layout';
 import DiscoverScreen from '../app/(tabs)/discover/index';
@@ -16,6 +17,7 @@ import RootLayout from '../app/_layout';
 import Index from '../app/index';
 import { resetPendingInvite } from '@/features/auth/pendingInvite';
 import { resetFakeAuth, testSession } from '@/features/auth/testing';
+import { MembersSheet } from '@/features/members';
 import { clearPreferenceCache } from '@/features/settings';
 import { exitScenario } from '@/scenarios';
 import { groupInviteSnapshot, VEGAS_INVITE_TOKEN } from '@/scenarios/fixtures/group';
@@ -198,14 +200,14 @@ describe('group-invite scenario', () => {
 });
 
 describe('Invite friends', () => {
-  async function pressAlert(text: string) {
-    const buttons = jest.mocked(Alert.alert).mock.calls.at(-1)![2] as AlertButton[];
-    await act(async () => buttons.find((b) => b.text === text)!.onPress!());
-  }
-
   it('the members sheet shares the link; Reset link makes a new one', async () => {
-    jest.spyOn(Alert, 'alert');
+    // Native dialogs open behind the sheet on iOS (TR-56): Reset asks in the sheet.
+    const alert = jest.spyOn(Alert, 'alert');
     const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' });
+    // The share sheet would open behind the members sheet too: it closes first, and the share
+    // sheet opens once it's gone (the library's mock never reports that: report it here).
+    const members = () => screen.UNSAFE_getByType(MembersSheet);
+    const sheetGone = () => act(() => members().findByType(BottomSheetModal).props.onDismiss());
     resetFakeAuth(null);
     renderRouter(routes, { initialUrl: '/scenario/group-vegas' });
     await screen.findByTestId('day-header-weather');
@@ -213,20 +215,34 @@ describe('Invite friends', () => {
     fireEvent.press(screen.getByTestId('plan-members'));
     const sheet = within(await screen.findByTestId('plan-members-sheet'));
     await act(async () => fireEvent.press(sheet.getByText('Invite friends')));
+    expect(members().props.open).toBe(false);
+    expect(share).not.toHaveBeenCalled();
+    sheetGone();
     const message = share.mock.calls[0][0].message!;
     expect(message).toMatch(
       /^Join my Las Vegas trip on Trip: exp:\/\/u\.expo\.dev\/.+\/--\/invite\/demo-trip-vegas-1\?runtime-version=/,
     );
 
-    // Sharing again reuses the link.
+    // Sharing again reuses the link. Closing the sheet another way shares nothing.
+    fireEvent.press(screen.getByTestId('plan-members'));
+    expect(members().props.open).toBe(true);
     await act(async () => fireEvent.press(sheet.getByText('Invite friends')));
+    sheetGone();
+    sheetGone();
+    expect(share).toHaveBeenCalledTimes(2);
     expect(share.mock.calls[1][0].message).toBe(message);
 
+    fireEvent.press(screen.getByTestId('plan-members'));
     fireEvent.press(sheet.getByText('Reset link'));
-    expect(jest.mocked(Alert.alert).mock.calls.at(-1)![0]).toBe('Reset the invite link?');
-    await pressAlert('Reset');
+    expect(screen.getByTestId('plan-members-sheet-invite-reset-confirm')).toHaveTextContent(
+      'Reset the invite link?The old link stops working. Friends already on the trip stay on it.ResetCancel',
+    );
+    await act(async () => fireEvent.press(screen.getByRole('button', { name: 'Reset' })));
+    expect(screen.queryByTestId('plan-members-sheet-invite-reset-confirm')).toBeNull();
+    expect(alert).not.toHaveBeenCalled();
     expect(sheet.getByText('Link reset. The old link no longer works.')).toBeOnTheScreen();
     await act(async () => fireEvent.press(sheet.getByText('Invite friends')));
+    sheetGone();
     expect(share.mock.calls[2][0].message).toContain('/invite/demo-trip-vegas-2?');
   });
 

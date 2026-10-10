@@ -1,4 +1,4 @@
-# TR-56 on device: the organizer removes Blake from his row's menu (an action sheet, then a
+# TR-56 on device: the organizer removes Blake from his row's menu (asked in the sheet, then a
 # confirm), and he leaves the sheet and the header. A plain menu, not a swipe: v1's gestures passed
 # in Jest and failed on the phone, so the device check is this flow.
 appId: com.mattsharp05.trip

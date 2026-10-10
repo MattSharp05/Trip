@@ -1,7 +1,7 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import { router as nav } from 'expo-router';
 import { act, fireEvent, renderRouter, screen, waitFor, within } from 'expo-router/testing-library';
-import { ActionSheetIOS, Alert, StyleSheet, type AlertButton } from 'react-native';
+import { ActionSheetIOS, Alert, StyleSheet } from 'react-native';
 
 import TabLayout from '../app/(tabs)/_layout';
 import DiscoverScreen from '../app/(tabs)/discover/index';
@@ -59,16 +59,25 @@ const avatars = (testID: string) =>
     .map((a) => a.props.testID.replace(`${testID}-`, ''));
 
 /**
- * Taps the button of the latest Alert labelled `text`, then lets the write's refetch land: React
+ * Taps the in-sheet question's button labelled `text`, then lets the write's refetch land: React
  * Query batches its updates on a timer, and renderRouter's fake timers only move when told to.
  */
-async function pressAlert(text: string) {
-  const alert = jest.mocked(Alert.alert).mock.calls.at(-1)!;
-  const buttons = alert[2] as AlertButton[];
-  await act(async () => buttons.find((b) => b.text === text)!.onPress!());
+async function pressInSheet(text: string) {
+  await act(async () => fireEvent.press(screen.getByRole('button', { name: text })));
   await act(async () => {
     jest.advanceTimersByTime(100);
   });
+}
+
+/**
+ * Native dialogs open behind the sheet's full-window overlay on iOS (TR-56): nothing in the sheet
+ * may use them. Returns the spies to check they stayed unused.
+ */
+function spyNativeDialogs() {
+  return [
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {}),
+    jest.spyOn(ActionSheetIOS, 'showActionSheetWithOptions').mockImplementation(() => {}),
+  ];
 }
 
 async function openSheet() {
@@ -128,38 +137,42 @@ describe('Members sheet', () => {
   });
 
   it('the organizer removes Blake from a row menu, confirmed: he leaves the avatars and the sheet', async () => {
-    const menu = jest
-      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-      .mockImplementation((_options, callback) => callback(0));
-    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const native = spyNativeDialogs();
     await open('group-vegas');
     const sheet = await openSheet();
 
+    // The menu and the confirm take the sheet's place, with the list hidden under them.
     fireEvent.press(sheet.getByTestId('plan-members-sheet-user-blake-menu'));
-    expect(menu.mock.calls[0][0]).toMatchObject({
-      title: 'Blake',
-      options: ['Remove from trip', 'Cancel'],
-      destructiveButtonIndex: 0,
-    });
-    expect(jest.mocked(Alert.alert).mock.calls[0][0]).toBe('Remove Blake from the trip?');
-    await pressAlert('Remove');
+    const menu = screen.getByTestId('plan-members-sheet-member-menu');
+    expect(menu).toHaveTextContent(/^BlakeRemove from tripCancel$/);
+    expect(screen.queryByTestId('plan-members-sheet')).toBeNull();
+    expect(screen.queryByText('Trip members')).toBeNull();
+    await pressInSheet('Remove from trip');
+    expect(screen.queryByTestId('plan-members-sheet-member-menu')).toBeNull();
+    expect(screen.getByTestId('plan-members-sheet-remove-confirm')).toHaveTextContent(
+      'Remove Blake from the trip?What they added stays on the trip.RemoveCancel',
+    );
+    await pressInSheet('Remove');
 
     await waitFor(() => expect(sheet.queryByTestId('plan-members-sheet-user-blake')).toBeNull());
     expect(avatars('plan-members')).toEqual(['user-willem', 'user-matthew']);
+    expect(screen.queryByTestId('plan-members-sheet-remove-confirm')).toBeNull();
+    expect(screen.getByText('Trip members')).toBeOnTheScreen();
+    for (const spy of native) expect(spy).not.toHaveBeenCalled();
   });
 
-  it('cancelling the confirm keeps Blake', async () => {
-    jest
-      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-      .mockImplementation((_options, callback) => callback(0));
-    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  it('cancelling the menu or the confirm keeps Blake and goes back to the list', async () => {
     await open('group-vegas');
     const sheet = await openSheet();
     fireEvent.press(sheet.getByTestId('plan-members-sheet-user-blake-menu'));
-    expect(jest.mocked(Alert.alert).mock.calls[0][2]).toContainEqual(
-      expect.objectContaining({ text: 'Cancel', style: 'cancel' }),
-    );
-    await act(async () => {});
+    await pressInSheet('Cancel');
+    expect(screen.queryByTestId('plan-members-sheet-member-menu')).toBeNull();
+
+    fireEvent.press(sheet.getByTestId('plan-members-sheet-user-blake-menu'));
+    await pressInSheet('Remove from trip');
+    await pressInSheet('Cancel');
+    expect(screen.queryByTestId('plan-members-sheet-remove-confirm')).toBeNull();
+    expect(screen.getByTestId('plan-members-sheet')).toBeOnTheScreen();
     expect(sheet.getByTestId('plan-members-sheet-user-blake')).toBeOnTheScreen();
   });
 
@@ -180,12 +193,15 @@ describe('Members sheet', () => {
   });
 
   it('leaving the trip (confirmed) drops it from Trips and selects the next trip', async () => {
-    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const native = spyNativeDialogs();
     await open('group-vegas-member');
     const sheet = await openSheet();
     fireEvent.press(sheet.getByTestId('plan-members-sheet-leave'));
-    expect(jest.mocked(Alert.alert).mock.calls[0][0]).toBe('Leave Las Vegas?');
-    await pressAlert('Leave');
+    expect(screen.getByTestId('plan-members-sheet-leave-confirm')).toHaveTextContent(
+      'Leave Las Vegas?The trip disappears from your trips. What you added stays.LeaveCancel',
+    );
+    await pressInSheet('Leave');
+    for (const spy of native) expect(spy).not.toHaveBeenCalled();
 
     await waitFor(() => expect(useTripStore.getState().selectedTripId).toBe('trip-cape-town'));
     expect(useSelectionStore.getState().tripId).toBe('trip-cape-town');

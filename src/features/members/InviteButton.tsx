@@ -1,14 +1,18 @@
 import { useState } from 'react';
-import { Alert, Pressable, Share, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { inviteLink, inviteMessage } from '@/core/inviteLink';
 import { useInviteToken } from '@/services/data';
 import { spacing } from '@/theme';
-import { Button, Text } from '@/ui';
+import { Button, Text, type ConfirmRequest } from '@/ui';
 
 export interface InviteButtonProps {
   tripId: string;
   city: string;
+  /** Asks in the sheet (`SheetConfirm`): a native Alert would open behind it on iOS (TR-56). */
+  confirm: (request: ConfirmRequest) => void;
+  /** Opens the share sheet with the message, once the sheet is gone: it would open behind it too. */
+  share: (message: string) => void;
   testID?: string;
 }
 
@@ -17,11 +21,17 @@ export interface InviteButtonProps {
  * with "Join my Las Vegas trip on Trip: <link>"; the small **Reset link** under it (confirmed)
  * makes a new link, and the old one stops working.
  */
-export function InviteButton({ tripId, city, testID = 'invite' }: InviteButtonProps) {
+export function InviteButton({
+  tripId,
+  city,
+  confirm,
+  share,
+  testID = 'invite',
+}: InviteButtonProps) {
   const { mutateAsync: getToken, isPending } = useInviteToken();
   const [note, setNote] = useState<string | null>(null);
 
-  const share = async () => {
+  const invite = async () => {
     setNote(null);
     let message: string;
     try {
@@ -30,8 +40,7 @@ export function InviteButton({ tripId, city, testID = 'invite' }: InviteButtonPr
       setNote("Couldn't make the invite link. Check your connection and try again.");
       return;
     }
-    // Closing the share sheet without sending is fine; nothing to report.
-    await Share.share({ message }).catch(() => {});
+    share(message);
   };
 
   const reset = async () => {
@@ -45,21 +54,20 @@ export function InviteButton({ tripId, city, testID = 'invite' }: InviteButtonPr
   };
 
   const confirmReset = () =>
-    Alert.alert(
-      'Reset the invite link?',
-      'The old link stops working. Friends already on the trip stay on it.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Reset', style: 'destructive', onPress: () => void reset() },
-      ],
-    );
+    confirm({
+      title: 'Reset the invite link?',
+      message: 'The old link stops working. Friends already on the trip stay on it.',
+      confirmLabel: 'Reset',
+      onConfirm: () => void reset(),
+      testID: `${testID}-reset-confirm`,
+    });
 
   return (
     <View style={styles.box} testID={testID}>
       <Button
         label="Invite friends"
         icon="person.badge.plus"
-        onPress={() => void share()}
+        onPress={() => void invite()}
         disabled={isPending}
         testID={`${testID}-share`}
       />

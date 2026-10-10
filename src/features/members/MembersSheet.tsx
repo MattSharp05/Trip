@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ActionSheetIOS, Alert, StyleSheet, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Alert, Share, StyleSheet, View } from 'react-native';
 
 import { now } from '@/core/clock';
 import { memberRoleLine } from '@/core/members';
@@ -13,7 +13,16 @@ import {
   type Member,
 } from '@/services/data';
 import { colors, spacing } from '@/theme';
-import { Button, IconButton, LoadError, Sheet, Skeleton, Text } from '@/ui';
+import {
+  Button,
+  IconButton,
+  LoadError,
+  Sheet,
+  SheetConfirm,
+  Skeleton,
+  Text,
+  type ConfirmRequest,
+} from '@/ui';
 
 import { InviteButton } from './InviteButton';
 import { MemberAvatar } from './MemberAvatars';
@@ -32,6 +41,9 @@ export interface MembersSheetProps {
  * Who is on the trip (TR-56; PRD v2 decision 2): everyone with "Organizer" under the creator and
  * "You" under yourself. The creator removes members from a row's menu (confirmed); anyone else can
  * leave the trip from the bottom (confirmed), after which the next trip is selected.
+ *
+ * The menu and the confirms are asked in the sheet (`SheetConfirm`), not with ActionSheetIOS or
+ * Alert: on iOS those open behind the sheet's full-window overlay, out of reach (TR-56).
  */
 export function MembersSheet({
   open,
@@ -45,6 +57,13 @@ export function MembersSheet({
   const { mutateAsync: leave, isPending: leaving } = useLeaveTrip();
   const switchTrip = useSwitchTrip();
   const [error, setError] = useState<string | null>(null);
+  // The question the sheet shows in place of the list; each opening starts on the list.
+  const [prompt, setPrompt] = useState<ConfirmRequest | null>(null);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setPrompt(null);
+  }
 
   const me = members?.find((m) => m.isMe);
   const iAmOrganizer = me?.role === 'owner';
@@ -52,33 +71,27 @@ export function MembersSheet({
   const city = trip?.city ?? 'this trip';
 
   const confirmRemove = (member: Member) =>
-    Alert.alert(`Remove ${member.name} from the trip?`, 'What they added stays on the trip.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: () => {
-          setError(null);
-          remove({ tripId, userId: member.id }).catch(() =>
-            setError("Couldn't remove them. Check your connection and try again."),
-          );
-        },
+    setPrompt({
+      title: `Remove ${member.name} from the trip?`,
+      message: 'What they added stays on the trip.',
+      confirmLabel: 'Remove',
+      onConfirm: () => {
+        setError(null);
+        remove({ tripId, userId: member.id }).catch(() =>
+          setError("Couldn't remove them. Check your connection and try again."),
+        );
       },
-    ]);
+      testID: `${testID}-remove-confirm`,
+    });
 
   // A plain menu, not a swipe (v1: custom gestures green in Jest failed on the phone).
   const openMenu = (member: Member) =>
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        title: member.name,
-        options: ['Remove from trip', 'Cancel'],
-        destructiveButtonIndex: 0,
-        cancelButtonIndex: 1,
-      },
-      (index) => {
-        if (index === 0) confirmRemove(member);
-      },
-    );
+    setPrompt({
+      title: member.name,
+      confirmLabel: 'Remove from trip',
+      onConfirm: () => confirmRemove(member),
+      testID: `${testID}-member-menu`,
+    });
 
   const leaveTrip = async () => {
     // Move to the next trip first (as the Trips tab would pick it), so nothing refetches or shows
@@ -94,17 +107,59 @@ export function MembersSheet({
     }
   };
 
+  // The share sheet opens once this sheet is gone (behind it, it would be out of reach).
+  const shareLater = useRef<string | null>(null);
+  const openShare = (message: string) =>
+    // Closing the share sheet without sending is fine; nothing to report.
+    void Share.share({ message }).catch(() => {});
+  const share = (message: string) => {
+    if (!open) return openShare(message);
+    shareLater.current = message;
+    onClose();
+  };
+  const handleClosed = () => {
+    const message = shareLater.current;
+    shareLater.current = null;
+    if (message) openShare(message);
+  };
+
   const confirmLeave = () =>
-    Alert.alert(`Leave ${city}?`, 'The trip disappears from your trips. What you added stays.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Leave', style: 'destructive', onPress: () => void leaveTrip() },
-    ]);
+    setPrompt({
+      title: `Leave ${city}?`,
+      message: 'The trip disappears from your trips. What you added stays.',
+      confirmLabel: 'Leave',
+      onConfirm: () => void leaveTrip(),
+      testID: `${testID}-leave-confirm`,
+    });
 
   return (
-    <Sheet open={open} onClose={onClose} title="Trip members">
-      <View style={styles.body} testID={testID}>
+    <Sheet
+      open={open}
+      onClose={onClose}
+      onClosed={handleClosed}
+      title={prompt ? undefined : 'Trip members'}
+    >
+      {prompt ? (
+        <SheetConfirm
+          {...prompt}
+          onConfirm={() => {
+            // Back to the list first: a menu's choice asks its own question next.
+            setPrompt(null);
+            prompt.onConfirm();
+          }}
+          onCancel={() => setPrompt(null)}
+        />
+      ) : null}
+      {/* Hidden, not unmounted, under a question: the invite button keeps its note. */}
+      <View style={[styles.body, prompt && styles.hidden]} testID={testID}>
         {trip ? (
-          <InviteButton tripId={tripId} city={trip.city} testID={`${testID}-invite`} />
+          <InviteButton
+            tripId={tripId}
+            city={trip.city}
+            confirm={setPrompt}
+            share={share}
+            testID={`${testID}-invite`}
+          />
         ) : null}
         {isPending ? (
           <View style={styles.list}>
@@ -193,6 +248,7 @@ function MemberRow({ member, separator, onMenu, testID }: MemberRowProps) {
 
 const styles = StyleSheet.create({
   body: { gap: spacing.md },
+  hidden: { display: 'none' },
   list: { gap: spacing.sm },
   row: {
     flexDirection: 'row',

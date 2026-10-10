@@ -70,16 +70,21 @@ const metrics = {
   insets: { top: 47, left: 0, right: 0, bottom: 34 },
 };
 
-function renderSheet(open: boolean, onClose = jest.fn()) {
+function renderSheet(open: boolean, onClose = jest.fn(), onClosed = jest.fn()) {
   const ui = (isOpen: boolean) => (
     <SafeAreaProvider initialMetrics={metrics}>
-      <Sheet open={isOpen} onClose={onClose} title="Fri, Nov 14">
+      <Sheet open={isOpen} onClose={onClose} onClosed={onClosed} title="Fri, Nov 14">
         <Text>Brunch at Mon Ami Gabi</Text>
       </Sheet>
     </SafeAreaProvider>
   );
   const result = render(ui(open));
-  return { ...result, setOpen: (isOpen: boolean) => result.rerender(ui(isOpen)), onClose };
+  return {
+    ...result,
+    setOpen: (isOpen: boolean) => result.rerender(ui(isOpen)),
+    onClose,
+    onClosed,
+  };
 }
 
 describe('Sheet', () => {
@@ -122,5 +127,15 @@ describe('Sheet', () => {
     expect(screen.queryByText('Brunch at Mon Ami Gabi')).toBeNull();
     setOpen(true);
     expect(screen.getByText('Brunch at Mon Ami Gabi')).toBeOnTheScreen();
+  });
+
+  it('reports when it is off screen, however it closed (native dialogs wait for it, TR-56)', () => {
+    const { setOpen, onClosed } = renderSheet(true);
+    expect(onClosed).not.toHaveBeenCalled();
+    setOpen(false);
+    expect(onClosed).toHaveBeenCalledTimes(1);
+    setOpen(true);
+    act(() => jest.requireMock('@gorhom/bottom-sheet').dragDown());
+    expect(onClosed).toHaveBeenCalledTimes(2);
   });
 });
