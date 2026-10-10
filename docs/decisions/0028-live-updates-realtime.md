@@ -23,5 +23,11 @@ refresh (PRD v2: "map and itinerary update for everyone"). The app reads through
 - Simple and correct; costs one refetch per burst of changes.
 - Deletes arrive without the old row's `trip_id` unless the table has `replica identity full`; the
   migration sets it on the published tables.
+- **Amended in TR-54:** Realtime doesn't apply RLS to delete events, so with deletes published
+  anyone who knew a trip's id heard its rows' deletes (primary keys only), member or not. The
+  publication carries inserts and updates only (`0054_realtime_no_deletes.sql`); a statement-level
+  `after delete` trigger on each trip-scoped table touches the trip's `updated_at`, and members
+  hear that `trips` update (RLS applies). A deleted trip itself isn't announced; members see it gone
+  on their next trips refetch. New trip-scoped tables add the same trigger.
 - Live updates are tested with two real accounts (Matthew's phone + a second account) and in
   `db:test-rls` (a member receives a change, a non-member doesn't).

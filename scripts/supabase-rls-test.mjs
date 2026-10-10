@@ -3,7 +3,8 @@
 // and writes a row in every table and a file in every bucket; B is a member of A's trip (added
 // with the service role, as the invite RPC will) and shares it; C (and an anonymous client) is on
 // no trip of A's and can't read, change or delete anything, or point at it. Private bookings and
-// passports stay A's until A shares them (TR-50, ADR 0027). The users and their data are deleted
+// passports stay A's until A shares them (TR-50, ADR 0027). Realtime follows the same rules: B
+// hears A's changes live, C doesn't (TR-54, ADR 0028). The users and their data are deleted
 // afterwards.
 //
 //   SUPABASE_ACCESS_TOKEN=… node scripts/supabase-rls-test.mjs
@@ -43,6 +44,56 @@ async function newUser() {
   const signIn = await client.auth.signInWithPassword({ email, password });
   if (signIn.error) throw signIn.error;
   return { id: data.user.id, client };
+}
+
+/**
+ * Listens on a trip's channel the way the app does (`useTripLiveUpdates`): changes to the trip's
+ * rows, plus its `trips` row (which a delete on the trip touches, TR-54).
+ */
+async function listen(client, tripId) {
+  const events = [];
+  await client.realtime.setAuth();
+  const channel = client.channel(`trip:${tripId}:${randomUUID()}`);
+  for (const table of ['itinerary_items', 'trip_members']) {
+    channel.on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table, filter: `trip_id=eq.${tripId}` },
+      (change) => events.push(change),
+    );
+  }
+  channel.on(
+    'postgres_changes',
+    { event: '*', schema: 'public', table: 'trips', filter: `id=eq.${tripId}` },
+    (change) => events.push(change),
+  );
+  // Joined is not listening yet: Realtime confirms "Subscribed to PostgreSQL" a moment later.
+  await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('realtime: subscribe timed out')), 15_000);
+    channel.on('system', {}, (message) => {
+      if (message.extension === 'postgres_changes' && message.status === 'ok') {
+        clearTimeout(timer);
+        resolve();
+      }
+    });
+    channel.subscribe((status, err) => {
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        clearTimeout(timer);
+        reject(new Error(`realtime: ${status} ${err?.message ?? ''}`));
+      }
+    });
+  });
+  return { events, channel };
+}
+
+/** Waits up to `ms` for an event matching `match`; resolves with it, or undefined. */
+async function waitFor(events, match, ms) {
+  const deadline = Date.now() + ms;
+  while (Date.now() < deadline) {
+    const found = events.find(match);
+    if (found) return found;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  return undefined;
 }
 
 async function insertOne(client, table, row) {
@@ -110,6 +161,37 @@ try {
     placeOnTrip.data?.trip_id === trip.id,
     placeOnTrip.error?.message,
   );
+
+  // TR-54: live updates. B (member) hears A's new stop within 5 s, and A's delete through the
+  // trip's touched `trips` row; C (non-member) hears nothing on the same filters.
+  const bLive = await listen(b.client, trip.id);
+  const cLive = await listen(c.client, trip.id);
+  const liveStop = await insertOne(a.client, 'itinerary_items', {
+    trip_id: trip.id,
+    day: '2026-11-04',
+    kind: 'place',
+    place_id: place.id,
+  });
+  const heard = await waitFor(
+    bLive.events,
+    (e) => e.eventType === 'INSERT' && e.new?.id === liveStop.id,
+    5_000,
+  );
+  check('realtime: member receives an insert on the trip within 5 s', Boolean(heard));
+  await a.client.from('itinerary_items').delete().eq('id', liveStop.id);
+  const touched = await waitFor(
+    bLive.events,
+    (e) => e.table === 'trips' && e.eventType === 'UPDATE' && e.new?.id === trip.id,
+    5_000,
+  );
+  check("realtime: member hears a delete through the trip's update", Boolean(touched));
+  check(
+    'realtime: non-member receives nothing',
+    cLive.events.length === 0,
+    JSON.stringify(cLive.events.map((e) => `${e.table} ${e.eventType}`)),
+  );
+  await b.client.removeChannel(bLive.channel);
+  await c.client.removeChannel(cLive.channel);
 
   // Rows the trip's members share, and rows that stay A's alone.
   const shared = new Set([
