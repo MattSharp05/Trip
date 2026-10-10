@@ -8,6 +8,7 @@ export { PhotoCard, type PhotoCardProps } from './PhotoCard';
 export { PlaceholderScreen } from './PlaceholderScreen';
 export { Segmented, type SegmentedProps } from './Segmented';
 export { Sheet, type SheetProps } from './Sheet';
+export { SheetConfirm, type ConfirmRequest, type SheetConfirmProps } from './SheetConfirm';
 export { Skeleton, type SkeletonProps } from './Skeleton';
 export { Surface, type SurfaceProps } from './Surface';
 export { Text, type TextProps, type TextTone } from './Text';
