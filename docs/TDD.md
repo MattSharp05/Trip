@@ -1,5 +1,5 @@
 # Technical Design — Trip
-Status: Approved 2026-10-06 · PRD: https://app.notion.com/p/3f124983f3ca81b4be8dd2226fdb12a1 · Design: [`design.md`](design.md)
+Status: Approved 2026-10-06; v2 Group trips section in review 2026-10-09 · PRD: https://app.notion.com/p/3f124983f3ca81b4be8dd2226fdb12a1 · Design: [`design.md`](design.md)
 
 Hard constraints from the PRD: iPhone only, **$0 running cost**, and everything must run in
 **Expo Go** during the demo phase (no paid Apple account, no Mac, no custom native code).
@@ -87,7 +87,7 @@ Feature folders keep parallel tickets from touching the same files; shared scree
 through small registries (e.g. the wallet card renderer map by booking type) rather than one big file.
 
 ## Data & state
-Tables (all with `user_id` and RLS `user_id = auth.uid()`):
+Tables (v1: all with `user_id` and RLS `user_id = auth.uid()`; v2 moves trip data to membership, see [v2: Group trips](#v2-group-trips)):
 - `trips` (city, country, lat/lng, timezone, start/end date, cover photo)
 - `places` (name, address, lat/lng, kind, photo url, source url)
 - `itinerary_items` (trip, day date, start time local, duration, place, kind, booking?, fixed?)
@@ -170,3 +170,72 @@ Client: TanStack Query caches per trip; Zustand holds selection and UI state. On
    in Phase B); Photon and OpenFreeMap are fair-use public services.
 7. **Expo Go tracks the latest SDK only:** when Expo ships SDK 58 to the App Store, the project must
    upgrade (a planned ticket when it happens).
+
+## v2: Group trips
+PRD: project page → "v2: Group trips". Same constraints: $0, Expo Go only, no Phase B features.
+ADRs 0027–0032.
+
+### Data model (ADR 0027, 0029, 0030)
+| Table / change | Purpose |
+|---|---|
+| `profiles` (id, display_name, venmo, cashapp, zelle) | Names on avatars and "Added by"; payment handles. Readable by yourself and co-members |
+| `trip_members` (trip_id, user_id, role owner/member, joined_at) | Membership; creator added by trigger; existing trips backfilled |
+| `is_trip_member(trip)` (security definer) | Used by every trip-scoped policy |
+| `trip_invites` (token, trip_id, created_by, revoked_at) + `invite_preview`, `accept_invite` RPCs | Invite links |
+| `places.trip_id`; plain FKs + same-trip triggers instead of composite `(x_id, user_id)` FKs | Members can attach to each other's rows on the same trip |
+| `user_id` = added by; `itinerary_items.added_by` | Attribution, kept when a Bucket List item is planned |
+| `bucket_likes` (bucket_item_id, user_id) | Likes, "Popular" |
+| `item_opt_outs` (itinerary_item_id, user_id) | Everyone is in unless they opt out |
+| `bookings.visibility` shared/private; `trip_flights(trip)` | Mine / Shared; flight times visible to the group, passes private |
+| `document_shares` (document_id, trip_id) | Share a passport/visa with one trip |
+| `trips.currency`; `expenses.paid_by, itinerary_item_id, rate_to_trip, trip_currency`; `expense_shares` | Shared expenses (equal split, stored shares) |
+| `payments` (from, to, amount, currency, method) | Settled payments |
+| `payment_nudges` | In-app reminders, one per pair per day |
+
+Migrations are named after their ticket (`0050_group_trips.sql`), are additive, and keep the app
+on `main` working (builders apply from their branch to the one project). `db:test-rls` covers
+owner / member / non-member and private items for every new table.
+
+### App
+- **Data layer split first** (Foundations ticket): `src/services/data/` becomes one module per
+  domain (`trips`, `members`, `itinerary`, `bucket`, `bookings`, `documents`, `expenses`), each with
+  its slice of the `DataSource` interface, demo implementation, Supabase implementation, hooks and
+  tests, composed in `source.ts` / `index.ts`. Parallel tickets then touch different files.
+- **Members:** `useTripMembers(tripId)` returns `{ id, name, initial, role, isMe }[]`. Avatars are
+  initials in a 24 pt circle (Surface fill, white initial; the selected or "you" ring in orange),
+  per `design.md` (no photos, no colours beyond the tokens).
+- **Live updates** (ADR 0028): `useTripLiveUpdates(tripId)` subscribes to `postgres_changes` for the
+  open trip and invalidates its queries.
+- **Invites** (ADR 0029): `app/invite/[token].tsx` outside the auth guard; share via `Share`.
+- **Opening a trip** always lands on Plan with the map (cards, globe, switcher, join).
+- **Flights:** `trip_flights` feeds an Arrivals list (grouped by airport, sorted by landing time)
+  and, on the arrival day, one great-circle arc per traveler converging on the destination
+  (`src/core/flights.ts` already draws one).
+- **Bucket List:** "Added by" line, heart + count, Popular sort; "Suggest times" runs Smart Add's
+  scorer (ADR 0006) for liked items and shows a proposed slot per item to accept.
+- **Itinerary:** row shows who is going (avatars) and "Added by"; the detail sheet has "I'm out".
+- **Wallet:** Organize → `Mine | Shared` segmented control above the filter chips; each item's menu
+  has Share with group / Make private (owner only). Other members' items show "Added by".
+- **Money:** Organize's Budget becomes **Expenses** (list + add) and **Balances** (one row per
+  member, person detail with history, Pay with Venmo / Cash App, Zelle details, Mark as paid,
+  Send reminder). Pure logic in `src/core/split.ts`, `src/core/settle.ts`,
+  `src/core/paymentLinks.ts`.
+
+### Scenarios (decision 8)
+Pretend travelers **Blake** and **Willem** join the Vegas fixtures (`src/scenarios/fixtures/group.ts`):
+three flights converging on LAS (Matthew from LAX, Blake from ORD, Willem from JFK), likes on
+Bucket List items, an opt-out, expenses in USD and EUR, one payment, one reminder. The demo
+session plays "you" = Matthew; scenario names start with `group-` (e.g. `group-plan-arrivals`,
+`group-bucket-popular`, `group-balances`). Real two-account checks use Matthew's phone plus a
+second account (a second sign-up) for invites and live updates.
+
+### Reachability (checked 2026-10-09 from a cloud session)
+Supabase Realtime websocket (`wghftsubdrkxfzysovou.supabase.co/realtime/v1`, 401 without a key =
+reachable), Frankfurter historical rates (`api.frankfurter.dev/v1/<date>`), Expo Push
+(`exp.host`), `venmo.com`, `cash.app`: all reachable. No new domains to allow.
+
+### v2 risks
+1. **Remote push in Expo Go on iOS** is unproven: spike first; reminders work in-app regardless.
+2. **RLS rewrite** touches every table on the live project: one migration, backfilled, tested by
+   `db:test-rls` with three users before anything builds on it.
+3. **Two-device QA:** invites and live updates need a second account; the scenarios cover the rest.
