@@ -1,9 +1,9 @@
 import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 import * as Notifications from 'expo-notifications';
-import { AppState } from 'react-native';
+import { AppState, type AppStateStatus } from 'react-native';
 
 import DevIndexScreen from '../app/dev/index';
-import PushTestScreen, { PUSH_DELAY_MS } from '../app/dev/push';
+import PushTestScreen from '../app/dev/push';
 import RootLayout from '../app/_layout';
 import { resetFakeAuth, testSession } from '@/features/auth/testing';
 import { sendExpoPush } from '@/services/expoPush';
@@ -20,6 +20,8 @@ jest.mock('@/services/expoPush', () => ({ sendExpoPush: jest.fn(async () => 'tic
 const notifications = Notifications as jest.Mocked<typeof Notifications> & {
   deliver: (notification: unknown) => void;
 };
+type Permission = Awaited<ReturnType<typeof Notifications.getPermissionsAsync>>;
+const permission = (status: string) => ({ status, granted: status === 'granted' }) as Permission;
 
 const routes = {
   _layout: RootLayout,
@@ -32,28 +34,23 @@ const routes = {
   'dev/gallery': () => null,
 };
 
-/** Holds the 5-second "lock your phone" wait; calling the result ends it. */
-function holdPushDelay(): () => void {
-  const realSetTimeout = global.setTimeout;
-  let release: (() => void) | undefined;
-  const spy = jest.spyOn(global, 'setTimeout').mockImplementation(((
-    fn: () => void,
-    ms?: number,
-  ) => {
-    if (ms !== PUSH_DELAY_MS) return realSetTimeout(fn, ms);
-    release = fn;
-    return 0;
-  }) as typeof setTimeout);
-  return () => {
-    spy.mockRestore();
-    if (!release) throw new Error('the push delay never started');
-    release();
-  };
+/** Lets a test move the app to another state (locking makes it 'inactive', then 'background'). */
+function appStateListeners() {
+  const listeners = new Set<(state: AppStateStatus) => void>();
+  jest.spyOn(AppState, 'addEventListener').mockImplementation((_type, listener) => {
+    listeners.add(listener);
+    return { remove: () => listeners.delete(listener) } as ReturnType<
+      typeof AppState.addEventListener
+    >;
+  });
+  return (state: AppStateStatus) =>
+    act(async () => listeners.forEach((listener) => listener(state)));
 }
 
 beforeEach(() => {
   resetFakeAuth(testSession);
   jest.clearAllMocks();
+  jest.restoreAllMocks();
 });
 
 describe('push test (TR-52)', () => {
@@ -64,7 +61,8 @@ describe('push test (TR-52)', () => {
     await act(async () => {});
   });
 
-  it('asks permission, shows the token, sends the push after the delay and sees it arrive', async () => {
+  it('asks permission, shows the token and sends the push as the phone locks', async () => {
+    const moveTo = appStateListeners();
     renderRouter(routes, { initialUrl: '/dev/push' });
     fireEvent.press(await screen.findByRole('button', { name: 'Allow notifications' }));
 
@@ -74,38 +72,55 @@ describe('push test (TR-52)', () => {
     });
     expect(notifications.setNotificationHandler).toHaveBeenCalled();
 
-    const endDelay = holdPushDelay();
-    fireEvent.press(screen.getByRole('button', { name: 'Send test push' }));
-    expect(await screen.findByText(/Lock your phone now/)).toBeOnTheScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Send when I lock' }));
+    expect(await screen.findByText(/Now lock your phone/)).toBeOnTheScreen();
     expect(sendExpoPush).not.toHaveBeenCalled();
-    const appState = AppState.currentState;
-    AppState.currentState = 'background'; // Matthew locked the phone
-    try {
-      await act(async () => endDelay());
-    } finally {
-      AppState.currentState = appState;
-    }
 
+    await moveTo('inactive');
+    expect(sendExpoPush).toHaveBeenCalledTimes(1);
     expect(sendExpoPush).toHaveBeenCalledWith(
       expect.objectContaining({
         to: 'ExponentPushToken[test-token]',
-        data: { tag: 'trip-push-test' },
+        data: expect.objectContaining({ tag: 'trip-push-test' }),
       }),
     );
     expect(
       await screen.findByText(/Sent at .* with the app in the background \(ticket ticket-1\)/),
     ).toBeOnTheScreen();
+    await moveTo('background');
+    expect(sendExpoPush).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends now with the app open, sees it arrive and sees it opened', async () => {
+    notifications.getPermissionsAsync.mockResolvedValueOnce(permission('granted'));
+    renderRouter(routes, { initialUrl: '/dev/push' });
+
+    fireEvent.press(await screen.findByRole('button', { name: 'Send now' }));
+    expect(
+      await screen.findByText(/Sent at .* with the app open \(ticket ticket-1\)/),
+    ).toBeOnTheScreen();
 
     expect(screen.getByTestId('push-arrived')).toHaveTextContent(/Not yet/);
     act(() => notifications.deliver({}));
     expect(screen.getByTestId('push-arrived')).not.toHaveTextContent(/Not yet/);
+
+    // Tapping this run's push opens Trip; an older test push doesn't count.
+    const { data } = jest.mocked(sendExpoPush).mock.calls[0][0];
+    const response = (run: string) =>
+      ({
+        notification: { request: { content: { data: { tag: 'trip-push-test', run } } } },
+      }) as never;
+    notifications.useLastNotificationResponse.mockReturnValue(response('older-run'));
+    act(() => notifications.deliver({}));
+    expect(screen.getByTestId('push-opened')).toHaveTextContent(/Not yet/);
+    notifications.useLastNotificationResponse.mockReturnValue(response(data!.run));
+    act(() => notifications.deliver({}));
+    expect(screen.getByTestId('push-opened')).toHaveTextContent(/Yes/);
+    notifications.useLastNotificationResponse.mockReturnValue(undefined);
   });
 
   it('shows the exact error when Expo Go gives no token', async () => {
-    notifications.getPermissionsAsync.mockResolvedValueOnce({
-      status: 'granted',
-      granted: true,
-    } as Awaited<ReturnType<typeof Notifications.getPermissionsAsync>>);
+    notifications.getPermissionsAsync.mockResolvedValueOnce(permission('granted'));
     notifications.getExpoPushTokenAsync.mockRejectedValueOnce(
       new Error('No "projectId" found in Expo Go'),
     );
@@ -113,24 +128,25 @@ describe('push test (TR-52)', () => {
 
     expect(await screen.findByText('No "projectId" found in Expo Go')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Try again' })).toBeOnTheScreen();
-    expect(screen.queryByRole('button', { name: 'Send test push' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Send now' })).toBeNull();
   });
 
   it('shows the error when Expo refuses the push', async () => {
     jest
       .mocked(sendExpoPush)
       .mockRejectedValueOnce(new Error('Expo Push refused it: InvalidCredentials'));
-    notifications.getPermissionsAsync.mockResolvedValueOnce({
-      status: 'granted',
-      granted: true,
-    } as Awaited<ReturnType<typeof Notifications.getPermissionsAsync>>);
+    notifications.getPermissionsAsync.mockResolvedValueOnce(permission('granted'));
     renderRouter(routes, { initialUrl: '/dev/push' });
 
-    const button = await screen.findByRole('button', { name: 'Send test push' });
-    const endDelay = holdPushDelay();
-    fireEvent.press(button);
-    await screen.findByText(/Lock your phone now/);
-    await act(async () => endDelay());
+    fireEvent.press(await screen.findByRole('button', { name: 'Send now' }));
     expect(await screen.findByText('Expo Push refused it: InvalidCredentials')).toBeOnTheScreen();
+  });
+
+  it('says where to turn notifications back on after a denial', async () => {
+    notifications.getPermissionsAsync.mockResolvedValueOnce(permission('denied'));
+    renderRouter(routes, { initialUrl: '/dev/push' });
+
+    expect(await screen.findByTestId('push-denied')).toHaveTextContent(/Settings app → Expo Go/);
+    expect(screen.queryByRole('button', { name: 'Allow notifications' })).toBeNull();
   });
 });

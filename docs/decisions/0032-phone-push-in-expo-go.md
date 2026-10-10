@@ -21,11 +21,12 @@ service (`exp.host`) is free and reachable from the cloud.
 **Consequences.** Reminders never depend on push; push is an addition.
 
 **Spike build (TR-52).** Settings → Developer → Push test (`app/dev/push.tsx`) asks permission,
-shows the Expo push token (`getExpoPushTokenAsync({ projectId })`, or the exact error), and "Send
-test push" posts one push to the Expo Push API (`src/services/expoPush.ts`) 5 seconds after the tap,
-so there is time to lock the phone. The screen then shows when it was sent (and whether the app was
-already in the background), whether a push arrived with the app open, and whether Trip was opened
-from the push.
+shows the Expo push token (`getExpoPushTokenAsync({ projectId })`, or the exact error), and sends
+one push through the Expo Push API (`src/services/expoPush.ts`) straight from the phone. "Send when I
+lock" sends it the moment Trip leaves the foreground (a timer started before locking could stay
+frozen until the phone is unlocked, because iOS suspends a background app's JavaScript); "Send now"
+sends it with the app open. The screen shows when the push was sent and in which app state, whether
+a push arrived with the app open, and whether Trip was opened from this run's push.
 
 ## Result
 

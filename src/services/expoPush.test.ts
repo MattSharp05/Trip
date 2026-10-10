@@ -36,5 +36,6 @@ describe('sendExpoPush', () => {
       sendExpoPush(push, reply(400, { errors: [{ message: '"to" must be a token' }] })),
     ).rejects.toThrow('"to" must be a token');
     await expect(sendExpoPush(push, reply(502, null))).rejects.toThrow('HTTP 502');
+    await expect(sendExpoPush(push, reply(200, null))).rejects.toThrow('an unexpected reply');
   });
 });

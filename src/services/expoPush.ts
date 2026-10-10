@@ -30,6 +30,6 @@ export async function sendExpoPush(push: TestPush, fetchFn: typeof fetch = fetch
     ticket?.details?.error ??
     ticket?.message ??
     json?.errors?.[0]?.message ??
-    `HTTP ${response.status}`;
+    (response.ok ? 'an unexpected reply' : `HTTP ${response.status}`);
   throw new Error(`Expo Push refused it: ${reason}`);
 }
