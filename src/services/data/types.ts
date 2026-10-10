@@ -3,246 +3,31 @@
  * camelCase. Dates are `YYYY-MM-DD` and times `HH:MM` (24h), both local wall-clock time in the
  * trip's timezone (flights carry each airport's own timezone). Money is integer minor units plus
  * an ISO currency code.
+ *
+ * Each domain's models live in its folder (`trips/types.ts`, …); this file re-exports them and
+ * holds the types that span domains.
  */
 
 import type { Money } from '@/core/money';
 
+import type { Booking } from './bookings/types';
+import type { BucketItem } from './bucket/types';
+import type { TravelDocument } from './documents/types';
+import type { Expense } from './expenses/types';
+import type { ItineraryItem } from './itinerary/types';
+import type { Place } from './places/types';
+import type { Trip } from './trips/types';
+
 export type { Money };
-
-/** Credit for a cover photo (Unsplash guidelines: "Photo by <name> on Unsplash", with links). */
-export interface PhotoCredit {
-  source: 'unsplash';
-  photographer: string;
-  photographerUrl: string;
-  photoUrl: string;
-}
-
-export interface Trip {
-  id: string;
-  city: string;
-  country: string | null;
-  lat: number | null;
-  lng: number | null;
-  /** IANA timezone, e.g. `America/Los_Angeles`. */
-  timezone: string;
-  startDate: string;
-  endDate: string;
-  coverPhotoUrl: string | null;
-  /** Who took the cover photo; null (or absent in fixtures) when it needs no credit line. */
-  coverPhotoCredit?: PhotoCredit | null;
-  /** The trip's total budget, in the currency it was set in; null when none is set. */
-  budget?: Money | null;
-}
-
-/** What "create a trip" saves; the source assigns the id. */
-export type NewTrip = Omit<Trip, 'id' | 'budget'>;
-
-export interface Place {
-  id: string;
-  name: string;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  /** food, landmark, hotel, airport, car, arena, bar, nightlife, attraction */
-  kind: string | null;
-  photoUrl: string | null;
-  sourceUrl: string | null;
-}
-
-/** What "save a place" takes; without an id it adds a new one. */
-export type PlaceInput = Omit<Place, 'id'> & { id?: string };
-
-export type ItemKind = 'flight' | 'hotel' | 'car' | 'event' | 'food' | 'activity';
-
-export interface ItineraryItem {
-  id: string;
-  tripId: string;
-  day: string;
-  startTime: string | null;
-  durationMinutes: number | null;
-  placeId: string | null;
-  kind: ItemKind;
-  bookingId: string | null;
-  /** Fixed items (bookings, tickets) never move when Smart Add reshuffles a day. */
-  fixed: boolean;
-  /** Display title; without one, screens show the place's name. */
-  title?: string;
-  /** The traveller's own notes (detail sheet); absent in fixtures. */
-  notes?: string | null;
-}
-
-export interface LocalDateTime {
-  date: string;
-  time: string;
-  timezone: string;
-}
-
-export interface Airport {
-  code: string;
-  city: string;
-  placeId: string | null;
-}
-
-export interface FlightData {
-  airline: string;
-  airlineCode: string;
-  flightNumber: string;
-  aircraft: string | null;
-  from: Airport;
-  to: Airport;
-  departs: LocalDateTime;
-  arrives: LocalDateTime;
-  terminal: string | null;
-  gate: string | null;
-  seat: string | null;
-  boardingTime: string | null;
-  boardingGroup: string | null;
-  cabin: string | null;
-  confirmation: string;
-  passenger: string;
-  /** A picture of the boarding pass the user added. Kept in the booking's JSON, not a column. */
-  passImage?: PassImage | null;
-  /** Where the barcode sits on `passImage`, as fractions of its size. */
-  passCrop?: PassCrop | null;
-}
-
-/**
- * An image file and its pixel size. `uri` is a file URI from the photo picker, or `fixture:<name>`
- * for a scenario's bundled sample.
- */
-export interface PassImage {
-  uri: string;
-  width: number;
-  height: number;
-}
-
-/** A rectangle on an image, each value a fraction (0–1) of the image's width or height. */
-export interface PassCrop {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-export interface HotelData {
-  name: string;
-  placeId: string;
-  checkIn: LocalDateTime;
-  checkOut: LocalDateTime;
-  confirmation: string;
-  room: string | null;
-  address: string;
-  phone: string | null;
-  website: string | null;
-  email: string | null;
-}
-
-export interface CarData {
-  company: string;
-  pickupPlaceId: string;
-  returnPlaceId: string;
-  pickup: LocalDateTime;
-  dropoff: LocalDateTime;
-  confirmation: string;
-  vehicle: string | null;
-}
-
-export interface TicketData {
-  event: string;
-  placeId: string;
-  starts: LocalDateTime;
-  section: string | null;
-  row: string | null;
-  seats: string | null;
-  confirmation: string;
-}
-
-interface BookingBase {
-  id: string;
-  tripId: string;
-  /**
-   * Storage path of the original file (PDF, screenshot), if one was imported; `fixture:<name>` for
-   * a scenario's bundled sample.
-   */
-  originalPath: string | null;
-}
-
-export type Booking =
-  | (BookingBase & { type: 'flight'; data: FlightData })
-  | (BookingBase & { type: 'hotel'; data: HotelData })
-  | (BookingBase & { type: 'car'; data: CarData })
-  | (BookingBase & { type: 'ticket'; data: TicketData });
-
-export type BookingType = Booking['type'];
-
-/** A TikTok or Instagram video the traveller saved places from (TR-30). */
-export interface SavedLink {
-  id: string;
-  tripId: string;
-  url: string;
-  platform: 'tiktok' | 'instagram';
-  /** The caption, when the platform shares it. */
-  title: string | null;
-  author: string | null;
-  thumbnailUrl: string | null;
-  /** The places saved from it. */
-  placeIds: string[];
-}
-
-/** What "save a link" takes; without an id it adds a new one. */
-export type SavedLinkInput = Omit<SavedLink, 'id'> & { id?: string };
-
-export interface BucketItem {
-  id: string;
-  tripId: string;
-  placeId: string;
-  durationMinutes: number | null;
-  /** Opening window; an end before the start runs past midnight (bars). */
-  windowStart: string | null;
-  windowEnd: string | null;
-  /** Where it came from: tiktok, instagram, search, discover. */
-  source: string | null;
-  /** Events have a fixed date and time. */
-  fixedDate: string | null;
-  fixedTime: string | null;
-  /** Display title (an event's name); without one, screens show the place's name. */
-  title?: string;
-  /** The video it was saved from, for "Watch" (absent in most fixtures). */
-  link?: SavedLink | null;
-}
-
-export interface Expense {
-  id: string;
-  tripId: string;
-  amountMinor: number;
-  currency: string;
-  category: string;
-  bookingId: string | null;
-  /** ISO instant. */
-  paidAt: string | null;
-  /** What it was for ("Sphere tickets"); optional. */
-  description?: string;
-}
-
-/**
- * A passport or visa, entered by hand and never sent to AI (ADR 0004). It belongs to the account,
- * so it shows on every trip.
- */
-export interface TravelDocument {
-  id: string;
-  type: 'passport' | 'visa';
-  country: string | null;
-  number: string | null;
-  expiresOn: string | null;
-  /**
-   * Photos: Storage paths in the private `originals` bucket (`<uid>/documents/…`) for an account,
-   * or local file URIs in a demo session.
-   */
-  imagePaths: string[];
-}
-
-/** What "save a document" takes; without an id it adds a new one. */
-export type DocumentInput = Omit<TravelDocument, 'id'> & { id?: string };
+export type * from './bookings/types';
+export type * from './bucket/types';
+export type * from './documents/types';
+export type * from './expenses/types';
+export type * from './itinerary/types';
+export type * from './links/types';
+export type * from './members/types';
+export type * from './places/types';
+export type * from './trips/types';
 
 /** Everything one trip's screens need, loaded together. */
 export interface TripData {
