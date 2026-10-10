@@ -13,6 +13,8 @@ export interface PlanSheetProps {
   bottomInset: number;
   /** Ask the sheet to go back to half height; changes each time (e.g. a row was tapped). */
   collapseKey: number;
+  /** Ask the sheet to go to half height from any height; changes each time a trip is opened. */
+  halfKey?: number;
   /** How much of the screen the sheet covers now: the map is sized to the rest. */
   onCoverChange?: (cover: number) => void;
   mode: PlanMode;
@@ -34,6 +36,7 @@ export function PlanSheet({
   halfHeight,
   bottomInset,
   collapseKey,
+  halfKey,
   onCoverChange,
   mode,
   onModeChange,
@@ -59,6 +62,7 @@ export function PlanSheet({
       halfHeight={halfHeight}
       bottomInset={bottomInset}
       collapseKey={collapseKey}
+      halfKey={halfKey}
       onCoverChange={onCoverChange}
       top={header}
       testID="plan-sheet"

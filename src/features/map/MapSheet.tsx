@@ -24,6 +24,8 @@ export interface MapSheetProps {
   bottomInset: number;
   /** Ask the sheet to leave full height for half; changes each time (e.g. a row was tapped). */
   collapseKey?: number;
+  /** Ask the sheet to go to half height from any height; changes each time (a trip was opened). */
+  halfKey?: number;
   /** Always on show, even collapsed (the day header, the trip filter). */
   top: ReactNode;
   /** Under `top`; hidden when the sheet is collapsed. */
@@ -43,6 +45,7 @@ export function MapSheet({
   halfHeight,
   bottomInset,
   collapseKey = 0,
+  halfKey = 0,
   top,
   children,
   onCoverChange,
@@ -78,6 +81,14 @@ export function MapSheet({
     collapsed.current = collapseKey;
     if (index.current === SHEET_FULL) sheet.current?.snapToIndex(SHEET_HALF);
   }, [collapseKey]);
+
+  // An opened trip shows its map above a half-height sheet, however the sheet was left (TR-56).
+  const halved = useRef(halfKey);
+  useEffect(() => {
+    if (halved.current === halfKey) return;
+    halved.current = halfKey;
+    if (index.current !== SHEET_HALF) sheet.current?.snapToIndex(SHEET_HALF);
+  }, [halfKey]);
 
   const onTopLayout = (e: LayoutChangeEvent) =>
     setTopHeight(Math.ceil(e.nativeEvent.layout.height));

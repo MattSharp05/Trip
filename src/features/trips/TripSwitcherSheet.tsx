@@ -4,11 +4,10 @@ import { now } from '@/core/clock';
 import { dateRangeLabel } from '@/core/dates';
 import { filterTrips } from '@/core/trips';
 import { useTrips, type Trip } from '@/services/data';
-import { useSelectionStore } from '@/stores/selection';
 import { colors, spacing } from '@/theme';
 import { Icon, LoadError, Sheet, Skeleton, Text } from '@/ui';
 
-import { useChooseTrip } from './selectedTrip';
+import { useOpenTrip } from './selectedTrip';
 
 /** Discover's extra choice (TR-33): every upcoming trip at once instead of one. */
 export interface AllUpcomingOption {
@@ -28,9 +27,9 @@ export interface TripSwitcherSheetProps {
 }
 
 /**
- * The trip switcher (TR-15): upcoming trips, soonest first, then past ones. Choosing a trip selects
- * it for Plan, Organize and Discover (remembered on a real account) and opens Plan on its first
- * day, or today while it's underway. Discover adds "All upcoming trips" at the top (TR-33).
+ * The trip switcher (TR-15): upcoming trips, soonest first, then past ones. Choosing another trip
+ * selects it for Plan, Organize and Discover (remembered on a real account) and opens Plan on its
+ * first day, or today while it's underway, with the map showing (TR-56). Discover adds "All upcoming trips" at the top (TR-33).
  */
 export function TripSwitcherSheet({
   open,
@@ -40,16 +39,13 @@ export function TripSwitcherSheet({
   testID = 'trip-switcher',
 }: TripSwitcherSheetProps) {
   const { data: trips, isPending, isError, refetch } = useTrips();
-  const chooseTrip = useChooseTrip();
+  const openTrip = useOpenTrip();
 
   const choose = (trip: Trip) => {
     allUpcoming?.onChange(false);
-    if (trip.id !== currentTripId) {
-      chooseTrip(trip.id);
-      // A switch starts the trip fresh: its opening day, not a scenario's.
-      useSelectionStore.getState().initForTrip(trip, {});
-    }
     onClose();
+    // Another trip opens like one from the Trips tab (TR-56): Plan, on its opening day, map showing.
+    if (trip.id !== currentTripId) openTrip(trip);
   };
 
   const chooseAll = () => {

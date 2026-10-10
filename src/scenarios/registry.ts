@@ -2,7 +2,7 @@ import type { TabName } from '@/core/tabs';
 import type { DataSnapshot } from '@/services/data/types';
 import type { ScenarioView } from '@/stores/scenario';
 
-import { groupSnapshot } from './fixtures/group';
+import { groupMemberSnapshot, groupSnapshot } from './fixtures/group';
 import { ME, VEGAS_TRIP_ID, vegasSnapshot } from './fixtures/vegas';
 import { vegasCrowdedSnapshot } from './fixtures/vegasCrowded';
 
@@ -272,6 +272,13 @@ export const SCENARIOS: readonly Scenario[] = [
     name: 'group-vegas',
     data: groupSnapshot,
     description: 'Plan tab, Las Vegas, Thu Nov 12, as a group trip with Blake and Willem.',
+    tab: 'plan',
+    view: { day: '2026-11-12', planMode: 'itinerary' },
+  }),
+  vegas({
+    name: 'group-vegas-member',
+    data: groupMemberSnapshot,
+    description: 'group-vegas as Willem, a member: no Remove in the members sheet, Leave trip.',
     tab: 'plan',
     view: { day: '2026-11-12', planMode: 'itinerary' },
   }),

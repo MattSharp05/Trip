@@ -1,9 +1,11 @@
 import * as SecureStore from 'expo-secure-store';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect } from 'react';
 
 import { now } from '@/core/clock';
 import { defaultTrip } from '@/core/trips';
 import { useDataSource, type Trip } from '@/services/data';
+import { useSelectionStore, type SelectionTrip } from '@/stores/selection';
 import { useTripStore } from '@/stores/trip';
 
 /**
@@ -38,6 +40,43 @@ export function useChooseTrip(): (tripId: string) => void {
       if (source.kind === 'supabase') void saveSelectedTripId(tripId);
     },
     [selectTrip, source.kind],
+  );
+}
+
+/**
+ * Open a trip (TR-56), the same from a trip card, a globe dot and the trip switcher: select it, start
+ * a different trip on its own opening day, and land on Plan with the sheet at half and the map on
+ * show.
+ */
+export function useOpenTrip(): (trip: SelectionTrip) => void {
+  const router = useRouter();
+  const switchTrip = useSwitchTrip();
+  return useCallback(
+    (trip: SelectionTrip) => {
+      if (useTripStore.getState().selectedTripId !== trip.id) switchTrip(trip);
+      useTripStore.getState().countOpen();
+      router.navigate('/plan');
+    },
+    [switchTrip, router],
+  );
+}
+
+/**
+ * Show another trip in Plan, Organize and Discover, starting fresh on its own opening day (not a
+ * scenario's); null shows none.
+ */
+export function useSwitchTrip(): (trip: SelectionTrip | null) => void {
+  const chooseTrip = useChooseTrip();
+  return useCallback(
+    (trip: SelectionTrip | null) => {
+      if (!trip) {
+        useTripStore.getState().selectTrip(null);
+        return;
+      }
+      chooseTrip(trip.id);
+      useSelectionStore.getState().initForTrip(trip, {});
+    },
+    [chooseTrip],
   );
 }
 
