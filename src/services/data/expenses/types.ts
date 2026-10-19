@@ -33,4 +33,6 @@ export interface Expense {
 /** The expenses slice of `DataSource`. */
 export interface ExpensesSource {
   saveExpense(expense: Expense): Promise<Expense>;
+  /** Replaces who an expense is split with (TR-66); the shares must add up to its amount. */
+  setExpenseShares(expenseId: string, shares: Share[]): Promise<void>;
 }

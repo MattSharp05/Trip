@@ -245,6 +245,29 @@ describe('Organize → Expenses on a group trip', () => {
     });
   });
 
+  it('splits an activity between everyone going by default: Willem is out of the Fountains', async () => {
+    await openGroup();
+    fireEvent.press(screen.getByTestId('budget-add-expense'));
+    fireEvent.changeText(screen.getByTestId('expense-amount'), '30');
+    fireEvent.changeText(screen.getByTestId('expense-note'), 'Gelato');
+    expect(screen.getByTestId('expense-split-everyone')).toHaveTextContent('Everyone');
+    fireEvent.press(screen.getByTestId('expense-activity-item-06'));
+    expect(screen.getByTestId('expense-split-everyone')).toHaveTextContent('Everyone going');
+    expect(screen.getByTestId('expense-split-everyone').props.accessibilityState.selected).toBe(
+      true,
+    );
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('expense-save'));
+    });
+
+    await screen.findByLabelText(/^Gelato, You paid · split 2 ways/);
+    const saved = (await savedTrip())?.expenses.find((e) => e.description === 'Gelato');
+    expect(saved?.shares).toEqual([
+      { userId: 'user-blake', shareMinor: 1500 },
+      { userId: 'user-matthew', shareMinor: 1500 },
+    ]);
+  });
+
   it('picking everyone one by one is Everyone again', async () => {
     await openGroup();
     fireEvent.press(screen.getByTestId('budget-add-expense'));

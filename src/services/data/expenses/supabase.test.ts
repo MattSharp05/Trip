@@ -95,6 +95,16 @@ describe('supabase expenses', () => {
     expect(saved).toMatchObject({ paidBy: 'u1', rateToTrip: 1.1298, shares });
   });
 
+  it("replaces an expense's shares through the RPC (TR-66)", async () => {
+    mockTables['rpc:set_expense_shares'] = { data: null, error: null };
+    await supabaseExpenses.setExpenseShares('e4', [{ userId: 'u1', shareMinor: 450 }]);
+    expect(mockCalls).toContainEqual([
+      'rpc',
+      'set_expense_shares',
+      { expense: 'e4', shares: [{ user_id: 'u1', share_minor: 450 }] },
+    ]);
+  });
+
   it('reads embedded shares, and none for a v1 expense', () => {
     const row = {
       id: 'e3',

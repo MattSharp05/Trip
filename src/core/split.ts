@@ -29,6 +29,47 @@ export function equalShares(amountMinor: number, participantIds: readonly string
 }
 
 /**
+ * Who an activity's expenses split between by default (TR-66, ADR 0030): every member who hasn't
+ * opted out of it, in the members' order.
+ */
+export function goingIds(
+  memberIds: readonly string[],
+  optedOut: readonly string[] | null | undefined,
+): string[] {
+  const out = new Set(optedOut ?? []);
+  return memberIds.filter((id) => !out.has(id));
+}
+
+/** The shares are exactly the equal split between these participants: nobody customised them. */
+export function isEqualSplit(
+  amountMinor: number,
+  shares: readonly Share[],
+  participantIds: readonly string[],
+): boolean {
+  const equal = equalShares(amountMinor, participantIds);
+  if (equal.length === 0 || equal.length !== shares.length) return false;
+  const byId = new Map(shares.map((s) => [s.userId, s.shareMinor]));
+  return equal.every((s) => byId.get(s.userId) === s.shareMinor);
+}
+
+/**
+ * An activity's expense after who's going changes from `before` to `after` (TR-66): the equal
+ * split for `after` while the expense still had the default split for `before`. Null when it stays
+ * as it is: a split someone customised, nobody left going, or no change.
+ */
+export function resplit(
+  amountMinor: number,
+  shares: readonly Share[],
+  before: readonly string[],
+  after: readonly string[],
+): Share[] | null {
+  if (!isEqualSplit(amountMinor, shares, before)) return null;
+  const next = equalShares(amountMinor, after);
+  if (next.length === 0 || isEqualSplit(amountMinor, shares, after)) return null;
+  return next;
+}
+
+/**
  * An amount in the trip currency at a stored rate (how many trip-currency units one unit buys),
  * rounded half-up to the trip currency's minor units: €60.00 at 1.1298 → $67.79.
  */

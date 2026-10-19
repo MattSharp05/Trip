@@ -1,4 +1,4 @@
-import { equalShares, toTripCurrency } from './split';
+import { equalShares, goingIds, isEqualSplit, resplit, toTripCurrency } from './split';
 
 describe('equalShares', () => {
   it('gives the remainder to the first participants by id', () => {
@@ -71,5 +71,49 @@ describe('toTripCurrency', () => {
       amountMinor: 3600,
       currency: 'USD',
     });
+  });
+});
+
+describe('opting out and the split (TR-66)', () => {
+  const sphere = equalShares(45000, ['blake', 'matthew', 'willem']);
+
+  it("defaults an activity's participants to the members going", () => {
+    expect(goingIds(['matthew', 'blake', 'willem'], ['willem'])).toEqual(['matthew', 'blake']);
+    expect(goingIds(['matthew', 'blake'], undefined)).toEqual(['matthew', 'blake']);
+    expect(goingIds(['matthew'], ['matthew'])).toEqual([]);
+  });
+
+  it('knows a default split from a customised one', () => {
+    expect(isEqualSplit(45000, sphere, ['willem', 'matthew', 'blake'])).toBe(true);
+    expect(isEqualSplit(45000, sphere, ['matthew', 'blake'])).toBe(false);
+    const custom = [
+      { userId: 'blake', shareMinor: 20000 },
+      { userId: 'matthew', shareMinor: 10000 },
+      { userId: 'willem', shareMinor: 15000 },
+    ];
+    expect(isEqualSplit(45000, custom, ['blake', 'matthew', 'willem'])).toBe(false);
+    expect(isEqualSplit(45000, [], [])).toBe(false);
+  });
+
+  it('recomputes a default split for who is going now', () => {
+    expect(resplit(45000, sphere, ['matthew', 'blake', 'willem'], ['matthew', 'blake'])).toEqual([
+      { userId: 'blake', shareMinor: 22500 },
+      { userId: 'matthew', shareMinor: 22500 },
+    ]);
+    // And back in.
+    const two = equalShares(45000, ['blake', 'matthew']);
+    expect(resplit(45000, two, ['matthew', 'blake'], ['matthew', 'blake', 'willem'])).toEqual(
+      sphere,
+    );
+  });
+
+  it('leaves a customised split, an unchanged one and an empty one alone', () => {
+    const forTwo = equalShares(45000, ['blake', 'matthew']);
+    // Split between two while all three were going: someone picked who pays.
+    expect(resplit(45000, forTwo, ['matthew', 'blake', 'willem'], ['matthew', 'blake'])).toBeNull();
+    expect(
+      resplit(45000, sphere, ['matthew', 'blake', 'willem'], ['matthew', 'blake', 'willem']),
+    ).toBeNull();
+    expect(resplit(4500, [{ userId: 'a', shareMinor: 4500 }], ['a'], [])).toBeNull();
   });
 });

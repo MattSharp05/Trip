@@ -1,7 +1,7 @@
 import { compareIds } from '@/core/split';
 
 import { checkRow, check, client, type Row } from '../shared/supabase';
-import type { Expense, ExpensesSource } from './types';
+import type { Expense, ExpensesSource, Share } from './types';
 
 /** What an expense read embeds: its shares (`select('*, expense_shares(user_id, share_minor)')`). */
 export const EXPENSE_SELECT = '*, expense_shares(user_id, share_minor)';
@@ -57,15 +57,18 @@ export const supabaseExpenses: ExpensesSource = {
         .select()
         .single(),
     );
-    // Replaced in one transaction by the RPC, which checks they add up to the amount.
-    if (expense.shares?.length) {
-      check(
-        await supabase.rpc('set_expense_shares', {
-          expense: expense.id,
-          shares: expense.shares.map((s) => ({ user_id: s.userId, share_minor: s.shareMinor })),
-        }),
-      );
-    }
+    if (expense.shares?.length) await setShares(expense.id, expense.shares);
     return { ...toExpense(row), ...(expense.shares?.length ? { shares: expense.shares } : {}) };
   },
+  setExpenseShares: setShares,
 };
+
+/** Replaced in one transaction by the RPC, which checks they add up to the amount. */
+async function setShares(expenseId: string, shares: Share[]) {
+  check(
+    await client().rpc('set_expense_shares', {
+      expense: expenseId,
+      shares: shares.map((s) => ({ user_id: s.userId, share_minor: s.shareMinor })),
+    }),
+  );
+}

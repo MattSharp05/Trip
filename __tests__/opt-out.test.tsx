@@ -7,8 +7,10 @@ import ScenarioRoute from '../app/scenario/[name]';
 import RootLayout from '../app/_layout';
 import { resetFakeAuth } from '@/features/auth/testing';
 import { exitScenario } from '@/scenarios';
+import { pairBalances } from '@/core/settle';
+import { toLedger } from '@/features/budget/balances';
 import { ME } from '@/scenarios/fixtures/vegas';
-import { WILLEM } from '@/scenarios/fixtures/group';
+import { BLAKE, WILLEM } from '@/scenarios/fixtures/group';
 import { useActiveSource } from '@/services/data/active';
 import { useSelectionStore } from '@/stores/selection';
 
@@ -164,5 +166,100 @@ describe('Shared itinerary: who is going (TR-60)', () => {
     expect(await screen.findByText('Edit stop')).toBeTruthy();
     expect(screen.queryByTestId('detail-going')).toBeNull();
     expect(screen.queryByTestId('detail-added-by')).toBeNull();
+  });
+});
+
+describe('Opting out takes you out of the expense split (TR-66)', () => {
+  const source = () => useActiveSource.getState().source;
+  const sphereShares = async () =>
+    (await source().getTripData('trip-vegas'))?.expenses.find(
+      (e) => e.id === 'expense-group-sphere',
+    )?.shares;
+  /** What `me` owes Blake (negative) or Blake owes `me`, from the saved expenses. */
+  const withBlake = async (me: string) => {
+    const expenses = (await source().getTripData('trip-vegas'))?.expenses ?? [];
+    const [balance] = pairBalances(toLedger(expenses, me, 'USD', null), me, [BLAKE]);
+    return `${balance.direction} ${balance.amountMinor}`;
+  };
+
+  async function openSphere(scenario: string, firstRow: string) {
+    await open(scenario, firstRow);
+    act(() => useSelectionStore.getState().selectDay('2026-11-13'));
+    await screen.findByTestId(`itinerary-row-${SPHERE}`);
+    await editStop(SPHERE);
+    await screen.findByTestId('detail-going');
+  }
+
+  it('Willem opting out of the Sphere splits it 2 ways, and Blake is owed accordingly', async () => {
+    // group-plan-opt-out's trip, seen by Willem.
+    await openSphere('group-vegas-member', 'item-03');
+    expect(screen.getByTestId('detail-expense-expense-group-sphere')).toHaveTextContent(
+      'Sphere tickets $450.00 · split 3 ways',
+    );
+    expect(screen.queryByTestId('detail-expense-custom')).toBeNull();
+    // Willem owes Blake $150 for the Sphere, less the $12 Uber Blake owes him; Matthew owes $150.
+    expect(await withBlake(WILLEM)).toBe('youOwe 13800');
+    expect(await withBlake(ME)).toBe('youOwe 15000');
+
+    await act(async () =>
+      fireEvent(screen.getByTestId('detail-going-switch'), 'valueChange', false),
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('detail-expense-expense-group-sphere')).toHaveTextContent(
+        'Sphere tickets $450.00 · split 2 ways',
+      ),
+    );
+    expect(await sphereShares()).toEqual([
+      { userId: BLAKE, shareMinor: 22500 },
+      { userId: ME, shareMinor: 22500 },
+    ]);
+    expect(await withBlake(WILLEM)).toBe('owesYou 1200');
+    expect(await withBlake(ME)).toBe('youOwe 22500');
+
+    // Back in: three ways again.
+    await act(async () =>
+      fireEvent(screen.getByTestId('detail-going-switch'), 'valueChange', true),
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('detail-expense-expense-group-sphere')).toHaveTextContent(
+        /split 3 ways$/,
+      ),
+    );
+    expect(await withBlake(WILLEM)).toBe('youOwe 13800');
+  });
+
+  it("keeps the switch when the opt-out saved but the split didn't", async () => {
+    await openSphere('group-vegas-member', 'item-03');
+    jest.spyOn(source(), 'setExpenseShares').mockRejectedValueOnce(new Error('offline'));
+    await act(async () =>
+      fireEvent(screen.getByTestId('detail-going-switch'), 'valueChange', false),
+    );
+    expect(
+      await screen.findByText("Saved, but the expense split didn't update."),
+    ).toBeOnTheScreen();
+    await waitFor(() => expect(goingLines()).toContain("I'm going: off"));
+    expect(await sphereShares()).toHaveLength(3);
+  });
+
+  it('leaves a custom split alone and says so', async () => {
+    await open('group-plan-opt-out', BRUNCH);
+    const custom = [
+      { userId: BLAKE, shareMinor: 25000 },
+      { userId: ME, shareMinor: 10000 },
+      { userId: WILLEM, shareMinor: 10000 },
+    ];
+    await source().setExpenseShares('expense-group-sphere', custom);
+    // Close the Fountains sheet the scenario opened, then edit the Sphere.
+    await act(async () => fireEvent.press(screen.getByTestId('detail-save')));
+    await editStop(SPHERE);
+    expect(await screen.findByTestId('detail-expense-custom')).toHaveTextContent(
+      'This activity has an expense with a custom split',
+    );
+
+    await act(async () =>
+      fireEvent(screen.getByTestId('detail-going-switch'), 'valueChange', false),
+    );
+    await waitFor(() => expect(goingLines()[0]).toBe("I'm going: off"));
+    expect(await sphereShares()).toEqual(custom);
   });
 });

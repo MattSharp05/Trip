@@ -9,6 +9,7 @@ import {
   useDataSource,
   useSavePlace,
   useSetGoing,
+  SplitNotUpdatedError,
   type DataSource,
   type ItineraryItem,
   type Member,
@@ -18,7 +19,7 @@ import type { SpotResult } from '@/services/places';
 import { useScenarioStore } from '@/stores/scenario';
 import { Sheet } from '@/ui';
 
-import { goingList } from '../itinerary';
+import { goingList, stopExpenses } from '../itinerary';
 import { AddStop } from './AddStopSheet';
 import { ItemDetails } from './DetailSheet';
 import type { ItineraryEditing } from './EditableRow';
@@ -95,7 +96,8 @@ export function useItineraryEditor({
   const find = useCallback((id: string) => data?.items.find((item) => item.id === id), [data]);
 
   const me = members.find((m) => m.isMe)?.id ?? null;
-  const { mutate: setGoing } = useSetGoing(data?.trip.id ?? null, me);
+  const memberIds = useMemo(() => members.map((m) => m.id), [members]);
+  const { mutate: setGoing } = useSetGoing(data?.trip.id ?? null, me, memberIds);
   /** "Willem", or "you"; only on a group trip, and only for someone still on it. */
   const addedByName = (item: ItineraryItem) => {
     if (members.length < 2) return null;
@@ -266,11 +268,19 @@ export function useItineraryEditor({
           onSave={saveDetails}
           addedBy={addedByName(item)}
           going={goingList(item, members)}
+          expenses={stopExpenses(item, data.expenses, memberIds)}
           onGoingChange={(going) => {
             setError(null);
             setGoing(
               { itemId: item.id, going },
-              { onError: () => setError("Couldn't save that change. Try again.") },
+              {
+                onError: (e) =>
+                  setError(
+                    e instanceof SplitNotUpdatedError
+                      ? "Saved, but the expense split didn't update."
+                      : "Couldn't save that change. Try again.",
+                  ),
+              },
             );
           }}
         />

@@ -1,6 +1,8 @@
 import type { SFSymbol } from 'expo-symbols';
 
 import { timeLabel } from '@/core/dates';
+import { formatMoney } from '@/core/money';
+import { goingIds, isEqualSplit } from '@/core/split';
 import {
   distanceLabel,
   durationLabel,
@@ -11,8 +13,16 @@ import {
   type DistanceUnit,
   type TravelEstimate,
 } from '@/core/travel';
+import { expenseTitle } from '@/features/budget/budget';
 import { pinSymbol } from '@/features/map';
-import type { Booking, ItemKind, ItineraryItem, Member, Place } from '@/services/data/types';
+import type {
+  Booking,
+  Expense,
+  ItemKind,
+  ItineraryItem,
+  Member,
+  Place,
+} from '@/services/data/types';
 
 /** One line of the day's timeline, ready to draw. */
 export interface ItineraryEntry {
@@ -76,6 +86,33 @@ export function goingList(
     isMe,
     going: !out.has(id),
   }));
+}
+
+/** A stop's expenses as its Going section shows them (TR-66). */
+export interface StopExpenses {
+  /** "Sphere tickets $450.00 · split 3 ways", one per expense linked to the stop. */
+  lines: { id: string; text: string }[];
+  /** One of them isn't split equally between everyone going: someone customised it. */
+  custom: boolean;
+}
+
+/** The expenses linked to a stop, and whether one has a split someone customised. */
+export function stopExpenses(
+  item: Pick<ItineraryItem, 'id' | 'optedOut'>,
+  expenses: readonly Expense[],
+  memberIds: readonly string[],
+): StopExpenses {
+  const linked = expenses.filter((e) => e.itineraryItemId === item.id);
+  const going = goingIds(memberIds, item.optedOut);
+  return {
+    lines: linked.map((e) => {
+      const ways = e.shares?.length ?? 1;
+      const amount = formatMoney({ amountMinor: e.amountMinor, currency: e.currency });
+      const split = ways > 1 ? `split ${ways} ways` : 'not split';
+      return { id: e.id, text: `${expenseTitle(e)} ${amount} · ${split}` };
+    }),
+    custom: linked.some((e) => e.shares?.length && !isEqualSplit(e.amountMinor, e.shares, going)),
+  };
 }
 
 /**

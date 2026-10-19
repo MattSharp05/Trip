@@ -14,7 +14,7 @@ import type { SpotResult } from '@/services/places';
 import { colors, continuous, radii, spacing, typography } from '@/theme';
 import { Button, IconButton, ListRow, Text } from '@/ui';
 
-import type { GoingMember } from '../itinerary';
+import type { GoingMember, StopExpenses } from '../itinerary';
 import { MINUTE_STEP, SheetError } from './TimeSheet';
 
 /** The duration stepper moves in quarter hours, from 15 minutes to 12 hours. */
@@ -39,11 +39,13 @@ export interface ItemDetailsProps {
   going?: GoingMember[];
   /** Your I'm going switch, saved as soon as it's flipped. */
   onGoingChange?: (going: boolean) => void;
+  /** Group trips (TR-66): the stop's expenses, under the Going list. */
+  expenses?: StopExpenses;
 }
 
 /**
  * An item's detail sheet: title, place, time, duration and notes. On a group trip, also who added
- * it and who is going, with your own I'm going switch (TR-60).
+ * it and who is going, with your own I'm going switch (TR-60), and its expenses (TR-66).
  */
 export function ItemDetails({
   item,
@@ -56,6 +58,7 @@ export function ItemDetails({
   addedBy = null,
   going = [],
   onGoingChange,
+  expenses,
 }: ItemDetailsProps) {
   const [title, setTitle] = useState(item.title ?? '');
   const [time, setTime] = useState(item.startTime);
@@ -186,6 +189,21 @@ export function ItemDetails({
               />
             ))}
           </View>
+          {expenses?.lines.map((line) => (
+            <Text
+              key={line.id}
+              variant="subhead"
+              tone="secondary"
+              testID={`detail-expense-${line.id}`}
+            >
+              {line.text}
+            </Text>
+          ))}
+          {expenses?.custom ? (
+            <Text variant="subhead" tone="secondary" testID="detail-expense-custom">
+              This activity has an expense with a custom split
+            </Text>
+          ) : null}
         </Field>
       ) : null}
       <Field label="Notes">
