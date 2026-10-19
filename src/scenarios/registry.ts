@@ -352,6 +352,14 @@ export const SCENARIOS: readonly Scenario[] = [
     tab: 'plan',
     view: { day: '2026-11-13', itemId: BELLAGIO_ITEM_ID, planMode: 'itinerary', openDetails: true },
   }),
+  vegas({
+    name: 'group-balances',
+    data: groupSnapshot,
+    description:
+      'Organize → Expenses → Balances on the group trip: you owe Blake $150.00, Willem owes you $57.60.',
+    tab: 'organize',
+    view: { organizeView: 'budget', budgetTab: 'balances' },
+  }),
   {
     name: 'empty-account',
     description: 'A new account with no trips: Trips tab empty state.',
