@@ -1,14 +1,24 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { dayLabel } from '@/core/dates';
 import { newId } from '@/core/ids';
 import { DEFAULT_DURATION_MIN } from '@/core/reflow';
 import { placeFromSpot } from '@/features/bucket';
 import type { LngLat } from '@/features/map';
-import { useSavePlace, type ItineraryItem, type TripData } from '@/services/data';
+import {
+  useDataSource,
+  useSavePlace,
+  useSetGoing,
+  type DataSource,
+  type ItineraryItem,
+  type Member,
+  type TripData,
+} from '@/services/data';
 import type { SpotResult } from '@/services/places';
+import { useScenarioStore } from '@/stores/scenario';
 import { Sheet } from '@/ui';
 
+import { goingList } from '../itinerary';
 import { AddStop } from './AddStopSheet';
 import { ItemDetails } from './DetailSheet';
 import type { ItineraryEditing } from './EditableRow';
@@ -42,14 +52,24 @@ export interface ItineraryEditorOptions {
   days: string[];
   /** The trip's city, for place search. */
   near: LngLat | null;
+  /** The trip's members (`useTripMembers`): "Added by" and who is going on a group trip. */
+  members?: readonly Member[];
 }
+
+const NO_MEMBERS: readonly Member[] = [];
 
 /**
  * Editing the Plan tab's itinerary: the gestures for `Itinerary` (`editing`), the day header's
  * Add (`add`) and Edit / Done (`reordering`, `toggleReorder`), the toast to show, and the sheets to
  * draw (`sheets`).
  */
-export function useItineraryEditor({ data, day, days, near }: ItineraryEditorOptions) {
+export function useItineraryEditor({
+  data,
+  day,
+  days,
+  near,
+  members = NO_MEMBERS,
+}: ItineraryEditorOptions) {
   const edits = useItineraryEdits(data?.trip.id ?? null);
   const { run, showMessage, remove } = edits;
   const { mutateAsync: savePlace } = useSavePlace();
@@ -73,6 +93,32 @@ export function useItineraryEditor({ data, day, days, near }: ItineraryEditorOpt
   }, []);
 
   const find = useCallback((id: string) => data?.items.find((item) => item.id === id), [data]);
+
+  const me = members.find((m) => m.isMe)?.id ?? null;
+  const { mutate: setGoing } = useSetGoing(data?.trip.id ?? null, me);
+  /** "Willem", or "you"; only on a group trip, and only for someone still on it. */
+  const addedByName = (item: ItineraryItem) => {
+    if (members.length < 2) return null;
+    const by = members.find((m) => m.id === (item.addedBy ?? me));
+    return by ? (by.isMe ? 'you' : by.name) : null;
+  };
+
+  // A scenario can open on a stop's detail sheet (`openDetails`), once its trip has loaded. Each
+  // Plan screen that mounts opens it; closing the sheet it opened uses it up.
+  const source = useDataSource();
+  const detailsOpened = useRef<DataSource | null>(null);
+  useEffect(() => {
+    const { view } = useScenarioStore.getState();
+    if (!view.openDetails || !view.itemId || source.kind !== 'demo') return;
+    if (detailsOpened.current === source || !data?.items.some((i) => i.id === view.itemId)) return;
+    detailsOpened.current = source;
+    open({ kind: 'details', itemId: view.itemId });
+  }, [data, source, open]);
+  useEffect(() => {
+    if (sheet || detailsOpened.current !== source) return;
+    const { view } = useScenarioStore.getState();
+    if (view.openDetails) useScenarioStore.setState({ view: { ...view, openDetails: undefined } });
+  }, [sheet, source]);
 
   const editing = useMemo((): ItineraryEditing => {
     /** Open a time or day sheet, unless a booking sets the item's time. */
@@ -212,6 +258,9 @@ export function useItineraryEditor({ data, day, days, near }: ItineraryEditorOpt
           error={error}
           saving={saving}
           onSave={saveDetails}
+          addedBy={addedByName(item)}
+          going={goingList(item, members)}
+          onGoingChange={(going) => setGoing({ itemId: item.id, going })}
         />
       );
     }

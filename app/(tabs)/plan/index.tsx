@@ -40,7 +40,7 @@ import {
 } from '@/features/plan';
 import { FlightStatusPill } from '@/features/wallet/flight';
 import { LINK_SAMPLES } from '../../../supabase/functions/_shared/parse/linkFixtures';
-import { useDataSource, useTripData, type DataSource } from '@/services/data';
+import { useDataSource, useTripData, useTripMembers, type DataSource } from '@/services/data';
 import { useTripForecast } from '@/services/weather';
 import { useScenarioStore } from '@/stores/scenario';
 import { useTripSelection } from '@/stores/selection';
@@ -76,10 +76,12 @@ export default function PlanScreen() {
   const forecast = useTripForecast(info);
   const days = useMemo(() => (info ? tripDays(info.startDate, info.endDate) : []), [info]);
   const map = useRef<TripMapHandle>(null);
+  const members = useTripMembers(tripId).data;
 
   const entries = useMemo(
-    () => (trip.data && selectedDay ? itineraryEntries(trip.data, selectedDay) : undefined),
-    [trip.data, selectedDay],
+    () =>
+      trip.data && selectedDay ? itineraryEntries(trip.data, selectedDay, members) : undefined,
+    [trip.data, selectedDay, members],
   );
   const selectedPlace = entries?.find((e) => e.id === selectedItemId)?.placeId ?? null;
 
@@ -153,7 +155,7 @@ export default function PlanScreen() {
       info && info.lat !== null && info.lng !== null ? { lat: info.lat, lng: info.lng } : null,
     [info],
   );
-  const editor = useItineraryEditor({ data: trip.data, day: selectedDay, days, near });
+  const editor = useItineraryEditor({ data: trip.data, day: selectedDay, days, near, members });
 
   // TikTok and Reel links (TR-30): the clipboard banner and the Add sheet's paste row open the
   // results sheet; saved places land on the Bucket List.

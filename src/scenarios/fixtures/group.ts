@@ -27,6 +27,9 @@ const members: Membership[] = [
 /** Who added what, beyond Matthew's own (unmarked) items. */
 const BUCKET_ADDED_BY: Record<string, string> = { 'bucket-golden-tiki': BLAKE };
 const STOP_ADDED_BY: Record<string, string> = { 'item-04': WILLEM }; // Dinner at Peppermill, Nov 12
+/** Who opted out of what (TR-60): Willem skips the Bellagio Fountains. */
+export const BELLAGIO_ITEM_ID = 'item-06'; // Bellagio Fountains, Fri Nov 13
+const STOP_OPTED_OUT: Record<string, string[]> = { [BELLAGIO_ITEM_ID]: [WILLEM] };
 
 /**
  * Shared expenses (TR-62, ADR 0030): Blake bought the Sphere tickets for all three (it replaces
@@ -101,9 +104,11 @@ export const groupSnapshot: DataSnapshot = {
   bucketItems: vegasSnapshot.bucketItems.map((b) =>
     BUCKET_ADDED_BY[b.id] ? { ...b, addedBy: BUCKET_ADDED_BY[b.id] } : b,
   ),
-  items: vegasSnapshot.items.map((i) =>
-    STOP_ADDED_BY[i.id] ? { ...i, addedBy: STOP_ADDED_BY[i.id] } : i,
-  ),
+  items: vegasSnapshot.items.map((i) => ({
+    ...i,
+    ...(STOP_ADDED_BY[i.id] ? { addedBy: STOP_ADDED_BY[i.id] } : {}),
+    ...(STOP_OPTED_OUT[i.id] ? { optedOut: STOP_OPTED_OUT[i.id] } : {}),
+  })),
 };
 
 /**

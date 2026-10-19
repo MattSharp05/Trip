@@ -610,6 +610,65 @@ try {
     cleanup.error?.message,
   );
 
+  // TR-60: opt-outs. B opts out of A's stop (the trip comes from the stop) and A sees it; B can't
+  // opt A or C out, A can't opt B back in, and C can neither read nor opt out.
+  const stopId = rows.itinerary_items.id;
+  const bOut = await b.client
+    .from('item_opt_outs')
+    .insert({ itinerary_item_id: stopId, trip_id: bTrip.id })
+    .select('user_id, trip_id')
+    .single();
+  check(
+    "item_opt_outs: member opts out of another member's stop, on the stop's trip",
+    !bOut.error && bOut.data.user_id === b.id && bOut.data.trip_id === trip.id,
+    bOut.error?.message,
+  );
+  const aSeesOut = await a.client
+    .from('item_opt_outs')
+    .select('user_id')
+    .eq('itinerary_item_id', stopId);
+  check(
+    'item_opt_outs: the trip reads who is out',
+    aSeesOut.data?.length === 1 && aSeesOut.data[0].user_id === b.id,
+    aSeesOut.error?.message ?? JSON.stringify(aSeesOut.data),
+  );
+  const bOptsOthers = await Promise.all(
+    [a.id, c.id].map((userId) =>
+      b.client
+        .from('item_opt_outs')
+        .insert({ itinerary_item_id: stopId, user_id: userId, trip_id: trip.id }),
+    ),
+  );
+  check(
+    "item_opt_outs: member can't opt someone else out (A or non-member C)",
+    bOptsOthers.every((r) => Boolean(r.error)),
+  );
+  const cReads = await c.client.from('item_opt_outs').select('user_id').eq('trip_id', trip.id);
+  const cOut = await c.client
+    .from('item_opt_outs')
+    .insert({ itinerary_item_id: stopId, trip_id: trip.id });
+  check(
+    "item_opt_outs: non-member can't read or opt out",
+    !cReads.data?.length && Boolean(cOut.error),
+  );
+  const aOptsBIn = await a.client
+    .from('item_opt_outs')
+    .delete()
+    .eq('itinerary_item_id', stopId)
+    .eq('user_id', b.id)
+    .select('user_id');
+  const bIn = await b.client
+    .from('item_opt_outs')
+    .delete()
+    .eq('itinerary_item_id', stopId)
+    .eq('user_id', b.id)
+    .select('user_id');
+  check(
+    "item_opt_outs: only you opt yourself back in (A can't delete B's)",
+    !aOptsBIn.data?.length && bIn.data?.length === 1,
+    aOptsBIn.error?.message ?? bIn.error?.message,
+  );
+
   // Profiles: yourself and the people you share a trip with.
   const profiles = await b.client.from('profiles').select('id, display_name');
   const visible = new Set(profiles.data?.map((p) => p.id));

@@ -1,9 +1,18 @@
 import { vegasSnapshot } from '@/scenarios/fixtures/vegas';
-import type { ItineraryItem } from '@/services/data/types';
+import type { ItineraryItem, Member } from '@/services/data/types';
 
 import { findScenario } from '@/scenarios/registry';
 
-import { itemForPin, itineraryEntries, legCaption, type ItineraryLeg } from './itinerary';
+import { BLAKE, WILLEM, groupSnapshot } from '@/scenarios/fixtures/group';
+
+import {
+  goingList,
+  hasGoing,
+  itemForPin,
+  itineraryEntries,
+  legCaption,
+  type ItineraryLeg,
+} from './itinerary';
 
 describe('itineraryEntries', () => {
   it("draws Friday's stops in time order with times, places and thumbnails", () => {
@@ -127,5 +136,57 @@ describe('itemForPin', () => {
       day: '2026-11-12',
     });
     expect(itemForPin(items, 'place-nowhere', '2026-11-13')).toBeNull();
+  });
+});
+
+describe('who is going (TR-60)', () => {
+  const ME = groupSnapshot.me;
+  const member = (id: string, name: string, isMe = false): Member => ({
+    id,
+    name,
+    initial: name[0],
+    role: isMe ? 'owner' : 'member',
+    isMe,
+  });
+  const members = [member(ME, 'Matthew', true), member(BLAKE, 'Blake'), member(WILLEM, 'Willem')];
+  const fountains = groupSnapshot.items.find((i) => i.id === 'item-06')!;
+
+  it('is everyone on the trip minus who opted out, in the members order', () => {
+    expect(goingList(fountains, members).map((m) => [m.name, m.going])).toEqual([
+      ['Matthew', true],
+      ['Blake', true],
+      ['Willem', false],
+    ]);
+    expect(goingList({ ...fountains, optedOut: undefined }, members).every((m) => m.going)).toBe(
+      true,
+    );
+  });
+
+  it('has no list on a trip of one, or for flights, hotels and cars', () => {
+    expect(goingList(fountains, members.slice(0, 1))).toEqual([]);
+    expect(['flight', 'hotel', 'car'].map((kind) => hasGoing({ kind: kind as 'flight' }))).toEqual([
+      false,
+      false,
+      false,
+    ]);
+    expect(hasGoing({ kind: 'event' })).toBe(true);
+  });
+
+  it('puts the goers on a row only when someone is out, and says when you are', () => {
+    const entries = itineraryEntries(groupSnapshot, '2026-11-13', members);
+    const byTitle = (title: string) => entries.find((e) => e.title === title)!;
+    expect(byTitle('Bellagio Fountains').going?.map((m) => m.name)).toEqual(['Matthew', 'Blake']);
+    expect(byTitle('Bellagio Fountains').youreOut).toBe(false);
+    expect(byTitle('Brunch at Mon Ami Gabi').going).toBeNull();
+
+    const out = {
+      ...groupSnapshot,
+      items: groupSnapshot.items.map((i) => ({ ...i, optedOut: [ME] })),
+    };
+    const mine = itineraryEntries(out, '2026-11-13', members)[0];
+    expect(mine).toMatchObject({ youreOut: true });
+    expect(mine.going?.map((m) => m.name)).toEqual(['Blake', 'Willem']);
+    // Without members (a trip of one, or still loading): nothing extra.
+    expect(itineraryEntries(out, '2026-11-13')[0]).toMatchObject({ going: null, youreOut: false });
   });
 });

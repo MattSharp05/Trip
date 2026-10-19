@@ -2,10 +2,12 @@ import { Image } from 'expo-image';
 import { memo } from 'react';
 import { Pressable, StyleSheet, View, type AccessibilityActionEvent } from 'react-native';
 
+import { nameList } from '@/core/members';
+import { MemberAvatar } from '@/features/members';
 import { colors, continuous, radii, screenPadding, spacing } from '@/theme';
 import { Icon, Skeleton, Text } from '@/ui';
 
-import type { ItineraryEntry } from './itinerary';
+import type { GoingMember, ItineraryEntry } from './itinerary';
 
 /** Every row is the same height, so the list can scroll to a row without measuring it. */
 export const ROW_HEIGHT = 68;
@@ -17,6 +19,9 @@ const NODE_SELECTED = 13;
 const THUMB = 44;
 /** The node sits level with the title's first line. */
 const NODE_TOP = spacing.md + 6;
+/** Who's going, on the title line: small circles, at most three before "+n". */
+const GOING_AVATAR = 18;
+const GOING_MAX = 3;
 
 export interface ItineraryRowProps {
   entry: ItineraryEntry;
@@ -46,7 +51,18 @@ export const ItineraryRow = memo(function ItineraryRow({
   accessibilityActions,
   onAccessibilityAction,
 }: ItineraryRowProps) {
-  const spoken = [entry.time, entry.title, entry.subtitle].filter(Boolean).join(', ');
+  const spoken = [
+    entry.time,
+    entry.title,
+    entry.youreOut ? "You're out" : null,
+    entry.going ? goingSpoken(entry.going) : null,
+    entry.subtitle,
+  ]
+    .filter(Boolean)
+    .join(', ');
+  const subtitle = [entry.youreOut ? "You're out" : null, entry.subtitle]
+    .filter(Boolean)
+    .join(' · ');
   const node = selected ? NODE_SELECTED : NODE;
   return (
     <Pressable
@@ -101,12 +117,20 @@ export const ItineraryRow = memo(function ItineraryRow({
         />
       </View>
       <View style={styles.text}>
-        <Text variant="body" numberOfLines={1} style={styles.title}>
-          {entry.title}
-        </Text>
-        {entry.subtitle ? (
-          <Text variant="subhead" tone="secondary" numberOfLines={1}>
-            {entry.subtitle}
+        <View style={styles.titleLine}>
+          <Text variant="body" numberOfLines={1} style={styles.title}>
+            {entry.title}
+          </Text>
+          {entry.going?.length ? <GoingStack going={entry.going} id={entry.id} /> : null}
+        </View>
+        {subtitle ? (
+          <Text
+            variant="subhead"
+            tone="secondary"
+            numberOfLines={1}
+            testID={entry.youreOut ? `itinerary-out-${entry.id}` : undefined}
+          >
+            {subtitle}
           </Text>
         ) : null}
       </View>
@@ -120,6 +144,31 @@ export const ItineraryRow = memo(function ItineraryRow({
     </Pressable>
   );
 });
+
+/** "Going: Blake and Willem" for VoiceOver. */
+const goingSpoken = (going: GoingMember[]) =>
+  `Going: ${nameList(going.map((m) => (m.isMe ? 'you' : m.name)))}`;
+
+/** Who's going (TR-60), overlapping like the header's avatars, you last with the orange ring. */
+function GoingStack({ going, id }: { going: GoingMember[]; id: string }) {
+  const ordered = [...going.filter((m) => !m.isMe), ...going.filter((m) => m.isMe)];
+  const shown = ordered.slice(0, GOING_MAX);
+  const more = ordered.length - shown.length;
+  return (
+    <View style={styles.going} testID={`itinerary-going-${id}`}>
+      {shown.map((member, i) => (
+        <View key={member.id} style={i > 0 && styles.tucked}>
+          <MemberAvatar member={member} size={GOING_AVATAR} />
+        </View>
+      ))}
+      {more > 0 ? (
+        <Text variant="caption" tone="secondary" style={styles.more}>
+          {`+${more}`}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
 
 /** A placeholder row while the trip loads. */
 export function ItinerarySkeletonRow({ testID }: { testID?: string }) {
@@ -163,7 +212,11 @@ const styles = StyleSheet.create({
   lineEnd: { bottom: ROW_HEIGHT - NODE_TOP - NODE / 2 },
   node: { position: 'absolute', backgroundColor: colors.accent },
   text: { flex: 1, paddingLeft: spacing.sm, paddingRight: spacing.md, gap: spacing.xxs },
-  title: { fontWeight: '600' },
+  titleLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  title: { fontWeight: '600', flexShrink: 1 },
+  going: { flexDirection: 'row', alignItems: 'center', marginLeft: 'auto' },
+  tucked: { marginLeft: -spacing.xs },
+  more: { marginLeft: spacing.xxs },
   skeletonText: { gap: spacing.sm, paddingTop: 2 },
   thumb: {
     width: THUMB,

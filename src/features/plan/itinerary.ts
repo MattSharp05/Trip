@@ -12,7 +12,7 @@ import {
   type TravelEstimate,
 } from '@/core/travel';
 import { pinSymbol } from '@/features/map';
-import type { Booking, ItineraryItem, Place } from '@/services/data/types';
+import type { Booking, ItemKind, ItineraryItem, Member, Place } from '@/services/data/types';
 
 /** One line of the day's timeline, ready to draw. */
 export interface ItineraryEntry {
@@ -33,6 +33,41 @@ export interface ItineraryEntry {
   fixed: boolean;
   /** Its time comes from a booking, so it can't be edited here. */
   booked: boolean;
+  /**
+   * Group trips (TR-60): who is going, when someone is out (the row then shows their avatars);
+   * null while everyone is in, keeping the row calm.
+   */
+  going: GoingMember[] | null;
+  /** You opted out of it ("You're out" on the row). */
+  youreOut: boolean;
+}
+
+/** A member and whether they're going to a stop (TR-60). */
+export type GoingMember = Pick<Member, 'id' | 'name' | 'initial' | 'isMe'> & { going: boolean };
+
+/** Stops the whole group shares as a matter of course: flights, the hotel, the rental car. */
+const LOGISTICS: readonly ItemKind[] = ['flight', 'hotel', 'car'];
+
+/** A stop with a Going list: not one of the trip's logistics. */
+export const hasGoing = (item: Pick<ItineraryItem, 'kind'>) => !LOGISTICS.includes(item.kind);
+
+/**
+ * Each member and whether they're going to the stop, in the members' order (you first): everyone
+ * minus who opted out. Empty on a trip of one, or for a flight, hotel or car.
+ */
+export function goingList(
+  item: Pick<ItineraryItem, 'kind' | 'optedOut'>,
+  members: readonly Pick<Member, 'id' | 'name' | 'initial' | 'isMe'>[],
+): GoingMember[] {
+  if (members.length < 2 || !hasGoing(item)) return [];
+  const out = new Set(item.optedOut ?? []);
+  return members.map(({ id, name, initial, isMe }) => ({
+    id,
+    name,
+    initial,
+    isMe,
+    going: !out.has(id),
+  }));
 }
 
 /** The estimated trip between two consecutive stops (`core/travel`). */
@@ -68,8 +103,15 @@ export const dayItems = (items: ItineraryItem[], day: string) =>
 /** The first part of an address: the venue or street ("Paris Las Vegas", "255 Sands Ave"). */
 const area = (address: string | null) => address?.split(',')[0].trim() || null;
 
-/** The day's items as timeline entries, in visit order. */
-export function itineraryEntries({ places, items, bookings }: ItineraryData, day: string) {
+/**
+ * The day's items as timeline entries, in visit order. `members` (the trip's, from
+ * `useTripMembers`) adds who is going on a group trip.
+ */
+export function itineraryEntries(
+  { places, items, bookings }: ItineraryData,
+  day: string,
+  members: readonly Member[] = [],
+) {
   const placeById = new Map(places.map((p) => [p.id, p]));
   const bookingById = new Map(bookings.map((b) => [b.id, b]));
 
@@ -97,6 +139,7 @@ export function itineraryEntries({ places, items, bookings }: ItineraryData, day
   return ordered.map((item, i): ItineraryEntry => {
     const place = item.placeId ? placeById.get(item.placeId) : undefined;
     const booking = item.bookingId ? bookingById.get(item.bookingId) : undefined;
+    const going = goingList(item, members);
     return {
       id: item.id,
       placeId: place ? place.id : null,
@@ -109,6 +152,8 @@ export function itineraryEntries({ places, items, bookings }: ItineraryData, day
       leg: legAfter(item, ordered[i + 1]),
       fixed: item.fixed,
       booked: item.bookingId !== null,
+      going: going.some((m) => !m.going) ? going.filter((m) => m.going) : null,
+      youreOut: going.some((m) => m.isMe && !m.going),
     };
   });
 }

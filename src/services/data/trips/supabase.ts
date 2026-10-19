@@ -2,7 +2,7 @@ import { bookingPlaceIds } from '../bookings/placeIds';
 import { toBooking } from '../bookings/supabase';
 import { toBucket } from '../bucket/supabase';
 import { EXPENSE_SELECT, toExpense } from '../expenses/supabase';
-import { toItem } from '../itinerary/supabase';
+import { ITEM_SELECT, toItem } from '../itinerary/supabase';
 import { toLink } from '../links/supabase';
 import { toPlace } from '../places/supabase';
 import { check, checkRow, client, type Row } from '../shared/supabase';
@@ -68,7 +68,7 @@ export const supabaseTrips: TripsSource = {
     const [items, bookings, bucketRows, expenses, links] = await Promise.all([
       supabase
         .from('itinerary_items')
-        .select('*')
+        .select(ITEM_SELECT)
         .eq('trip_id', tripId)
         .order('day')
         .order('start_time'),

@@ -5,6 +5,7 @@ import type { DataSnapshot } from '@/services/data/types';
 import type { ScenarioView } from '@/stores/scenario';
 
 import {
+  BELLAGIO_ITEM_ID,
   groupArrivalsSnapshot,
   groupInviteSnapshot,
   groupMemberSnapshot,
@@ -334,6 +335,14 @@ export const SCENARIOS: readonly Scenario[] = [
       "Organize → Wallet on the group trip, Shared: hotel, Blake's Airbnb, Willem's car, UFC.",
     tab: 'organize',
     view: { organizeView: 'wallet', walletScope: 'shared' },
+  }),
+  vegas({
+    name: 'group-plan-opt-out',
+    data: groupSnapshot,
+    description:
+      'group-vegas on Fri Nov 13, Bellagio Fountains open: Matthew and Blake going, Willem out.',
+    tab: 'plan',
+    view: { day: '2026-11-13', itemId: BELLAGIO_ITEM_ID, planMode: 'itinerary', openDetails: true },
   }),
   {
     name: 'empty-account',

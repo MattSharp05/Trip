@@ -126,6 +126,49 @@ export type Database = {
           },
         ];
       };
+      bucket_likes: {
+        Row: {
+          bucket_item_id: string;
+          created_at: string;
+          trip_id: string;
+          user_id: string;
+        };
+        Insert: {
+          bucket_item_id: string;
+          created_at?: string;
+          trip_id: string;
+          user_id?: string;
+        };
+        Update: {
+          bucket_item_id?: string;
+          created_at?: string;
+          trip_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'bucket_likes_bucket_item_id_fkey';
+            columns: ['bucket_item_id'];
+            isOneToOne: false;
+            referencedRelation: 'bucket_items';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bucket_likes_trip_id_fkey';
+            columns: ['trip_id'];
+            isOneToOne: false;
+            referencedRelation: 'trips';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bucket_likes_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       document_shares: {
         Row: {
           created_at: string;
@@ -359,6 +402,49 @@ export type Database = {
           units?: number;
         };
         Relationships: [];
+      };
+      item_opt_outs: {
+        Row: {
+          created_at: string;
+          itinerary_item_id: string;
+          trip_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          itinerary_item_id: string;
+          trip_id: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          itinerary_item_id?: string;
+          trip_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'item_opt_outs_itinerary_item_id_fkey';
+            columns: ['itinerary_item_id'];
+            isOneToOne: false;
+            referencedRelation: 'itinerary_items';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'item_opt_outs_trip_id_fkey';
+            columns: ['trip_id'];
+            isOneToOne: false;
+            referencedRelation: 'trips';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'item_opt_outs_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       itinerary_items: {
         Row: {
