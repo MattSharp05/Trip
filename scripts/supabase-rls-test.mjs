@@ -353,6 +353,64 @@ try {
     .select('id');
   check('bookings: only the owner changes visibility', Boolean(hide.error) || !hide.data?.length);
 
+  // TR-58 (ADR 0027): A's private flight's route and times reach the group through trip_flights;
+  // its seat, confirmation and passenger don't, and the booking row stays A's.
+  const flightLeg = await insertOne(a.client, 'bookings', {
+    trip_id: trip.id,
+    type: 'flight',
+    data: {
+      airline: 'United Airlines',
+      flightNumber: 'UA 1187',
+      from: { code: 'ORD', city: 'Chicago', placeId: null },
+      to: { code: 'LAS', city: 'Las Vegas', placeId: null },
+      departs: { date: '2026-11-01', time: '11:50', timezone: 'America/Chicago' },
+      arrives: { date: '2026-11-01', time: '14:10', timezone: 'America/Los_Angeles' },
+      seat: '22C',
+      confirmation: 'SECRET',
+      passenger: 'A Traveller',
+    },
+  });
+  const bFlights = await b.client.rpc('trip_flights', { trip: trip.id });
+  const bLeg = bFlights.data?.find((f) => f.booking_id === flightLeg.id);
+  check(
+    "trip_flights: member sees A's flight times",
+    bLeg?.traveler_id === a.id &&
+      bLeg.flight_number === 'UA 1187' &&
+      bLeg.to_code === 'LAS' &&
+      bLeg.arrives_time === '14:10' &&
+      bLeg.arrives_timezone === 'America/Los_Angeles',
+    bFlights.error?.message ?? JSON.stringify(bFlights.data),
+  );
+  check(
+    'trip_flights: no seat, confirmation, passenger or pass',
+    !JSON.stringify(bFlights.data ?? '').match(/SECRET|22C|A Traveller/),
+  );
+  const bLegRow = await b.client.from('bookings').select('id').eq('id', flightLeg.id);
+  check("trip_flights: member still can't read A's booking row", !bLegRow.data?.length);
+  const cFlights = await c.client.rpc('trip_flights', { trip: trip.id });
+  check('trip_flights: non-member sees nothing', !cFlights.error && cFlights.data?.length === 0);
+  const anonFlights = await anonymous.rpc('trip_flights', { trip: trip.id });
+  check("trip_flights: signed-out clients can't call it", Boolean(anonFlights.error));
+  // B's flight, shared with the trip, for the check after B leaves.
+  const bSharedLeg = await insertOne(b.client, 'bookings', {
+    trip_id: trip.id,
+    type: 'flight',
+    visibility: 'shared',
+    data: {
+      flightNumber: 'B6 1123',
+      from: { code: 'JFK', city: 'New York' },
+      to: { code: 'LAS', city: 'Las Vegas' },
+      departs: { date: '2026-11-01', time: '11:40', timezone: 'America/New_York' },
+      arrives: { date: '2026-11-01', time: '14:45', timezone: 'America/Los_Angeles' },
+    },
+  });
+  const aFlights = await a.client.rpc('trip_flights', { trip: trip.id });
+  check(
+    "trip_flights: owner sees the member's flight",
+    aFlights.data?.some((f) => f.booking_id === bSharedLeg.id && f.traveler_id === b.id),
+    aFlights.error?.message,
+  );
+
   // Pointing at other people's rows: never as someone else, never across trips.
   const asA = await b.client
     .from('expenses')
@@ -674,6 +732,12 @@ try {
     .eq('trip_id', trip.id)
     .eq('user_id', b.id);
   check("leaving keeps the member's shared rows on the trip", kept.data?.length === 1);
+  const afterLeaving = await a.client.rpc('trip_flights', { trip: trip.id });
+  check(
+    "trip_flights: a member who left isn't listed, though their shared booking stays",
+    !afterLeaving.error && !afterLeaving.data?.some((f) => f.traveler_id === b.id),
+    afterLeaving.error?.message,
+  );
 
   // TR-57 (ADR 0029): invite links. C (a non-member) previews A's active link, which shows only
   // the trip's summary, and joins with it; a reset link stops working.

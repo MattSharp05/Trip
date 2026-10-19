@@ -5,6 +5,7 @@ import type { DataSnapshot } from '@/services/data/types';
 import type { ScenarioView } from '@/stores/scenario';
 
 import {
+  groupArrivalsSnapshot,
   groupInviteSnapshot,
   groupMemberSnapshot,
   groupSnapshot,
@@ -302,6 +303,14 @@ export const SCENARIOS: readonly Scenario[] = [
     tripId: null,
     view: {},
   },
+  vegas({
+    name: 'group-plan-arrivals',
+    data: groupArrivalsSnapshot,
+    description:
+      "group-vegas on Nov 12 with everyone's flights: the Arrivals card and its pickup hint.",
+    tab: 'plan',
+    view: { day: '2026-11-12', planMode: 'itinerary' },
+  }),
   {
     name: 'empty-account',
     description: 'A new account with no trips: Trips tab empty state.',

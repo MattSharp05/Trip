@@ -27,6 +27,7 @@ import {
 import { TripDayMap, type TripMapHandle } from '@/features/map';
 import { FlightGlobe } from '@/features/map/globe';
 import {
+  ArrivalsCard,
   DatePills,
   DayHeader,
   FlightCard,
@@ -388,6 +389,11 @@ export default function PlanScreen() {
               bottomInset={sheetBottom + spacing.lg}
               editing={editor.editing}
               reordering={reordering}
+              header={
+                trip.data && selectedDay ? (
+                  <ArrivalsCard data={trip.data} day={selectedDay} />
+                ) : undefined
+              }
             />
           }
           bucketList={

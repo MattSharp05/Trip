@@ -676,6 +676,27 @@ export type Database = {
         Returns: boolean;
       };
       reset_invite: { Args: { trip: string }; Returns: string };
+      trip_flights: {
+        Args: { trip: string };
+        Returns: {
+          airline: string;
+          arrives_date: string;
+          arrives_time: string;
+          arrives_timezone: string;
+          booking_id: string;
+          departs_date: string;
+          departs_time: string;
+          departs_timezone: string;
+          flight_number: string;
+          from_city: string;
+          from_code: string;
+          from_place_id: string;
+          to_city: string;
+          to_code: string;
+          to_place_id: string;
+          traveler_id: string;
+        }[];
+      };
     };
     Enums: {
       [_ in never]: never;

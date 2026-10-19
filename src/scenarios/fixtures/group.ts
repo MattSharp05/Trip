@@ -1,4 +1,5 @@
 import type { DataSnapshot, Membership, Profile } from '@/services/data/types';
+import type { Booking, FlightData } from '@/services/data/bookings/types';
 
 import { VEGAS_TRIP_ID, vegasSnapshot } from './vegas';
 
@@ -63,4 +64,93 @@ export const groupInviteSnapshot: DataSnapshot = {
   me: ALEX,
   profiles: [...profiles, { id: ALEX, displayName: 'Alex' }],
   invites: [{ token: VEGAS_INVITE_TOKEN, tripId: VEGAS_TRIP_ID, createdBy: vegasSnapshot.me }],
+};
+
+/** A flight booking of Blake's or Willem's: private to them, as flights are (ADR 0027). */
+const memberFlight = (
+  id: string,
+  addedBy: string,
+  data: Pick<
+    FlightData,
+    'airline' | 'airlineCode' | 'flightNumber' | 'from' | 'to' | 'departs' | 'arrives'
+  >,
+): Booking => ({
+  id,
+  tripId: VEGAS_TRIP_ID,
+  addedBy,
+  visibility: 'private',
+  originalPath: null,
+  type: 'flight',
+  data: {
+    aircraft: null,
+    terminal: null,
+    gate: null,
+    seat: '22C',
+    boardingTime: null,
+    boardingGroup: null,
+    cabin: 'Main',
+    confirmation: 'PRIV8',
+    passenger: addedBy,
+    ...data,
+  },
+});
+
+const LAS = { code: 'LAS', city: 'Las Vegas', placeId: 'place-las' };
+const ORD = { code: 'ORD', city: 'Chicago', placeId: null };
+const JFK = { code: 'JFK', city: 'New York', placeId: null };
+const PT = 'America/Los_Angeles';
+
+/** Blake's and Willem's flights in and out of Vegas (TR-58): landing 2:10 and 2:45 PM on Nov 12. */
+export const memberFlights: Booking[] = [
+  memberFlight('booking-blake-out', BLAKE, {
+    airline: 'United Airlines',
+    airlineCode: 'UA',
+    flightNumber: 'UA 1187',
+    from: ORD,
+    to: LAS,
+    departs: { date: '2026-11-12', time: '11:50', timezone: 'America/Chicago' },
+    arrives: { date: '2026-11-12', time: '14:10', timezone: PT },
+  }),
+  memberFlight('booking-willem-out', WILLEM, {
+    airline: 'JetBlue',
+    airlineCode: 'B6',
+    flightNumber: 'B6 1123',
+    from: JFK,
+    to: LAS,
+    departs: { date: '2026-11-12', time: '11:40', timezone: 'America/New_York' },
+    arrives: { date: '2026-11-12', time: '14:45', timezone: PT },
+  }),
+  memberFlight('booking-blake-home', BLAKE, {
+    airline: 'United Airlines',
+    airlineCode: 'UA',
+    flightNumber: 'UA 2290',
+    from: LAS,
+    to: ORD,
+    departs: { date: '2026-11-16', time: '16:05', timezone: PT },
+    arrives: { date: '2026-11-16', time: '21:55', timezone: 'America/Chicago' },
+  }),
+  memberFlight('booking-willem-home', WILLEM, {
+    airline: 'JetBlue',
+    airlineCode: 'B6',
+    flightNumber: 'B6 1124',
+    from: LAS,
+    to: JFK,
+    departs: { date: '2026-11-16', time: '16:30', timezone: PT },
+    arrives: { date: '2026-11-17', time: '00:58', timezone: 'America/New_York' },
+  }),
+];
+
+/**
+ * `group-vegas` with everyone's flights (TR-58): Blake and Willem land 35 min apart after
+ * Matthew, and fly home on Nov 16. Their bookings stay private; Plan shows their times only.
+ */
+export const groupArrivalsSnapshot: DataSnapshot = {
+  ...groupSnapshot,
+  // Matthew's flights say so, so the scenario reads the same as any of the three.
+  bookings: [
+    ...groupSnapshot.bookings.map((b) =>
+      b.type === 'flight' ? { ...b, addedBy: b.addedBy ?? vegasSnapshot.me } : b,
+    ),
+    ...memberFlights,
+  ],
 };
