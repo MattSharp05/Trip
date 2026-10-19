@@ -365,8 +365,9 @@ export interface SuggestResult {
 /**
  * Suggest times for liked items (TR-64, PRD decision 9): where each liked candidate fits, most
  * likes first (ties keep the given order), without saving anything. Items with no likes are left
- * out. Each suggestion is planned against the itinerary plus the suggestions before it, so none
- * overlap a stop or each other.
+ * out. Liked events are planned first (they have one time; a flexible item can go elsewhere), then
+ * the rest by likes, each against the itinerary plus the suggestions before it, so none overlap a
+ * stop or each other.
  *
  * Unlike Smart Add, a suggestion never moves a stop: it only fills free time. A fixed-time event
  * that overlaps any stop (or an earlier suggestion) is skipped as a `conflict`. So every suggestion
@@ -384,8 +385,12 @@ export function suggestTimes(input: {
   const skipped: SuggestSkip[] = [];
   // Array.prototype.sort is stable: equal likes keep the given order.
   const liked = input.candidates.filter((c) => c.likes > 0).sort((a, b) => b.likes - a.likes);
+  const isEvent = (c: SuggestCandidate) =>
+    c.candidate.fixedDate !== null && c.candidate.fixedTime !== null;
+  // Events go first: they have one time, and a flexible item can always go elsewhere.
+  const order = [...liked.filter(isEvent), ...liked.filter((c) => !isEvent(c))];
 
-  for (const { id, candidate } of liked) {
+  for (const { id, candidate } of order) {
     const result = planSmartAdd({ days, items, candidate, travel });
     if (result.kind === 'none') {
       skipped.push({ id, reason: result.reason });
@@ -412,5 +417,7 @@ export function suggestTimes(input: {
     ];
     suggestions.push({ id, placement });
   }
+  const rank = new Map(liked.map((c, i) => [c.id, i]));
+  suggestions.sort((a, b) => rank.get(a.id)! - rank.get(b.id)!);
   return { suggestions, skipped };
 }

@@ -315,6 +315,23 @@ describe('Suggest times for liked items (TR-64)', () => {
     expect(result.skipped).toEqual([{ id: 'show', reason: 'conflict', conflictId: 'walk' }]);
   });
 
+  it('plans a less-liked event before a flexible item, so the item goes around it', () => {
+    const { suggestions, skipped } = suggestTimes({
+      days: [DAYS[0]],
+      items: [],
+      candidates: [
+        liked('walk', 2),
+        liked('show', 1, { fixedDate: DAYS[0], fixedTime: '09:00', durationMinutes: 120 }),
+      ],
+      travel,
+    });
+    expect(skipped).toEqual([]);
+    expect(suggestions.map((s) => [s.id, s.placement.startTime])).toEqual([
+      ['walk', '11:15'],
+      ['show', '09:00'],
+    ]);
+  });
+
   it('places a liked event that fits on its own date and time', () => {
     const { suggestions } = suggestTimes({
       days: DAYS,

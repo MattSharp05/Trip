@@ -41,14 +41,13 @@ export function useSuggestTimes(data: TripData | null | undefined) {
   const source = useDataSource();
   const opened = useRef<DataSource | null>(null);
   const shown = useRef(false);
-  const loaded = data !== undefined && data !== null;
   useEffect(() => {
     const { view } = useScenarioStore.getState();
-    if (!view.suggestTimes || source.kind !== 'demo' || !loaded) return;
+    if (!view.suggestTimes || source.kind !== 'demo' || !data || !hasLikedItems(data)) return;
     if (opened.current === source || usedBy === source) return;
     opened.current = source;
     show();
-  }, [loaded, source, show]);
+  }, [data, source, show]);
   useEffect(() => {
     if (opened.current !== source) return;
     if (open) shown.current = true;

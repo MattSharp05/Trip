@@ -1,12 +1,11 @@
 import { likeCount, sortBucket } from '@/core/bucket';
-import { dayOfMonth, timeLabel, tripDays, weekdayShort } from '@/core/dates';
+import { tripDays } from '@/core/dates';
 import { newId } from '@/core/ids';
-import { nameList } from '@/core/members';
 import { suggestTimes, type Suggestion } from '@/core/smartAdd';
 import type { BucketItem, TripData } from '@/services/data/types';
 
-import { clashNote, NO_ROOM_NOTE, OUTSIDE_TRIP_NOTE } from './planAll';
-import { candidateFor, plannerItems, stopFor, type SmartAddChange } from './smartAdd';
+import { daysLabel, plural, skipNote } from './planAll';
+import { candidateFor, plannerItems, stopFor, whenLabel, type SmartAddChange } from './smartAdd';
 
 /** One row of the Suggest times sheet (TR-64): a liked item and where it fits, or why not. */
 export interface SuggestionRow {
@@ -27,12 +26,6 @@ export interface SuggestionPlan {
   /** The earliest new stop, for the screen to open its day. */
   first: { itemId: string; day: string };
 }
-
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-
-/** "Fri 13, 5:15 PM" */
-const whenLabel = (day: string, time: string) =>
-  `${weekdayShort(day)} ${dayOfMonth(day)}, ${timeLabel(time)}`;
 
 const titleOf = (data: TripData, bucketItem: BucketItem) =>
   bucketItem.title || data.places.find((p) => p.id === bucketItem.placeId)?.name || 'Saved place';
@@ -77,12 +70,7 @@ export function bucketSuggestions(
   });
   const left: SuggestionRow[] = skipped.map((skip) => {
     const b = byId.get(skip.id)!;
-    const note =
-      skip.reason === 'conflict'
-        ? clashNote(data, skip.conflictId!)
-        : skip.reason === 'outside-trip'
-          ? OUTSIDE_TRIP_NOTE
-          : NO_ROOM_NOTE;
+    const note = skipNote(data, skip);
     return {
       bucketId: b.id,
       title: titleOf(data, b),
@@ -115,13 +103,11 @@ export function planSuggestions(
   const first = [...added].sort(
     (a, b) => a.day.localeCompare(b.day) || (a.startTime ?? '').localeCompare(b.startTime ?? ''),
   )[0];
-  const days = [...new Set(added.map((item) => item.day))]
-    .sort()
-    .map((day) => `${weekdayShort(day)} ${dayOfMonth(day)}`);
+  const days = [...new Set(added.map((item) => item.day))].sort();
   const message =
     pairs.length === 1
       ? `Added ${titleOf(data, pairs[0].bucketItem)} to ${whenLabel(first.day, first.startTime!)}`
-      : `Added ${plural(pairs.length, 'liked item', 'liked items')}\n${nameList(days)}`;
+      : `Added ${plural(pairs.length, 'liked item', 'liked items')}\n${daysLabel(days)}`;
   return {
     change: {
       save: added,

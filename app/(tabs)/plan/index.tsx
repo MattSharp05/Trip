@@ -237,23 +237,34 @@ export default function PlanScreen() {
     setGlobeDay(null);
     selectItem(first.itemId, 'map', first.day);
   }, [planAll, setPlanMode, selectItem, dismissEditToast, dismissBucketToast]);
-  // Suggest times for liked items (TR-64): accepting closes the sheet and opens the earliest new
-  // stop's day, like Smart Add, with one Undo.
+  // Suggest times for liked items (TR-64): each Accept places its item like Smart Add, with Undo;
+  // once nothing that fits is left (or after Accept all) the sheet closes on the earliest new stop.
   const suggest = useSuggestTimes(trip.data);
   const { accept, notes: smartNotes } = smart;
-  const { close: closeSuggest } = suggest;
+  const { close: closeSuggest, rows: suggestRows } = suggest;
   const acceptSuggestions = useCallback(
     (accepted: Parameters<typeof accept>[0]) => {
       dismissEditToast();
       dismissBucketToast();
-      closeSuggest();
+      const taken = new Set(accepted.map((s) => s.id));
+      const left = suggestRows.some((row) => row.suggestion && !taken.has(row.bucketId));
       const first = accept(accepted);
+      if (left) return;
+      closeSuggest();
       if (!first) return;
       setPlanMode('itinerary');
       setGlobeDay(null);
       selectItem(first.itemId, 'map', first.day);
     },
-    [accept, closeSuggest, setPlanMode, selectItem, dismissEditToast, dismissBucketToast],
+    [
+      accept,
+      suggestRows,
+      closeSuggest,
+      setPlanMode,
+      selectItem,
+      dismissEditToast,
+      dismissBucketToast,
+    ],
   );
   const group = (members?.length ?? 0) > 1;
   // The newest toast wins: an edit or a bucket change replaces Smart Add's.

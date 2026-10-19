@@ -23,13 +23,13 @@ export const NO_ROOM_NOTE = "Didn't fit any day's free time";
 export const OUTSIDE_TRIP_NOTE = 'Not during this trip';
 
 /** "Fri 13, Sat 14 and Sun 15" */
-function daysLabel(days: string[]): string {
+export function daysLabel(days: string[]): string {
   const labels = days.map((day) => `${weekdayShort(day)} ${dayOfMonth(day)}`);
   return labels.length > 1 ? `${labels.slice(0, -1).join(', ')} and ${labels.at(-1)}` : labels[0];
 }
 
 /** "Overlaps UFC 310 at 7:00 PM": a stop already planned, or an event placed in this same run. */
-export function clashNote(data: TripData, conflictId: string): string {
+function clashNote(data: TripData, conflictId: string): string {
   const stop = data.items.find((item) => item.id === conflictId);
   if (stop) return `Overlaps ${itemTitle(data, stop)} at ${timeLabel(stop.startTime ?? '00:00')}`;
   const event = data.bucketItems.find((b) => b.id === conflictId);
@@ -39,7 +39,16 @@ export function clashNote(data: TripData, conflictId: string): string {
     : NO_ROOM_NOTE;
 }
 
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+/** Why an item wasn't placed (Plan my bucket list's notes, Suggest times' rows). */
+export function skipNote(
+  data: TripData,
+  skip: { reason: 'no-slot' | 'outside-trip' | 'conflict'; conflictId?: string },
+): string {
+  if (skip.reason === 'conflict') return clashNote(data, skip.conflictId!);
+  return skip.reason === 'outside-trip' ? OUTSIDE_TRIP_NOTE : NO_ROOM_NOTE;
+}
+
+export const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /**
  * Plan my bucket list (TR-32): places every bucket item that fits (`core/planAll`), as one change
@@ -58,14 +67,7 @@ export function planBucketAll(data: TripData, ids: () => string = newId): PlanAl
   });
 
   const notes: Record<string, string> = {};
-  for (const skip of result.skipped) {
-    notes[skip.id] =
-      skip.reason === 'conflict'
-        ? clashNote(data, skip.conflictId!)
-        : skip.reason === 'outside-trip'
-          ? OUTSIDE_TRIP_NOTE
-          : NO_ROOM_NOTE;
-  }
+  for (const skip of result.skipped) notes[skip.id] = skipNote(data, skip);
 
   if (result.placed.length === 0) {
     return {

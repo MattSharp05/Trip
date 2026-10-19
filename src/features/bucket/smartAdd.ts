@@ -101,7 +101,7 @@ export function stopFor(
 }
 
 /** "Fri 13, 5:15 PM" */
-const whenLabel = (day: string, time: string) =>
+export const whenLabel = (day: string, time: string) =>
   `${weekdayShort(day)} ${dayOfMonth(day)}, ${timeLabel(time)}`;
 
 /**

@@ -42,7 +42,7 @@ export interface ItineraryEntry {
   youreOut: boolean;
   /**
    * Group trips (TR-64): who added it, when it wasn't you ("Added by Blake" on the row), also when
-   * you planned their Bucket List item. Null on your own stops and on a trip of one.
+   * you planned their Bucket List item. Null on your own stops, bookings and a trip of one.
    */
   addedBy: string | null;
 }
@@ -78,9 +78,12 @@ export function goingList(
   }));
 }
 
-/** Another member's name when they added the stop; null for yours (unmarked stops are yours). */
-function adderName(item: Pick<ItineraryItem, 'addedBy'>, members: readonly Member[]) {
-  if (members.length < 2 || !item.addedBy) return null;
+/**
+ * Another member's name when they added the stop; null for yours (unmarked stops are yours) and for
+ * bookings, whose row keeps its flight number or place.
+ */
+function adderName(item: Pick<ItineraryItem, 'addedBy' | 'bookingId'>, members: readonly Member[]) {
+  if (members.length < 2 || !item.addedBy || item.bookingId !== null) return null;
   const by = members.find((m) => m.id === item.addedBy);
   return by && !by.isMe ? by.name : null;
 }

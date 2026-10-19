@@ -43,12 +43,27 @@ describe('Suggest times for liked items (TR-64)', () => {
     expect(screen.getByTestId('suggest-accept-all')).toBeTruthy();
   });
 
+  it('Accept on one row places it and keeps the sheet on the rest', async () => {
+    renderRouter(routes, { initialUrl: '/scenario/group-bucket-suggest' });
+    const accept = await screen.findByTestId('suggest-accept-bucket-lotus-of-siam');
+    await act(async () => fireEvent.press(accept));
+    await waitFor(() => expect(rows()).toEqual(['bucket-golden-tiki']));
+    await waitFor(() => expect(screen.getByRole('tab', { name: 'Bucket List (4)' })).toBeTruthy());
+    expect(screen.getByRole('tab', { name: 'Bucket List (4)' })).toBeSelected();
+    // One left: no Accept all.
+    expect(screen.queryByTestId('suggest-accept-all')).toBeNull();
+  });
+
   it("accepting Blake's Golden Tiki plans it on Sun 15 as added by Blake, with Undo", async () => {
     renderRouter(routes, { initialUrl: '/scenario/group-bucket-suggest' });
-    const accept = await screen.findByTestId('suggest-accept-bucket-golden-tiki');
-    await act(async () => fireEvent.press(accept));
+    // Skip leaves Lotus of Siam out, so Golden Tiki is the last one and the sheet closes on it.
+    const skip = await screen.findByTestId('suggest-skip-bucket-lotus-of-siam');
+    await act(async () => fireEvent.press(skip));
+    expect(rows()).toEqual(['bucket-golden-tiki']);
+    await act(async () => fireEvent.press(screen.getByTestId('suggest-accept-bucket-golden-tiki')));
 
     expect(await screen.findByText('Added Golden Tiki to Sun 15, 4:00 PM')).toBeTruthy();
+    expect(rows()).toEqual([]);
     expect(screen.getByRole('tab', { name: 'Itinerary' })).toBeSelected();
     const { selectedDay, selectedItemId } = useSelectionStore.getState();
     expect(selectedDay).toBe('2026-11-15');
@@ -58,20 +73,6 @@ describe('Suggest times for liked items (TR-64)', () => {
 
     await act(async () => fireEvent.press(screen.getByText('Undo')));
     await waitFor(() => expect(screen.getByRole('tab', { name: 'Bucket List (5)' })).toBeTruthy());
-  });
-
-  it('Skip leaves an item out; Accept all places the rest', async () => {
-    renderRouter(routes, { initialUrl: '/scenario/group-bucket-suggest' });
-    const skip = await screen.findByTestId('suggest-skip-bucket-golden-tiki');
-    await act(async () => fireEvent.press(skip));
-    expect(rows()).toEqual(['bucket-lotus-of-siam']);
-    // One left: no Accept all.
-    expect(screen.queryByTestId('suggest-accept-all')).toBeNull();
-    await act(async () =>
-      fireEvent.press(screen.getByTestId('suggest-accept-bucket-lotus-of-siam')),
-    );
-    expect(await screen.findByText('Added Lotus of Siam to Sat 14, 3:45 PM')).toBeTruthy();
-    await waitFor(() => expect(screen.getByRole('tab', { name: 'Bucket List (4)' })).toBeTruthy());
   });
 
   it('shows the button on the group Bucket List; Accept all places every suggestion', async () => {
