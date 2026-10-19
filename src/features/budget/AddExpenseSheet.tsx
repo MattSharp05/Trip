@@ -14,7 +14,7 @@ import { colors, spacing } from '@/theme';
 import { Button, Chip, Sheet, Text } from '@/ui';
 
 import { CATEGORIES, type Category } from './budget';
-import { buildExpense, defaultExpenseCurrency } from './expenseForm';
+import { buildExpense, defaultExpenseCurrency, newExpenseId } from './expenseForm';
 import { SheetField } from './SheetField';
 import { withTripRate } from './tripRate';
 import { useOpenCount } from './useOpenCount';
@@ -96,6 +96,9 @@ function ExpenseForm({
   const [picked, setPicked] = useState<string[] | null>(null);
   const [itemId, setItemId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // One id per open sheet: a retry after a half-finished save (row written, shares not) updates
+  // that row instead of adding a second one.
+  const [expenseId] = useState(() => newExpenseId());
 
   const everyone = members.map((m) => m.id);
   const participants = picked ?? everyone;
@@ -141,6 +144,7 @@ function ExpenseForm({
         itineraryItemId: itemId,
       },
       trip,
+      expenseId,
     );
     if ('error' in result) {
       setError(result.error);

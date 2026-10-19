@@ -813,6 +813,31 @@ try {
     .eq('trip_id', trip.id)
     .eq('user_id', b.id);
   check("leaving keeps the member's shared rows on the trip", kept.data?.length === 1);
+  // TR-62: an expense B paid stays editable after B left (an upsert re-saves the same payer).
+  const bPaid = await a.client
+    .from('expenses')
+    .select('*')
+    .eq('trip_id', trip.id)
+    .eq('user_id', b.id)
+    .single();
+  const resave = await a.client
+    .from('expenses')
+    // The fields the app sends (no user_id: it stays the adder's).
+    .upsert({
+      id: bPaid.data?.id,
+      trip_id: trip.id,
+      amount_minor: bPaid.data?.amount_minor,
+      currency: bPaid.data?.currency,
+      paid_by: bPaid.data?.paid_by,
+      description: 'edited',
+    })
+    .select('paid_by, description')
+    .single();
+  check(
+    'expenses: re-saving an expense whose payer left keeps the payer',
+    resave.data?.paid_by === b.id && resave.data.description === 'edited',
+    resave.error?.message ?? bPaid.error?.message,
+  );
 
   // TR-57 (ADR 0029): invite links. C (a non-member) previews A's active link, which shows only
   // the trip's summary, and joins with it; a reset link stops working.

@@ -1,3 +1,5 @@
+import { compareIds } from '@/core/split';
+
 import { checkRow, check, client, type Row } from '../shared/supabase';
 import type { Expense, ExpensesSource } from './types';
 
@@ -26,7 +28,7 @@ export const toExpense = (r: ExpenseRow): Expense => ({
     ? {
         shares: r.expense_shares
           .map((s) => ({ userId: s.user_id, shareMinor: s.share_minor }))
-          .sort((a, b) => (a.userId < b.userId ? -1 : a.userId > b.userId ? 1 : 0)),
+          .sort((a, b) => compareIds(a.userId, b.userId)),
       }
     : {}),
 });

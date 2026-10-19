@@ -12,13 +12,16 @@ export interface Share {
   shareMinor: number;
 }
 
+/** Profile ids in code-unit order: the order shares are listed and remainders handed out in. */
+export const compareIds = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+
 /**
  * An equal split: everyone gets `floor(amount / n)`, and the remainder's minor units go one each to
  * the first participants by id, so the shares always add up to the amount. Ordered by id;
  * duplicates count once. Empty for no participants.
  */
 export function equalShares(amountMinor: number, participantIds: readonly string[]): Share[] {
-  const ids = [...new Set(participantIds)].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  const ids = [...new Set(participantIds)].sort(compareIds);
   if (ids.length === 0) return [];
   const base = Math.floor(amountMinor / ids.length);
   const remainder = amountMinor - base * ids.length;

@@ -58,6 +58,7 @@ export function BudgetScreen() {
   const [tab, setTab] = useState<BudgetTab>('categories');
   const [filter, setFilter] = useState<Category | null>(null);
   const [sheet, setSheet] = useState<'currency' | 'total' | 'expense' | null>(null);
+  const [currencyFailed, setCurrencyFailed] = useState(false);
   const close = () => setSheet(null);
 
   const data = tripData.data;
@@ -154,6 +155,12 @@ export function BudgetScreen() {
 
         <SummaryCard summary={summary} onEdit={() => setSheet('total')} />
 
+        {currencyFailed ? (
+          <Text variant="subhead" tone="secondary" testID="budget-currency-error">
+            {"Couldn't change the trip currency. Check your connection and try again."}
+          </Text>
+        ) : null}
+
         {rates.isError && needsRates ? (
           <Text variant="subhead" tone="secondary" testID="budget-rates-error">
             {`Couldn't load today's exchange rates. Amounts not in ${display} are left out of the totals.`}
@@ -233,16 +240,20 @@ export function BudgetScreen() {
         value={display}
         onChange={(code) => {
           close();
+          setCurrencyFailed(false);
           if (code === tripCurrencyOf(trip)) {
             setPicked(null);
             return;
           }
-          // Shown right away; back to the saved one if the change doesn't save.
+          // Shown right away; back to the saved one, with a note, if the change doesn't save.
           setPicked(code);
           saveCurrency
             .mutateAsync({ tripId: trip.id, currency: code })
             .then(() => setPicked(null))
-            .catch(() => setPicked(null));
+            .catch(() => {
+              setPicked(null);
+              setCurrencyFailed(true);
+            });
         }}
         onClose={close}
       />
@@ -258,7 +269,7 @@ export function BudgetScreen() {
         onClose={close}
         data={data}
         members={memberList}
-        tripCurrency={display}
+        tripCurrency={tripCurrencyOf(trip)}
         homeCurrency={preferences.homeCurrency}
         onSaved={() => {
           setFilter(null);
