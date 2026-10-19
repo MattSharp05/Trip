@@ -62,6 +62,7 @@ async function listen(client, tripId) {
     'bookings',
     'expenses',
     'places',
+    'bucket_likes',
   ]) {
     channel.on(
       'postgres_changes',
@@ -609,6 +610,88 @@ try {
     cleanup.data?.length === 3 && orphanShares.data?.length === 0,
     cleanup.error?.message,
   );
+
+  // TR-59: Bucket List likes. B likes A's item and A sees it (live, too); C can't read or like it;
+  // nobody likes as someone else or takes back someone else's like.
+  const aLive = await listen(a.client, trip.id);
+  const bLike = await b.client
+    .from('bucket_likes')
+    .insert({ bucket_item_id: rows.bucket_items.id, trip_id: bTrip.id })
+    .select()
+    .single();
+  check(
+    "bucket_likes: member likes another member's item, on the item's trip",
+    !bLike.error && bLike.data.user_id === b.id && bLike.data.trip_id === trip.id,
+    bLike.error?.message,
+  );
+  check(
+    'realtime: a like reaches the other members',
+    Boolean(
+      await waitFor(
+        aLive.events,
+        (e) => e.table === 'bucket_likes' && e.eventType === 'INSERT',
+        5_000,
+      ),
+    ),
+  );
+  const likeAgain = await b.client
+    .from('bucket_likes')
+    .upsert(
+      { bucket_item_id: rows.bucket_items.id, trip_id: trip.id },
+      { onConflict: 'bucket_item_id,user_id', ignoreDuplicates: true },
+    );
+  check('bucket_likes: liking twice is a no-op', !likeAgain.error, likeAgain.error?.message);
+  const aSeesLikes = await a.client
+    .from('bucket_items')
+    .select('id, bucket_likes(user_id)')
+    .eq('id', rows.bucket_items.id)
+    .single();
+  check(
+    'bucket_likes: the item reads with its likes',
+    aSeesLikes.data?.bucket_likes?.length === 1 && aSeesLikes.data.bucket_likes[0].user_id === b.id,
+    aSeesLikes.error?.message ?? JSON.stringify(aSeesLikes.data),
+  );
+  const cLikes = await c.client
+    .from('bucket_likes')
+    .select('user_id')
+    .eq('bucket_item_id', rows.bucket_items.id);
+  const cLike = await c.client
+    .from('bucket_likes')
+    .insert({ bucket_item_id: rows.bucket_items.id, trip_id: trip.id });
+  check(
+    "bucket_likes: non-member can't read or like",
+    !cLikes.data?.length && Boolean(cLike.error),
+  );
+  const likeAsA = await b.client
+    .from('bucket_likes')
+    .insert({ bucket_item_id: rows.bucket_items.id, trip_id: trip.id, user_id: a.id });
+  check("bucket_likes: member can't like as someone else", Boolean(likeAsA.error));
+  const aUnlikesB = await a.client
+    .from('bucket_likes')
+    .delete()
+    .eq('bucket_item_id', rows.bucket_items.id)
+    .eq('user_id', b.id)
+    .select('user_id');
+  check("bucket_likes: can't take back someone else's like", !aUnlikesB.data?.length);
+  aLive.events.length = 0;
+  const bUnlikes = await b.client
+    .from('bucket_likes')
+    .delete()
+    .eq('bucket_item_id', rows.bucket_items.id)
+    .eq('user_id', b.id)
+    .select('user_id');
+  check('bucket_likes: member unlikes', bUnlikes.data?.length === 1, bUnlikes.error?.message);
+  check(
+    "realtime: an unlike reaches the other members through the trip's update",
+    Boolean(
+      await waitFor(
+        aLive.events,
+        (e) => e.table === 'trips' && e.eventType === 'UPDATE' && e.new?.id === trip.id,
+        5_000,
+      ),
+    ),
+  );
+  await a.client.removeChannel(aLive.channel);
 
   // TR-60: opt-outs. B opts out of A's stop (the trip comes from the stop) and A sees it; B can't
   // opt A or C out, A can't opt B back in, and C can neither read nor opt out.

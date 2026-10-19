@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { create } from 'zustand';
 
+import type { BucketSort } from '@/core/bucket';
 import { now } from '@/core/clock';
 import { dayIn, daysBetween } from '@/core/dates';
 import type { Trip } from '@/services/data/types';
@@ -40,6 +41,9 @@ interface SelectionState {
    */
   selectItem: (itemId: string | null, by?: SelectionSource, day?: string) => void;
   setPlanMode: (mode: PlanMode) => void;
+  /** The Bucket List's order, by trip: kept while you switch trips (TR-59). */
+  bucketSorts: Record<string, BucketSort>;
+  setBucketSort: (tripId: string, sort: BucketSort) => void;
 }
 
 export type SelectionTrip = Pick<Trip, 'id' | 'startDate' | 'endDate' | 'timezone'>;
@@ -63,6 +67,7 @@ const CLEARED = {
   selectedItemId: null,
   selectedBy: null,
   planMode: 'itinerary',
+  bucketSorts: {},
 } as const;
 
 export const useSelectionStore = create<SelectionState>()((set) => ({
@@ -87,7 +92,23 @@ export const useSelectionStore = create<SelectionState>()((set) => ({
       picks: s.picks + 1,
     })),
   setPlanMode: (planMode) => set({ planMode }),
+  setBucketSort: (tripId, sort) =>
+    set((s) => ({ bucketSorts: { ...s.bucketSorts, [tripId]: sort } })),
 }));
+
+/** A trip's Bucket List order: what you picked for it, else the scenario's, else Recent. */
+export function useBucketSort(tripId: string | null) {
+  const picked = useSelectionStore((s) => (tripId ? s.bucketSorts[tripId] : undefined));
+  const setBucketSort = useSelectionStore((s) => s.setBucketSort);
+  const sort: BucketSort = picked ?? useScenarioStore.getState().view.bucketSort ?? 'recent';
+  const setSort = useCallback(
+    (next: BucketSort) => {
+      if (tripId) setBucketSort(tripId, next);
+    },
+    [tripId, setBucketSort],
+  );
+  return [sort, setSort] as const;
+}
 
 // Loading or leaving a scenario starts over: the next screen to show a trip re-initialises it.
 useScenarioStore.subscribe((state, prev) => {

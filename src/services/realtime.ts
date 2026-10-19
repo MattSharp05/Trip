@@ -7,7 +7,8 @@ import { supabase } from './supabase';
 
 /**
  * Trip-scoped tables in the `supabase_realtime` publication (migration 0054_realtime.sql, plus
- * `expense_shares` from 0062_shared_expenses.sql and `item_opt_outs` from 0060_opt_outs.sql).
+ * `expense_shares` from 0062_shared_expenses.sql, `bucket_likes` from 0059_bucket_likes.sql and
+ * `item_opt_outs` from 0060_opt_outs.sql).
  */
 export const LIVE_TABLES = [
   'trip_members',
@@ -17,6 +18,7 @@ export const LIVE_TABLES = [
   'expenses',
   'places',
   'expense_shares',
+  'bucket_likes',
   'item_opt_outs',
 ] as const;
 

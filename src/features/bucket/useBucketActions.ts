@@ -5,6 +5,7 @@ import {
   useDeleteBucketItem,
   useSaveBucketItem,
   useSavePlace,
+  useToggleBucketLike,
   type BucketItem,
   type PlaceInput,
 } from '@/services/data';
@@ -21,13 +22,19 @@ export interface BucketToast {
 }
 
 /**
- * The Bucket List's writes for one trip: add from search or a dropped pin, delete with Undo. The
- * Plan screen draws the Add sheet and the toast from what this returns.
+ * The Bucket List's writes for one trip: add from search or a dropped pin, delete with Undo, and
+ * like (as `me`, your profile id; likes wait until it's known). The Plan screen draws the Add sheet
+ * and the toast from what this returns.
  */
-export function useBucketActions(tripId: string | null, bucketItems: BucketItem[] | undefined) {
+export function useBucketActions(
+  tripId: string | null,
+  bucketItems: BucketItem[] | undefined,
+  me?: string,
+) {
   const { mutateAsync: savePlace } = useSavePlace();
   const { mutateAsync: saveItem, mutate: restoreItem } = useSaveBucketItem();
   const { mutate: deleteItem } = useDeleteBucketItem();
+  const { mutate: toggleLike } = useToggleBucketLike();
   const [addMode, setAddMode] = useState<AddMode | null>(null);
   const [toast, setToast] = useState<BucketToast | null>(null);
   const [saving, setSaving] = useState(false);
@@ -78,6 +85,18 @@ export function useBucketActions(tripId: string | null, bucketItems: BucketItem[
     [bucketItems, deleteItem],
   );
 
+  const like = useCallback(
+    (entry: BucketEntry) => {
+      const item = bucketItems?.find((b) => b.id === entry.id);
+      if (!item || !me) return;
+      toggleLike(
+        { item, me, liked: !entry.likedByMe },
+        { onError: () => setToast({ message: "Couldn't save your like. Try again." }) },
+      );
+    },
+    [bucketItems, me, toggleLike],
+  );
+
   const undo = useCallback(() => {
     if (toast?.undo) restoreItem(toast.undo);
   }, [toast, restoreItem]);
@@ -94,6 +113,7 @@ export function useBucketActions(tripId: string | null, bucketItems: BucketItem[
     dropPin,
     savePin,
     remove,
+    like,
     undo,
   };
 }

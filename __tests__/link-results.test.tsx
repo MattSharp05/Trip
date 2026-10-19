@@ -114,9 +114,10 @@ describe('link-results', () => {
     await act(async () => fireEvent.press(screen.getByTestId('link-save')));
 
     await waitFor(() => expect(bucketRows()).toHaveLength(7));
-    expect(bucketRows().slice(-2)).toEqual([
-      "Esther's Kitchen | 1131 South Main Street · Food | Saved from TikTok | Smart Add",
+    // Recent: newest first.
+    expect(bucketRows().slice(0, 2)).toEqual([
       'Tacos El Gordo | 3049 South Las Vegas Boulevard · Food | Saved from TikTok | Smart Add',
+      "Esther's Kitchen | 1131 South Main Street · Food | Saved from TikTok | Smart Add",
     ]);
     expect(screen.getByText('Added 2 places to your Bucket List')).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'Bucket List (7)' })).toBeSelected();
@@ -125,8 +126,8 @@ describe('link-results', () => {
 
     // Each saved row's play button opens the video.
     const watch = screen.getAllByLabelText('Watch on TikTok');
-    expect(watch).toHaveLength(3); // Golden Tiki (saved earlier) and the two new ones
-    fireEvent.press(watch[2]);
+    expect(watch).toHaveLength(3); // the two new ones (newest first) and Golden Tiki, saved earlier
+    fireEvent.press(watch[0]);
     expect(openBrowser).toHaveBeenLastCalledWith(VEGAS_FOOD.url, expect.anything());
   });
 

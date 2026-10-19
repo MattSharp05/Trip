@@ -43,7 +43,7 @@ import { LINK_SAMPLES } from '../../../supabase/functions/_shared/parse/linkFixt
 import { useDataSource, useTripData, useTripMembers, type DataSource } from '@/services/data';
 import { useTripForecast } from '@/services/weather';
 import { useScenarioStore } from '@/stores/scenario';
-import { useTripSelection } from '@/stores/selection';
+import { useBucketSort, useTripSelection } from '@/stores/selection';
 import { useTripStore } from '@/stores/trip';
 import { colors, radii, screenPadding, spacing } from '@/theme';
 import { Button, LoadError, Skeleton, Text, Toast, useTabBarInset } from '@/ui';
@@ -140,10 +140,15 @@ export default function PlanScreen() {
 
   // Bucket List: its places show on the map as outlined pins while the segment is open.
   const inBucket = selection.planMode === 'bucket';
-  const bucket = useMemo(() => (trip.data ? bucketEntries(trip.data) : undefined), [trip.data]);
+  const me = members?.find((m) => m.isMe)?.id;
+  const [bucketSort, setBucketSort] = useBucketSort(tripId);
+  const bucket = useMemo(
+    () => (trip.data ? bucketEntries(trip.data, { members, sort: bucketSort }) : undefined),
+    [trip.data, members, bucketSort],
+  );
   const savedPins = useMemo(() => (trip.data ? bucketPins(trip.data) : []), [trip.data]);
   const savedIds = useMemo(() => savedPins.map((p) => p.id), [savedPins]);
-  const actions = useBucketActions(tripId, trip.data?.bucketItems);
+  const actions = useBucketActions(tripId, trip.data?.bucketItems, me);
   const [bucketPick, setBucketPick] = useState<string | null>(null);
   const pickBucketRow = useCallback((entry: BucketEntry) => {
     setBucketPick(entry.placeId);
@@ -407,6 +412,9 @@ export default function PlanScreen() {
               onPlanAll={planAllBucket}
               notes={smart.notes}
               onAdd={actions.openSearch}
+              onLike={me ? actions.like : undefined}
+              sort={bucketSort}
+              onSort={setBucketSort}
               bottomInset={sheetBottom + spacing.lg}
             />
           }

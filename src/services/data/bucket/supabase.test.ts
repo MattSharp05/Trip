@@ -1,5 +1,5 @@
-import { mockRows, mockTables, mockUpserts } from '../shared/supabaseMock';
-import { supabaseBucket } from './supabase';
+import { mockCalls, mockRows, mockTables, mockUpserts } from '../shared/supabaseMock';
+import { supabaseBucket, toBucket } from './supabase';
 
 jest.mock('../../supabase', () => jest.requireActual('../shared/supabaseMock').mockSupabaseModule);
 
@@ -69,5 +69,33 @@ describe('supabase bucket list', () => {
     };
     expect(await supabaseBucket.saveBucketItem(item)).toMatchObject({ link: { id: 'l1' } });
     expect(mockUpserts.at(-1)).toMatchObject({ saved_link_id: 'l1' });
+  });
+
+  it('reads who liked an item from its embedded likes (TR-59)', () => {
+    const row = { ...mockRows.bucket, bucket_likes: [{ user_id: 'u3' }, { user_id: 'u2' }] };
+    expect(toBucket(row).likedBy).toEqual(['u2', 'u3']);
+    expect(toBucket({ ...mockRows.bucket, bucket_likes: [] })).not.toHaveProperty('likedBy');
+  });
+
+  it('likes as you, and unlikes only your own like', async () => {
+    mockTables.bucket_likes = { data: null, error: null };
+    await supabaseBucket.likeBucketItem({ id: 'k2', tripId: 't1' });
+    expect(mockUpserts.at(-1)).toEqual({ bucket_item_id: 'k2', trip_id: 't1' });
+
+    mockCalls.length = 0;
+    await supabaseBucket.unlikeBucketItem('k2');
+    expect(mockCalls).toEqual([
+      ['bucket_likes', 'delete'],
+      ['bucket_likes', 'eq', 'bucket_item_id', 'k2'],
+      ['bucket_likes', 'eq', 'user_id', 'u1'],
+    ]);
+  });
+
+  it('a failed like throws, so the screen can roll it back', async () => {
+    mockTables.bucket_likes = {
+      data: null,
+      error: { message: 'new row violates row-level security' },
+    };
+    await expect(supabaseBucket.likeBucketItem({ id: 'k2', tripId: 't1' })).rejects.toThrow();
   });
 });

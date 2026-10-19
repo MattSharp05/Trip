@@ -32,6 +32,15 @@ export const BELLAGIO_ITEM_ID = 'item-06'; // Bellagio Fountains, Fri Nov 13
 const STOP_OPTED_OUT: Record<string, string[]> = { [BELLAGIO_ITEM_ID]: [WILLEM] };
 
 /**
+ * Bucket List likes (TR-59): Blake's Golden Tiki has two (Blake and Willem), Lotus of Siam one
+ * (Blake), the rest none. Popular: Golden Tiki, Lotus of Siam, then the rest newest first.
+ */
+const BUCKET_LIKES: Record<string, string[]> = {
+  'bucket-golden-tiki': [BLAKE, WILLEM],
+  'bucket-lotus-of-siam': [BLAKE],
+};
+
+/**
  * Shared expenses (TR-62, ADR 0030): Blake bought the Sphere tickets for all three (it replaces
  * Matthew's own Sphere expense), Matthew paid a dinner in euros for himself and Willem (rate from
  * the demo rates), and Willem paid an Uber for all three.
@@ -101,9 +110,11 @@ export const groupSnapshot: DataSnapshot = {
   members,
   profiles,
   expenses: [...vegasSnapshot.expenses.filter((e) => e.id !== 'expense-sphere'), ...GROUP_EXPENSES],
-  bucketItems: vegasSnapshot.bucketItems.map((b) =>
-    BUCKET_ADDED_BY[b.id] ? { ...b, addedBy: BUCKET_ADDED_BY[b.id] } : b,
-  ),
+  bucketItems: vegasSnapshot.bucketItems
+    .map((b) => (BUCKET_ADDED_BY[b.id] ? { ...b, addedBy: BUCKET_ADDED_BY[b.id] } : b))
+    // Matthew's own items say so, so Blake and Willem see "Added by Matthew" (TR-59).
+    .map((b) => ({ ...b, addedBy: b.addedBy ?? ME }))
+    .map((b) => (BUCKET_LIKES[b.id] ? { ...b, likedBy: BUCKET_LIKES[b.id] } : b)),
   items: vegasSnapshot.items.map((i) => ({
     ...i,
     ...(STOP_ADDED_BY[i.id] ? { addedBy: STOP_ADDED_BY[i.id] } : {}),
