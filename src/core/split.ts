@@ -3,7 +3,7 @@
  * same shares, and the stored shares are the source of truth afterwards.
  */
 
-import { toMajor, toMinor, type Money } from './money';
+import { convert, toMajor, toMinor, type Money, type Rates } from './money';
 
 export interface Share {
   /** The participant's profile id. */
@@ -38,4 +38,29 @@ export function toTripCurrency(share: Money, rate: number, tripCurrency: string)
     amountMinor: toMinor(toMajor(share.amountMinor, share.currency) * rate, tripCurrency),
     currency: tripCurrency,
   };
+}
+
+/** The rate an expense stored when it was saved (ADR 0030), and the currency it converts to. */
+export interface StoredRate {
+  rateToTrip?: number | null;
+  tripCurrency?: string | null;
+}
+
+/**
+ * An amount from an expense in the trip currency: as-is in the same currency; at the rate stored
+ * on the expense when that was for this trip currency; else at today's rates (v1 expenses, a rate
+ * that couldn't load, a changed trip currency). Null when neither covers it.
+ */
+export function atTripRate(
+  money: Money,
+  stored: StoredRate,
+  tripCurrency: string,
+  rates: Rates | null | undefined,
+): Money | null {
+  if (money.currency === tripCurrency)
+    return { amountMinor: money.amountMinor, currency: tripCurrency };
+  if (stored.tripCurrency === tripCurrency && stored.rateToTrip) {
+    return toTripCurrency(money, stored.rateToTrip, tripCurrency);
+  }
+  return convert(money, tripCurrency, rates);
 }
