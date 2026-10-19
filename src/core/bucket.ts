@@ -63,9 +63,10 @@ export const likeCount = (item: Likeable): number => item.likedBy?.length ?? 0;
  * array.
  */
 export function sortBucket<T extends Likeable>(items: readonly T[], sort: BucketSort): T[] {
-  const newest = items.map((item, age) => ({ item, age })).reverse();
-  if (sort === 'popular') newest.sort((a, b) => likeCount(b.item) - likeCount(a.item));
-  return newest.map((e) => e.item);
+  const newest = [...items].reverse();
+  // Stable: equal counts keep newest first.
+  if (sort === 'popular') newest.sort((a, b) => likeCount(b) - likeCount(a));
+  return newest;
 }
 
 /** The items with `me`'s like on `itemId` added or removed. Returns a new array. */

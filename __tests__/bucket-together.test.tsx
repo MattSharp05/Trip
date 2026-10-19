@@ -6,6 +6,7 @@ import ScenarioRoute from '../app/scenario/[name]';
 import RootLayout from '../app/_layout';
 import { resetFakeAuth } from '@/features/auth/testing';
 import { exitScenario } from '@/scenarios';
+import { queryClient } from '@/services/data';
 import { useActiveSource } from '@/services/data/active';
 
 jest.mock('@/services/supabase', () => ({
@@ -101,6 +102,36 @@ describe('Bucket List together on group-bucket-popular', () => {
     await act(async () => fireEvent.press(heart()));
     await waitFor(() => expect(likes('bucket-pinball')).toBe(0));
     expect(heart()).toHaveAccessibleName('Like');
+  });
+
+  it('a quick like then unlike saves in that order, ending unliked', async () => {
+    await open('group-bucket-popular');
+    const heart = await screen.findByTestId('bucket-like-bucket-fremont');
+    await waitFor(() => expect(heart).toHaveAccessibleName('Like'));
+    const source = useActiveSource.getState().source;
+    const like = source.likeBucketItem.bind(source);
+    // The like is slow to save; the unlike must still go after it.
+    jest
+      .spyOn(source, 'likeBucketItem')
+      .mockImplementationOnce((item) =>
+        new Promise((r) => setTimeout(r, 50)).then(() => like(item)),
+      );
+
+    await act(async () => fireEvent.press(heart));
+    await waitFor(() => expect(likes('bucket-fremont')).toBe(1));
+    await act(async () => fireEvent.press(screen.getByTestId('bucket-like-bucket-fremont')));
+    await waitFor(() => expect(likes('bucket-fremont')).toBe(0));
+
+    // Both saves done (the slow like first), and the refetch agrees.
+    await waitFor(() => expect(source.likeBucketItem).toHaveBeenCalledTimes(1));
+    await waitFor(async () => {
+      const saved = await source.getTripData('trip-vegas');
+      expect(saved?.bucketItems.find((b) => b.id === 'bucket-fremont')).not.toHaveProperty(
+        'likedBy',
+      );
+    });
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    expect(likes('bucket-fremont')).toBe(0);
   });
 
   it('rolls the like back with a message when it fails to save', async () => {
