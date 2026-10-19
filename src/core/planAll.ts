@@ -2,8 +2,8 @@
  * Plan my bucket list (TR-32, ADR 0006): places a whole set of candidates at once, greedily, most
  * constrained first. Pure TypeScript, no React Native.
  *
- * Order (`byConstraint`): fixed-time events first (by date and time), then the narrowest window,
- * then the longest visit, then id. Each candidate then goes through Smart Add (`planSmartAdd`)
+ * Order (`byConstraint`): the most liked first (TR-64, group trips), then fixed-time events (by date
+ * and time), then the narrowest window, then the longest visit, then id. Each candidate then goes through Smart Add (`planSmartAdd`)
  * against the plan as it stands after the ones before it, so nothing placed here overlaps.
  *
  * A candidate that clashes with a fixed item (a booking, a ticket) is not placed: one tap must never
@@ -26,6 +26,8 @@ export interface PlanAllCandidate {
   /** The bucket item's id; placed stops get `id` back with their placement. */
   id: string;
   candidate: SmartAddCandidate;
+  /** Bucket List likes (TR-64): more likes go first. None when absent. */
+  likes?: number;
 }
 
 export interface PlanAllInput {
@@ -67,8 +69,13 @@ const windowWidth = (c: SmartAddCandidate) => {
 
 const durationOf = (c: SmartAddCandidate) => c.durationMinutes ?? durationForKind(c.kind);
 
-/** Most constrained first: events by date and time, then narrowest window, then longest visit. */
+/**
+ * Most liked first; then most constrained: events by date and time, then narrowest window, then
+ * longest visit.
+ */
 export function byConstraint(a: PlanAllCandidate, b: PlanAllCandidate): number {
+  const likes = (b.likes ?? 0) - (a.likes ?? 0);
+  if (likes !== 0) return likes;
   const fixedA = isFixed(a.candidate);
   const fixedB = isFixed(b.candidate);
   if (fixedA !== fixedB) return fixedA ? -1 : 1;

@@ -178,3 +178,25 @@ describe('planAll', () => {
     expectNoOverlaps(result.items);
   });
 });
+
+describe('Plan all with likes (TR-64)', () => {
+  it('places the liked items first, even ahead of a narrower window', () => {
+    const days = ['2026-11-13'];
+    // Room for two visits: one before the long fixed stop (09:00-12:00), one after (19:00-22:00).
+    const items = [stop('tour', '2026-11-13', '12:00', 420, true)];
+    const narrow = flexible('narrow', '09:00', '12:00', 150);
+    const liked = { ...flexible('liked', null, null, 150), likes: 2 };
+    const alsoLiked = { ...flexible('also-liked', null, null, 150), likes: 1 };
+    const result = planAll({ days, items, candidates: [narrow, alsoLiked, liked] });
+    expect(result.placed.map((p) => p.id)).toEqual(['liked', 'also-liked']);
+    expect(result.skipped.map((s) => s.id)).toEqual(['narrow']);
+    expectNoOverlaps(result.items);
+  });
+
+  it('orders by likes before constraint', () => {
+    const a = { ...flexible('a', null, null, 60), likes: 0 };
+    const b = { ...flexible('b', '10:00', '11:00', 60) };
+    const c = { ...flexible('c', null, null, 60), likes: 1 };
+    expect([a, b, c].sort(byConstraint).map((x) => x.id)).toEqual(['c', 'b', 'a']);
+  });
+});

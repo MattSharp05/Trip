@@ -15,6 +15,8 @@ const SKELETON_ROWS = 4;
 
 /** The sort row's height: the 34 pt control and the space above it. */
 const SORT_HEIGHT = 34 + spacing.sm;
+/** Suggest times: the 50 pt button and the space under it (Plan my bucket list pads above). */
+const SUGGEST_HEIGHT = 50 + spacing.md;
 
 const SORTS = [
   { value: 'popular', label: 'Popular' },
@@ -30,6 +32,8 @@ export interface BucketListProps {
   onSmartAdd?: (entry: BucketEntry) => void;
   /** Plan my bucket list: places every item that fits (TR-32). */
   onPlanAll?: () => void;
+  /** Suggest times for liked items (TR-64): set on a group trip with a liked item. */
+  onSuggest?: () => void;
   /** Why an item stayed in the list after Plan my bucket list, by bucket item id. */
   notes?: Record<string, string>;
   /** Opens the Add sheet (search, or drop a pin). */
@@ -50,6 +54,7 @@ export function BucketList({
   onDelete,
   onSmartAdd,
   onPlanAll,
+  onSuggest,
   notes,
   onAdd,
   onLike,
@@ -112,9 +117,12 @@ export function BucketList({
   }
 
   const sorting = sort !== undefined && onSort !== undefined && entries.length > 1;
-  const headerHeight = (sorting ? SORT_HEIGHT : 0) + (onPlanAll ? PLAN_ALL_HEIGHT : 0);
+  const headerHeight =
+    (sorting ? SORT_HEIGHT : 0) +
+    (onPlanAll ? PLAN_ALL_HEIGHT : 0) +
+    (onSuggest ? SUGGEST_HEIGHT : 0);
   const header =
-    sorting || onPlanAll ? (
+    sorting || onPlanAll || onSuggest ? (
       <View>
         {sorting ? (
           <View style={styles.sort}>
@@ -122,6 +130,17 @@ export function BucketList({
           </View>
         ) : null}
         {onPlanAll ? <PlanAllButton onPress={onPlanAll} /> : null}
+        {onSuggest ? (
+          <View style={styles.suggest}>
+            <Button
+              label="Suggest times for liked items"
+              variant="secondary"
+              icon="clock"
+              onPress={onSuggest}
+              testID="bucket-suggest"
+            />
+          </View>
+        ) : null}
       </View>
     ) : null;
   return (
@@ -145,6 +164,7 @@ export function BucketList({
 
 const styles = StyleSheet.create({
   sort: { height: SORT_HEIGHT, paddingTop: spacing.sm, paddingHorizontal: screenPadding },
+  suggest: { height: SUGGEST_HEIGHT, paddingHorizontal: screenPadding, paddingBottom: spacing.md },
   add: { paddingHorizontal: screenPadding, paddingTop: spacing.md, alignItems: 'center' },
   skeletons: { paddingHorizontal: screenPadding },
   skeletonRow: {

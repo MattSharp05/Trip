@@ -11,7 +11,8 @@
  *   (`outside-trip`).
  * The planner never writes anything. To place several items (Plan my bucket list, TR-32), call it
  * once per item, adding each placement (and moves) to `items` before the next call. Discover's
- * events (TR-31) are candidates with `fixedDate` and `fixedTime`.
+ * events (TR-31) are candidates with `fixedDate` and `fixedTime`. `suggestTimes` (TR-64) plans the
+ * liked items of a group's Bucket List the same way, without moving anything.
  *
  * Flexible candidates: for each trip day, for each gap between the day's timed items, the start is
  * the later of the previous item's end plus travel, the window's start and 9:00, rounded up to the
@@ -333,4 +334,90 @@ function placeFixed(
   }
   current = current.filter((item) => item !== event);
   return { kind: 'placed', placement: placementAfter(current), moved };
+}
+
+/** A liked bucket item to suggest a time for (TR-64). */
+export interface SuggestCandidate {
+  /** The bucket item's id. */
+  id: string;
+  candidate: SmartAddCandidate;
+  likes: number;
+}
+
+export interface Suggestion {
+  id: string;
+  placement: Placement;
+}
+
+export interface SuggestSkip {
+  id: string;
+  reason: 'no-slot' | 'outside-trip' | 'conflict';
+  /** With `conflict`: the stop (or earlier suggestion) it would overlap. */
+  conflictId?: string;
+}
+
+export interface SuggestResult {
+  /** Most liked first. */
+  suggestions: Suggestion[];
+  skipped: SuggestSkip[];
+}
+
+/**
+ * Suggest times for liked items (TR-64, PRD decision 9): where each liked candidate fits, most
+ * likes first (ties keep the given order), without saving anything. Items with no likes are left
+ * out. Liked events are planned first (they have one time; a flexible item can go elsewhere), then
+ * the rest by likes, each against the itinerary plus the suggestions before it, so none overlap a
+ * stop or each other.
+ *
+ * Unlike Smart Add, a suggestion never moves a stop: it only fills free time. A fixed-time event
+ * that overlaps any stop (or an earlier suggestion) is skipped as a `conflict`. So every suggestion
+ * can be accepted on its own, in any order, without touching the rest of the plan.
+ */
+export function suggestTimes(input: {
+  days: readonly string[];
+  items: readonly PlannerItem[];
+  candidates: readonly SuggestCandidate[];
+  travel?: (from: LatLng, to: LatLng) => TravelEstimate;
+}): SuggestResult {
+  const { days, travel } = input;
+  let items: PlannerItem[] = [...input.items];
+  const suggestions: Suggestion[] = [];
+  const skipped: SuggestSkip[] = [];
+  // Array.prototype.sort is stable: equal likes keep the given order.
+  const liked = input.candidates.filter((c) => c.likes > 0).sort((a, b) => b.likes - a.likes);
+  const isEvent = (c: SuggestCandidate) =>
+    c.candidate.fixedDate !== null && c.candidate.fixedTime !== null;
+  // Events go first: they have one time, and a flexible item can always go elsewhere.
+  const order = [...liked.filter(isEvent), ...liked.filter((c) => !isEvent(c))];
+
+  for (const { id, candidate } of order) {
+    const result = planSmartAdd({ days, items, candidate, travel });
+    if (result.kind === 'none') {
+      skipped.push({ id, reason: result.reason });
+      continue;
+    }
+    if (result.kind === 'conflict' || result.moved.length > 0) {
+      const conflictId = result.kind === 'conflict' ? result.conflictId : result.moved[0].id;
+      skipped.push({ id, reason: 'conflict', conflictId });
+      continue;
+    }
+    const { placement } = result;
+    const fixed = candidate.fixedDate !== null && candidate.fixedTime !== null;
+    items = [
+      ...items,
+      {
+        id,
+        day: placement.day,
+        startTime: placement.startTime,
+        durationMinutes: placement.durationMinutes,
+        fixed,
+        position: candidate.position,
+        kind: fixed ? 'event' : (candidate.kind ?? 'place'),
+      },
+    ];
+    suggestions.push({ id, placement });
+  }
+  const rank = new Map(liked.map((c, i) => [c.id, i]));
+  suggestions.sort((a, b) => rank.get(a.id)! - rank.get(b.id)!);
+  return { suggestions, skipped };
 }

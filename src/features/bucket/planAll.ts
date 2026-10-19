@@ -1,10 +1,11 @@
+import { likeCount } from '@/core/bucket';
 import { dayOfMonth, timeLabel, tripDays, weekdayShort } from '@/core/dates';
 import { newId } from '@/core/ids';
 import { planAll } from '@/core/planAll';
-import { itemTitle, kindForPlace } from '@/features/plan/edit/edits';
+import { itemTitle } from '@/features/plan/edit/edits';
 import type { BucketItem, ItineraryItem, TripData } from '@/services/data/types';
 
-import { candidateFor, plannerItems, type SmartAddChange } from './smartAdd';
+import { candidateFor, plannerItems, stopFor, type SmartAddChange } from './smartAdd';
 
 /** What tapping Plan my bucket list leads to: the writes, the toast, and notes for what didn't fit. */
 export interface PlanAllPlan {
@@ -22,7 +23,7 @@ export const NO_ROOM_NOTE = "Didn't fit any day's free time";
 export const OUTSIDE_TRIP_NOTE = 'Not during this trip';
 
 /** "Fri 13, Sat 14 and Sun 15" */
-function daysLabel(days: string[]): string {
+export function daysLabel(days: string[]): string {
   const labels = days.map((day) => `${weekdayShort(day)} ${dayOfMonth(day)}`);
   return labels.length > 1 ? `${labels.slice(0, -1).join(', ')} and ${labels.at(-1)}` : labels[0];
 }
@@ -38,7 +39,16 @@ function clashNote(data: TripData, conflictId: string): string {
     : NO_ROOM_NOTE;
 }
 
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+/** Why an item wasn't placed (Plan my bucket list's notes, Suggest times' rows). */
+export function skipNote(
+  data: TripData,
+  skip: { reason: 'no-slot' | 'outside-trip' | 'conflict'; conflictId?: string },
+): string {
+  if (skip.reason === 'conflict') return clashNote(data, skip.conflictId!);
+  return skip.reason === 'outside-trip' ? OUTSIDE_TRIP_NOTE : NO_ROOM_NOTE;
+}
+
+export const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /**
  * Plan my bucket list (TR-32): places every bucket item that fits (`core/planAll`), as one change
@@ -49,18 +59,15 @@ export function planBucketAll(data: TripData, ids: () => string = newId): PlanAl
   const result = planAll({
     days: tripDays(data.trip.startDate, data.trip.endDate),
     items: plannerItems(data),
-    candidates: data.bucketItems.map((b) => ({ id: b.id, candidate: candidateFor(data, b) })),
+    candidates: data.bucketItems.map((b) => ({
+      id: b.id,
+      candidate: candidateFor(data, b),
+      likes: likeCount(b),
+    })),
   });
 
   const notes: Record<string, string> = {};
-  for (const skip of result.skipped) {
-    notes[skip.id] =
-      skip.reason === 'conflict'
-        ? clashNote(data, skip.conflictId!)
-        : skip.reason === 'outside-trip'
-          ? OUTSIDE_TRIP_NOTE
-          : NO_ROOM_NOTE;
-  }
+  for (const skip of result.skipped) notes[skip.id] = skipNote(data, skip);
 
   if (result.placed.length === 0) {
     return {
@@ -75,24 +82,12 @@ export function planBucketAll(data: TripData, ids: () => string = newId): PlanAl
   // Final day and time of every planner item (later events can move stops placed earlier).
   const final = new Map(result.items.map((item) => [item.id, item]));
   const added: ItineraryItem[] = result.placed.map(({ id: bucketId, placement }) => {
-    const bucketItem = byId.get(bucketId) as BucketItem;
-    const place = data.places.find((p) => p.id === bucketItem.placeId);
-    const fixedTime = bucketItem.fixedDate !== null && bucketItem.fixedTime !== null;
     const at = final.get(bucketId)!;
-    return {
-      id: ids(),
-      tripId: data.trip.id,
+    return stopFor(data, byId.get(bucketId) as BucketItem, ids(), {
       day: at.day,
       startTime: at.startTime,
       durationMinutes: placement.durationMinutes,
-      placeId: bucketItem.placeId,
-      kind: fixedTime ? 'event' : kindForPlace(place?.kind ?? null),
-      bookingId: null,
-      fixed: fixedTime,
-      ...(bucketItem.title ? { title: bucketItem.title } : {}),
-      // Planning someone's Bucket List item keeps them as its adder (ADR 0027).
-      ...(bucketItem.addedBy ? { addedBy: bucketItem.addedBy } : {}),
-    };
+    });
   });
   const movedIds = new Set(result.moved.map((m) => m.id));
   const before = data.items.filter((item) => movedIds.has(item.id));
