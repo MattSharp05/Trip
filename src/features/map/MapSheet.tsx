@@ -93,27 +93,47 @@ export function MapSheet({
   const onTopLayout = (e: LayoutChangeEvent) =>
     setTopHeight(Math.ceil(e.nativeEvent.layout.height));
 
+  // The library lays the content out taller than the area leaves it at full height (on device it
+  // ran ~95 pt past the bottom of the screen), so a list's last row and its padding for the tab
+  // bar could never scroll into view (TR-59: Add a place stayed under the tab bar). Pad the
+  // content by the difference, so its bottom edge is the area's bottom edge.
+  const [area, setArea] = useState(0);
+  const [contentHeight, setContentHeight] = useState(0);
+  const overflow = area > 0 ? Math.max(Math.round(contentHeight - (area - HANDLE_HEIGHT)), 0) : 0;
+
   return (
-    <BottomSheet
-      ref={sheet}
-      index={SHEET_HALF}
-      snapPoints={snapPoints}
-      enableDynamicSizing={false}
-      enableOverDrag={false}
-      animateOnMount={false}
-      backgroundStyle={styles.background}
-      handleIndicatorStyle={styles.grabber}
-      handleStyle={styles.handle}
-      onAnimate={(from, to) => {
-        if (to < from) report(to);
-      }}
-      onChange={report}
-    >
-      <View testID={testID} style={styles.content}>
-        <View onLayout={onTopLayout}>{top}</View>
-        <View style={styles.body}>{children}</View>
-      </View>
-    </BottomSheet>
+    <>
+      <View
+        pointerEvents="none"
+        style={StyleSheet.absoluteFill}
+        testID={testID ? `${testID}-area` : undefined}
+        onLayout={(e) => setArea(e.nativeEvent.layout.height)}
+      />
+      <BottomSheet
+        ref={sheet}
+        index={SHEET_HALF}
+        snapPoints={snapPoints}
+        enableDynamicSizing={false}
+        enableOverDrag={false}
+        animateOnMount={false}
+        backgroundStyle={styles.background}
+        handleIndicatorStyle={styles.grabber}
+        handleStyle={styles.handle}
+        onAnimate={(from, to) => {
+          if (to < from) report(to);
+        }}
+        onChange={report}
+      >
+        <View
+          testID={testID}
+          style={[styles.content, { paddingBottom: overflow }]}
+          onLayout={(e) => setContentHeight(e.nativeEvent.layout.height)}
+        >
+          <View onLayout={onTopLayout}>{top}</View>
+          <View style={styles.body}>{children}</View>
+        </View>
+      </BottomSheet>
+    </>
   );
 }
 

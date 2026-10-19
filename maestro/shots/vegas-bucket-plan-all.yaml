@@ -10,8 +10,15 @@ tags:
     env:
       SCENARIO: vegas-bucket
       READY_ID: bucket-list
+- waitForAnimationToEnd:
+    timeout: 5000
 - tapOn:
     id: bucket-plan-all
+# Any toast first: if the plan went differently, the failure's screenshot shows what it said.
+- extendedWaitUntil:
+    visible:
+      id: plan-toast
+    timeout: 10000
 - extendedWaitUntil:
     visible: 'Placed 5 items across your trip.*'
     timeout: 10000
