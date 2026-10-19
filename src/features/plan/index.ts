@@ -6,9 +6,12 @@ export { FlightCard, type FlightCardProps } from './FlightCard';
 export { Itinerary, type ItineraryProps } from './Itinerary';
 export {
   dayItems,
+  goingList,
+  hasGoing,
   itemForPin,
   itineraryEntries,
   legCaption,
+  type GoingMember,
   type ItineraryEntry,
   type ItineraryLeg,
 } from './itinerary';

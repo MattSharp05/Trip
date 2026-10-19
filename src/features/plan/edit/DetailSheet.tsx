@@ -1,18 +1,20 @@
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Switch, View } from 'react-native';
 
 import { timeAsDate, timeOfDate } from '@/core/dates';
 import { DEFAULT_DURATION_MIN } from '@/core/reflow';
 import { durationLabel } from '@/core/travel';
 import { SpotSearch } from '@/features/bucket';
 import type { LngLat } from '@/features/map';
+import { MemberAvatar } from '@/features/members';
 import type { ItineraryItem } from '@/services/data';
 import type { SpotResult } from '@/services/places';
 import { colors, continuous, radii, spacing, typography } from '@/theme';
 import { Button, IconButton, ListRow, Text } from '@/ui';
 
+import type { GoingMember } from '../itinerary';
 import { MINUTE_STEP, SheetError } from './TimeSheet';
 
 /** The duration stepper moves in quarter hours, from 15 minutes to 12 hours. */
@@ -31,9 +33,18 @@ export interface ItemDetailsProps {
   saving: boolean;
   /** `spot`: a newly picked place for the item. */
   onSave: (next: ItineraryItem, spot: SpotResult | null) => void;
+  /** Group trips (TR-60): who added it ("Willem", "you"); null hides the line. */
+  addedBy?: string | null;
+  /** Group trips: each member and whether they're going; empty hides the Going section. */
+  going?: GoingMember[];
+  /** Your I'm going switch, saved as soon as it's flipped. */
+  onGoingChange?: (going: boolean) => void;
 }
 
-/** An item's detail sheet: title, place, time, duration and notes. */
+/**
+ * An item's detail sheet: title, place, time, duration and notes. On a group trip, also who added
+ * it and who is going, with your own I'm going switch (TR-60).
+ */
 export function ItemDetails({
   item,
   placeName,
@@ -42,6 +53,9 @@ export function ItemDetails({
   error,
   saving,
   onSave,
+  addedBy = null,
+  going = [],
+  onGoingChange,
 }: ItemDetailsProps) {
   const [title, setTitle] = useState(item.title ?? '');
   const [time, setTime] = useState(item.startTime);
@@ -93,6 +107,11 @@ export function ItemDetails({
           style={styles.input}
           testID="detail-title"
         />
+        {addedBy ? (
+          <Text variant="subhead" tone="secondary" testID="detail-added-by">
+            {`Added by ${addedBy}`}
+          </Text>
+        ) : null}
       </Field>
       <View style={styles.group}>
         <ListRow
@@ -155,6 +174,20 @@ export function ItemDetails({
           )}
         </View>
       </View>
+      {going.length > 0 ? (
+        <Field label="Going">
+          <View style={styles.group} testID="detail-going">
+            {going.map((member, i) => (
+              <GoingRow
+                key={member.id}
+                member={member}
+                separator={i > 0}
+                onChange={onGoingChange}
+              />
+            ))}
+          </View>
+        </Field>
+      ) : null}
       <Field label="Notes">
         <BottomSheetTextInput
           value={notes}
@@ -171,6 +204,42 @@ export function ItemDetails({
       </Field>
       <SheetError message={error} />
       <Button label="Save" onPress={save} disabled={saving} testID="detail-save" />
+    </View>
+  );
+}
+
+/** A member and their status; your own row is the I'm going switch. */
+function GoingRow({
+  member,
+  separator,
+  onChange,
+}: {
+  member: GoingMember;
+  separator: boolean;
+  onChange?: (going: boolean) => void;
+}) {
+  return (
+    <View
+      style={[styles.line, styles.member, separator && styles.separator]}
+      testID={`detail-going-row-${member.id}`}
+    >
+      <MemberAvatar member={member} size={28} onRaised />
+      <Text variant="body" style={styles.memberName}>
+        {member.isMe ? "I'm going" : member.name}
+      </Text>
+      {member.isMe ? (
+        <Switch
+          value={member.going}
+          onValueChange={onChange}
+          trackColor={{ true: colors.accent }}
+          accessibilityLabel="I'm going"
+          testID="detail-going-switch"
+        />
+      ) : (
+        <Text variant="body" tone="secondary" testID={`detail-going-status-${member.id}`}>
+          {member.going ? 'Going' : 'Out'}
+        </Text>
+      )}
     </View>
   );
 }
@@ -218,6 +287,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
   },
+  member: { justifyContent: 'flex-start', gap: spacing.md },
+  memberName: { flex: 1 },
   separator: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.hairline },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   duration: { minWidth: 72, textAlign: 'center' },

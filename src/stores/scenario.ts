@@ -7,6 +7,8 @@ export interface ScenarioView {
   /** Plan: the day to show (`YYYY-MM-DD`) and the item to highlight. */
   day?: string;
   itemId?: string;
+  /** Plan: open the detail sheet of `itemId` (TR-60). */
+  openDetails?: boolean;
   /** Plan: itinerary or Bucket List. */
   planMode?: 'itinerary' | 'bucket';
   /** Plan: the Bucket List's order (TR-59); Recent when unset. */

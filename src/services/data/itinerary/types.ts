@@ -20,10 +20,19 @@ export interface ItineraryItem {
   addedBy?: string;
   /** The traveller's own notes (detail sheet); absent in fixtures. */
   notes?: string | null;
+  /**
+   * Who opted out of it (profile ids, TR-60). Everyone on the trip is going unless listed here;
+   * absent or empty means everyone is in.
+   */
+  optedOut?: string[];
 }
 
 /** The itinerary slice of `DataSource`. */
 export interface ItinerarySource {
   saveItineraryItem(item: ItineraryItem): Promise<ItineraryItem>;
   deleteItineraryItem(id: string): Promise<void>;
+  /** You're not going to this stop (TR-60). Nothing changes if you're already out. */
+  optOut(itemId: string, tripId: string): Promise<void>;
+  /** You're going after all. */
+  optIn(itemId: string): Promise<void>;
 }

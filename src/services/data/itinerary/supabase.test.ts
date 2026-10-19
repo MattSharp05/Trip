@@ -1,5 +1,5 @@
-import { mockUpserts, mockTables } from '../shared/supabaseMock';
-import { supabaseItinerary } from './supabase';
+import { mockCalls, mockUpserts, mockTables } from '../shared/supabaseMock';
+import { supabaseItinerary, toItem } from './supabase';
 
 jest.mock('../../supabase', () => jest.requireActual('../shared/supabaseMock').mockSupabaseModule);
 
@@ -64,5 +64,39 @@ describe('supabase itinerary', () => {
     });
     expect(mockUpserts.at(-1)).toMatchObject({ added_by: 'u2' });
     expect(saved.addedBy).toBe('u2');
+  });
+
+  it('reads who opted out of a stop, sorted, and keeps them on a save (TR-60)', async () => {
+    expect(
+      toItem({ ...itemRow, added_by: null, item_opt_outs: [{ user_id: 'u3' }, { user_id: 'u2' }] }),
+    ).toMatchObject({ optedOut: ['u2', 'u3'] });
+    expect(toItem({ ...itemRow, added_by: null, item_opt_outs: [] })).not.toHaveProperty(
+      'optedOut',
+    );
+
+    mockTables.itinerary_items = { data: itemRow, error: null };
+    const saved = await supabaseItinerary.saveItineraryItem({
+      ...toItem({ ...itemRow, added_by: null }),
+      optedOut: ['u2'],
+    });
+    expect(saved.optedOut).toEqual(['u2']);
+    expect(mockUpserts.at(-1)).not.toHaveProperty('optedOut');
+  });
+
+  it('opts you out of a stop and back in (TR-60)', async () => {
+    mockTables.item_opt_outs = { data: null, error: null };
+    await supabaseItinerary.optOut('i1', 't1');
+    expect(mockUpserts.at(-1)).toEqual({ itinerary_item_id: 'i1', user_id: 'u1', trip_id: 't1' });
+
+    mockCalls.length = 0;
+    await supabaseItinerary.optIn('i1');
+    expect(mockCalls).toEqual([
+      ['item_opt_outs', 'delete'],
+      ['item_opt_outs', 'eq', 'itinerary_item_id', 'i1'],
+      ['item_opt_outs', 'eq', 'user_id', 'u1'],
+    ]);
+
+    mockTables.item_opt_outs = { data: null, error: { message: 'denied' } };
+    await expect(supabaseItinerary.optOut('i1', 't1')).rejects.toThrow('denied');
   });
 });
