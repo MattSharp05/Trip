@@ -27,6 +27,9 @@ const members: Membership[] = [
 /** Who added what, beyond Matthew's own (unmarked) items. */
 const BUCKET_ADDED_BY: Record<string, string> = { 'bucket-golden-tiki': BLAKE };
 const STOP_ADDED_BY: Record<string, string> = { 'item-04': WILLEM }; // Dinner at Peppermill, Nov 12
+/** Who opted out of what (TR-60): Willem skips the Bellagio Fountains. */
+export const BELLAGIO_ITEM_ID = 'item-06'; // Bellagio Fountains, Fri Nov 13
+const STOP_OPTED_OUT: Record<string, string[]> = { [BELLAGIO_ITEM_ID]: [WILLEM] };
 
 /**
  * Bucket List likes (TR-59): Blake's Golden Tiki has two (Blake and Willem), Lotus of Siam one
@@ -112,9 +115,11 @@ export const groupSnapshot: DataSnapshot = {
     // Matthew's own items say so, so Blake and Willem see "Added by Matthew" (TR-59).
     .map((b) => ({ ...b, addedBy: b.addedBy ?? ME }))
     .map((b) => (BUCKET_LIKES[b.id] ? { ...b, likedBy: BUCKET_LIKES[b.id] } : b)),
-  items: vegasSnapshot.items.map((i) =>
-    STOP_ADDED_BY[i.id] ? { ...i, addedBy: STOP_ADDED_BY[i.id] } : i,
-  ),
+  items: vegasSnapshot.items.map((i) => ({
+    ...i,
+    ...(STOP_ADDED_BY[i.id] ? { addedBy: STOP_ADDED_BY[i.id] } : {}),
+    ...(STOP_OPTED_OUT[i.id] ? { optedOut: STOP_OPTED_OUT[i.id] } : {}),
+  })),
 };
 
 /**

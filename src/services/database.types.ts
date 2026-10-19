@@ -403,6 +403,49 @@ export type Database = {
         };
         Relationships: [];
       };
+      item_opt_outs: {
+        Row: {
+          created_at: string;
+          itinerary_item_id: string;
+          trip_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          itinerary_item_id: string;
+          trip_id: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          itinerary_item_id?: string;
+          trip_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'item_opt_outs_itinerary_item_id_fkey';
+            columns: ['itinerary_item_id'];
+            isOneToOne: false;
+            referencedRelation: 'itinerary_items';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'item_opt_outs_trip_id_fkey';
+            columns: ['trip_id'];
+            isOneToOne: false;
+            referencedRelation: 'trips';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'item_opt_outs_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       itinerary_items: {
         Row: {
           added_by: string | null;
