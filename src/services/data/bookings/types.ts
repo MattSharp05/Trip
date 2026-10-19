@@ -116,4 +116,6 @@ export interface BookingsSource {
   /** Adds a new booking (an import); the caller picks its id. */
   createBooking(booking: Booking): Promise<Booking>;
   deleteBooking(id: string): Promise<void>;
+  /** Mine / Shared: only the booking's owner may change it (the database refuses anyone else). */
+  setBookingVisibility(id: string, visibility: BookingVisibility): Promise<Booking>;
 }

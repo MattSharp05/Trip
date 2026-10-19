@@ -2,7 +2,7 @@ import { formatDay, formatNights, nightsBetween } from '../format';
 import type { WalletCardDef, WalletCardRendererProps } from './types';
 import { WalletCard } from './WalletCard';
 
-function HotelCard({ entry, onPress }: WalletCardRendererProps<'hotel'>) {
+function HotelCard({ entry, onPress, tag }: WalletCardRendererProps<'hotel'>) {
   const hotel = entry.booking.data;
   const nights = nightsBetween(hotel.checkIn.date, hotel.checkOut.date);
   return (
@@ -13,6 +13,7 @@ function HotelCard({ entry, onPress }: WalletCardRendererProps<'hotel'>) {
         `${formatDay(hotel.checkIn.date)} – ${formatDay(hotel.checkOut.date)} · ${formatNights(nights)}`,
         `Confirmation ${hotel.confirmation}`,
       ]}
+      tag={tag}
       onPress={onPress}
       testID={`wallet-card-${entry.id}`}
     />

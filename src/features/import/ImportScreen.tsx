@@ -14,9 +14,11 @@ import {
   queryClient,
   useDataSource,
   useTrips,
+  type BookingVisibility,
   type NewTrip,
   type Trip,
 } from '@/services/data';
+import { defaultVisibility } from '@/services/data/bookings/visibility';
 import { findCoverPhoto, trackPhotoDownload } from '@/services/photos';
 import { useImportStore } from '@/stores/import';
 import { useTripStore } from '@/stores/trip';
@@ -27,6 +29,7 @@ import { draftFrom, fieldsFor, finishDraft, switchType, TYPE_OPTIONS, type Draft
 import { importErrorMessage, readBooking, type ReadBooking } from './readBooking';
 import { ReviewFields } from './ReviewFields';
 import { saveImport } from './saveImport';
+import { VisibilityRow } from './VisibilityRow';
 
 /**
  * Booking import (TR-25): reads the picked file ("Reading your booking"), then the review screen:
@@ -158,6 +161,8 @@ function Review({ read }: { read: ReadBooking }) {
   const [draft, setDraft] = useState(() => draftFrom(read.result.booking, read.result.uncertain));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
+  // Null until the traveller flips it: then the type's default, which follows a type switch.
+  const [visibility, setVisibility] = useState<BookingVisibility | null>(null);
   const target = useTarget(read.result, draft);
   const fields = fieldsFor(draft.base);
 
@@ -198,6 +203,7 @@ function Review({ read }: { read: ReadBooking }) {
           target: resolved,
           originalPath: read.originalPath,
           importedAt: now().toISOString(),
+          ...(visibility ? { visibility } : {}),
         });
         if (photoLocation) void trackPhotoDownload(photoLocation).catch(() => {});
         return result;
@@ -268,6 +274,13 @@ function Review({ read }: { read: ReadBooking }) {
           ))}
         </ScrollView>
         <TripTarget target={target} />
+        {target && 'trip' in target ? (
+          <VisibilityRow
+            tripId={target.trip.id}
+            value={visibility ?? defaultVisibility(draft.base.type)}
+            onChange={setVisibility}
+          />
+        ) : null}
         <ReviewFields
           fields={fields}
           values={draft.values}

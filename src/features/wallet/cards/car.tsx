@@ -2,7 +2,7 @@ import { brandCode, formatDateTime } from '../format';
 import type { WalletCardDef, WalletCardRendererProps } from './types';
 import { WalletCard } from './WalletCard';
 
-function CarCard({ entry, places, onPress }: WalletCardRendererProps<'car'>) {
+function CarCard({ entry, places, onPress, tag }: WalletCardRendererProps<'car'>) {
   const car = entry.booking.data;
   const pickupPlace = places.get(car.pickupPlaceId)?.name;
   return (
@@ -10,6 +10,7 @@ function CarCard({ entry, places, onPress }: WalletCardRendererProps<'car'>) {
       badge={{ code: brandCode(car.company) }}
       title={`${car.company} rental car`}
       lines={[`Pickup ${formatDateTime(car.pickup)}`, ...(pickupPlace ? [pickupPlace] : [])]}
+      tag={tag}
       onPress={onPress}
       testID={`wallet-card-${entry.id}`}
     />

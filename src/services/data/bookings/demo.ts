@@ -19,5 +19,15 @@ export function demoBookings(store: DemoStore): BookingsSource {
     async deleteBooking(id) {
       store.db = { ...store.db, bookings: store.db.bookings.filter((b) => b.id !== id) };
     },
+    async setBookingVisibility(id, visibility) {
+      const { db } = store;
+      const booking = db.bookings.find((b) => b.id === id);
+      if (!booking) throw new Error('Booking not found');
+      // As the database's trigger: only the traveller who added it changes who sees it.
+      if ((booking.addedBy ?? db.me) !== db.me) throw new Error("Only the booking's owner");
+      const next = { ...booking, visibility };
+      store.db = { ...db, bookings: upsert(db.bookings, next) };
+      return copy(next);
+    },
   };
 }

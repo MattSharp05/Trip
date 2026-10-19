@@ -8,6 +8,7 @@ import {
   groupInviteSnapshot,
   groupMemberSnapshot,
   groupSnapshot,
+  groupWalletSnapshot,
   VEGAS_INVITE_TOKEN,
 } from './fixtures/group';
 import { ME, VEGAS_TRIP_ID, vegasSnapshot } from './fixtures/vegas';
@@ -309,6 +310,21 @@ export const SCENARIOS: readonly Scenario[] = [
       'Organize tab, Expenses on the group trip: Sphere paid by Blake, dinner in euros, an Uber.',
     tab: 'organize',
     view: { organizeView: 'budget' },
+  }),
+  vegas({
+    name: 'group-wallet-mine',
+    data: groupWalletSnapshot,
+    description: 'Organize → Wallet on the group trip, Mine: your flights and passport.',
+    tab: 'organize',
+    view: { organizeView: 'wallet', walletScope: 'mine' },
+  }),
+  vegas({
+    name: 'group-wallet-shared',
+    data: groupWalletSnapshot,
+    description:
+      "Organize → Wallet on the group trip, Shared: hotel, Blake's Airbnb, Willem's car, UFC.",
+    tab: 'organize',
+    view: { organizeView: 'wallet', walletScope: 'shared' },
   }),
   {
     name: 'empty-account',

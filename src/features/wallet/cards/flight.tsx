@@ -3,7 +3,7 @@ import { formatDateTime } from '../format';
 import type { WalletCardDef, WalletCardRendererProps } from './types';
 import { WalletCard } from './WalletCard';
 
-function FlightCard({ entry, onPress }: WalletCardRendererProps<'flight'>) {
+function FlightCard({ entry, onPress, tag }: WalletCardRendererProps<'flight'>) {
   const flight = entry.booking.data;
   return (
     <WalletCard
@@ -14,6 +14,7 @@ function FlightCard({ entry, onPress }: WalletCardRendererProps<'flight'>) {
         formatDateTime(flight.departs),
       ]}
       accessory={<FlightStatusPill flight={flight} />}
+      tag={tag}
       onPress={onPress}
       testID={`wallet-card-${entry.id}`}
     />

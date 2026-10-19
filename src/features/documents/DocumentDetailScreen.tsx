@@ -3,12 +3,13 @@ import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { useDocuments } from '@/services/data';
+import { useDocuments, useMyProfile } from '@/services/data';
 import type { TravelDocument } from '@/services/data/types';
 import { colors, screenPadding, spacing } from '@/theme';
 import { Button, Icon, ListRow, LoadError, Skeleton, Surface, Text } from '@/ui';
 
 import { DocumentPhoto } from './DocumentPhoto';
+import { DocumentSharing } from './DocumentSharing';
 import { warningText } from './expiry';
 import { documentName } from './form';
 import { PhotoViewer } from './PhotoViewer';
@@ -40,7 +41,7 @@ function Facts({ document }: { document: TravelDocument }) {
   );
 }
 
-function Detail({ document }: { document: TravelDocument }) {
+function Detail({ document, mine }: { document: TravelDocument; mine: boolean }) {
   const router = useRouter();
   const [viewing, setViewing] = useState<number | null>(null);
   const warning = useExpiryWarning(document.expiresOn);
@@ -84,14 +85,20 @@ function Detail({ document }: { document: TravelDocument }) {
           <Text variant="subhead" tone="secondary">
             No photo yet
           </Text>
-          <Button label="Add a photo" variant="secondary" icon="camera" onPress={edit} />
+          {mine ? (
+            <Button label="Add a photo" variant="secondary" icon="camera" onPress={edit} />
+          ) : null}
         </Surface>
       )}
 
       <Facts document={document} />
 
+      <DocumentSharing document={document} />
+
       <Text variant="caption" tone="secondary" style={styles.privacy}>
-        Saved to your account only and never sent to AI.
+        {document.sharedTripIds?.length
+          ? 'Shared only with the trips you chose and never sent to AI.'
+          : 'Saved to your account only and never sent to AI.'}
       </Text>
 
       <PhotoViewer
@@ -110,6 +117,9 @@ export function DocumentDetailScreen({ id }: { id: string }) {
   const documents = useDocuments();
   const document = documents.data?.find((d) => d.id === id);
   const title = document ? documentName(document.type) : '';
+  // Someone else's shared passport is read-only: only its owner edits it (RLS).
+  const profile = useMyProfile();
+  const mine = !!document && (!document.addedBy || document.addedBy === profile.data?.id);
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -118,20 +128,21 @@ export function DocumentDetailScreen({ id }: { id: string }) {
           headerShown: true,
           title,
           headerBackTitle: 'Organize',
-          headerRight: document
-            ? () => (
-                <Pressable
-                  accessibilityRole="button"
-                  hitSlop={8}
-                  onPress={() =>
-                    router.push(`/organize/document/${encodeURIComponent(document.id)}/edit`)
-                  }
-                  testID="document-edit"
-                >
-                  <Text variant="body">Edit</Text>
-                </Pressable>
-              )
-            : undefined,
+          headerRight:
+            document && mine
+              ? () => (
+                  <Pressable
+                    accessibilityRole="button"
+                    hitSlop={8}
+                    onPress={() =>
+                      router.push(`/organize/document/${encodeURIComponent(document.id)}/edit`)
+                    }
+                    testID="document-edit"
+                  >
+                    <Text variant="body">Edit</Text>
+                  </Pressable>
+                )
+              : undefined,
         }}
       />
       {documents.isPending ? (
@@ -140,7 +151,7 @@ export function DocumentDetailScreen({ id }: { id: string }) {
           <Skeleton height={132} radius="card" />
         </>
       ) : document ? (
-        <Detail document={document} />
+        <Detail document={document} mine={mine} />
       ) : documents.isError ? (
         <LoadError
           message="Couldn't load this document. Check your connection."
