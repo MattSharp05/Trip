@@ -2,8 +2,9 @@ import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import type { BucketSort } from '@/core/bucket';
 import { screenPadding, spacing } from '@/theme';
-import { Button, Skeleton, Text } from '@/ui';
+import { Button, Segmented, Skeleton, Text } from '@/ui';
 
 import type { BucketEntry } from './bucket';
 import { BUCKET_ROW_HEIGHT, BucketRow } from './BucketRow';
@@ -11,6 +12,14 @@ import { PLAN_ALL_HEIGHT, PlanAllButton } from './PlanAllButton';
 import { SmartAddButton } from './SmartAddButton';
 
 const SKELETON_ROWS = 4;
+
+/** The sort row's height: the 34 pt control and the space above it. */
+const SORT_HEIGHT = 34 + spacing.sm;
+
+const SORTS = [
+  { value: 'popular', label: 'Popular' },
+  { value: 'recent', label: 'Recent' },
+] as const satisfies readonly { value: BucketSort; label: string }[];
 
 export interface BucketListProps {
   /** The trip's saved places; undefined while the trip loads. */
@@ -25,6 +34,11 @@ export interface BucketListProps {
   notes?: Record<string, string>;
   /** Opens the Add sheet (search, or drop a pin). */
   onAdd: () => void;
+  /** Toggles your like on an item (TR-59). */
+  onLike?: (entry: BucketEntry) => void;
+  /** Popular or Recent, and how to change it; the control shows with two or more items. */
+  sort?: BucketSort;
+  onSort?: (sort: BucketSort) => void;
   /** Room under the last row for the tab bar. */
   bottomInset: number;
 }
@@ -38,6 +52,9 @@ export function BucketList({
   onPlanAll,
   notes,
   onAdd,
+  onLike,
+  sort,
+  onSort,
   bottomInset,
 }: BucketListProps) {
   const renderItem = useCallback(
@@ -47,10 +64,11 @@ export function BucketList({
         onPress={onSelect}
         onDelete={onDelete}
         note={notes?.[item.id]}
+        onLike={onLike}
         action={onSmartAdd ? <SmartAddButton entry={item} onPress={onSmartAdd} /> : undefined}
       />
     ),
-    [onSelect, onDelete, onSmartAdd, notes],
+    [onSelect, onDelete, onSmartAdd, onLike, notes],
   );
 
   const add = (
@@ -93,7 +111,19 @@ export function BucketList({
     );
   }
 
-  const headerHeight = onPlanAll ? PLAN_ALL_HEIGHT : 0;
+  const sorting = sort !== undefined && onSort !== undefined && entries.length > 1;
+  const headerHeight = (sorting ? SORT_HEIGHT : 0) + (onPlanAll ? PLAN_ALL_HEIGHT : 0);
+  const header =
+    sorting || onPlanAll ? (
+      <View>
+        {sorting ? (
+          <View style={styles.sort}>
+            <Segmented segments={SORTS} value={sort} onChange={onSort} testID="bucket-sort" />
+          </View>
+        ) : null}
+        {onPlanAll ? <PlanAllButton onPress={onPlanAll} /> : null}
+      </View>
+    ) : null;
   return (
     <BottomSheetFlatList
       data={entries}
@@ -105,7 +135,7 @@ export function BucketList({
         offset: headerHeight + BUCKET_ROW_HEIGHT * i,
         index: i,
       })}
-      ListHeaderComponent={onPlanAll ? <PlanAllButton onPress={onPlanAll} /> : null}
+      ListHeaderComponent={header}
       ListFooterComponent={add}
       contentContainerStyle={{ paddingBottom: bottomInset }}
       testID="bucket-list"
@@ -114,6 +144,7 @@ export function BucketList({
 }
 
 const styles = StyleSheet.create({
+  sort: { height: SORT_HEIGHT, paddingTop: spacing.sm, paddingHorizontal: screenPadding },
   add: { paddingHorizontal: screenPadding, paddingTop: spacing.md, alignItems: 'center' },
   skeletons: { paddingHorizontal: screenPadding },
   skeletonRow: {

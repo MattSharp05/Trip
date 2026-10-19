@@ -45,3 +45,41 @@ export function sourceLabel(source: string | null): string | null {
 export function kindLabel(kind: string | null): string | null {
   return kind ? kind.charAt(0).toUpperCase() + kind.slice(1) : null;
 }
+
+/** How the Bucket List is ordered (TR-59): most liked first, or newest first. */
+export type BucketSort = 'popular' | 'recent';
+
+/** The fields sorting and liking need; `BucketItem` fits. */
+export interface Likeable {
+  id: string;
+  likedBy?: string[];
+}
+
+export const likeCount = (item: Likeable): number => item.likedBy?.length ?? 0;
+
+/**
+ * The items in display order. `items` are in the order they were saved (oldest first), so the
+ * later one is newer. Recent: newest first. Popular: most likes first, then newest. Returns a new
+ * array.
+ */
+export function sortBucket<T extends Likeable>(items: readonly T[], sort: BucketSort): T[] {
+  const newest = items.map((item, age) => ({ item, age })).reverse();
+  if (sort === 'popular') newest.sort((a, b) => likeCount(b.item) - likeCount(a.item));
+  return newest.map((e) => e.item);
+}
+
+/** The items with `me`'s like on `itemId` added or removed. Returns a new array. */
+export function withLike<T extends Likeable>(
+  items: readonly T[],
+  itemId: string,
+  me: string,
+  liked: boolean,
+): T[] {
+  return items.map((item) => {
+    if (item.id !== itemId) return item;
+    const others = (item.likedBy ?? []).filter((u) => u !== me);
+    const next: T = { ...item, likedBy: liked ? [...others, me].sort() : others };
+    if (!next.likedBy?.length) delete next.likedBy;
+    return next;
+  });
+}
