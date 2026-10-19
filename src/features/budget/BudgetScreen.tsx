@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { dateRangeLabel } from '@/core/dates';
-import { convert, formatMoney } from '@/core/money';
+import { FALLBACK_NAME, memberLabel } from '@/core/members';
+import { formatMoney } from '@/core/money';
 import { usePreferences } from '@/features/settings';
-import { useTripData } from '@/services/data';
+import { useSaveTripCurrency, useTripData, useTripMembers } from '@/services/data';
 import { useRates } from '@/services/rates';
 import { useScenarioStore } from '@/stores/scenario';
 import { useTripStore } from '@/stores/trip';
@@ -15,8 +16,12 @@ import { AddExpenseSheet } from './AddExpenseSheet';
 import {
   categoryIcon,
   categoryOf,
+  needsLiveRate,
   recentFirst,
+  splitLine,
   summarize,
+  tripAmount,
+  tripCurrencyOf,
   type BudgetSummary,
   type Category,
 } from './budget';
@@ -28,25 +33,27 @@ type BudgetTab = 'categories' | 'expenses';
 
 const TABS = [
   { value: 'categories', label: 'Categories' },
-  { value: 'expenses', label: 'Expenses' },
+  { value: 'expenses', label: 'All' },
 ] as const;
 
 /**
- * Organize → Budget for the selected trip: the total, spent and left with a progress bar, totals
- * per category, and every expense in its original currency next to the display currency. The
- * display currency starts at the home currency (or the scenario's) and switches from the header;
- * stored amounts never change.
+ * Organize → Expenses for the selected trip, shared by everyone on it (ADR 0030): the total, spent
+ * and left with a progress bar, totals per category, and every expense in the currency it was paid
+ * in next to the trip currency, with who paid and who it's split with. The trip currency switches
+ * from the header, for everyone; stored amounts never change.
  */
 export function BudgetScreen() {
   const tabBarInset = useTabBarInset();
   const tripId = useTripStore((s) => s.selectedTripId);
   const tripData = useTripData(tripId);
+  const members = useTripMembers(tripId);
+  const saveCurrency = useSaveTripCurrency();
   const { preferences } = usePreferences();
-  // A scenario can open the budget in a currency; read once, on mount.
+  // A scenario can open the expenses in a currency; read once, on mount.
   const [picked, setPicked] = useState<string | null>(
     () => useScenarioStore.getState().view.currency ?? null,
   );
-  const display = picked ?? preferences.homeCurrency;
+  const display = picked ?? (tripData.data ? tripCurrencyOf(tripData.data.trip) : 'USD');
   const rates = useRates(display);
   const [tab, setTab] = useState<BudgetTab>('categories');
   const [filter, setFilter] = useState<Category | null>(null);
@@ -57,26 +64,36 @@ export function BudgetScreen() {
   const expenses = data?.expenses;
   const needsRates =
     !!data &&
-    [...(expenses ?? []), ...(data.trip.budget ? [data.trip.budget] : [])].some(
-      (m) => m.currency !== display,
-    );
+    ((expenses ?? []).some((e) => needsLiveRate(e, display)) ||
+      (!!data.trip.budget && data.trip.budget.currency !== display));
   const summary = useMemo(
     () => (data ? summarize(data.expenses, data.trip.budget, display, rates.data) : null),
     [data, display, rates.data],
   );
   const rows = useMemo(() => recentFirst(expenses ?? []), [expenses]);
 
-  if (tripData.isError) {
+  const memberList = members.data;
+  const me = memberList?.find((m) => m.isMe)?.id ?? '';
+  const nameOf = (id: string) => {
+    const member = memberList?.find((m) => m.id === id);
+    return member ? memberLabel(member) : FALLBACK_NAME;
+  };
+  const group = (memberList?.length ?? 0) > 1;
+
+  if (tripData.isError || members.isError) {
     return (
       <View style={styles.empty} testID="budget-slot">
-        <Text variant="headline">{"Couldn't load the budget"}</Text>
+        <Text variant="headline">{"Couldn't load the expenses"}</Text>
         <Text variant="subhead" tone="secondary" style={styles.centered}>
           Check your connection and try again.
         </Text>
         <Button
           label="Try again"
           variant="secondary"
-          onPress={() => void tripData.refetch()}
+          onPress={() => {
+            void tripData.refetch();
+            void members.refetch();
+          }}
           testID="budget-retry"
         />
       </View>
@@ -89,14 +106,14 @@ export function BudgetScreen() {
       <View style={styles.empty} testID="budget-slot">
         <Text variant="headline">No trip selected</Text>
         <Text variant="subhead" tone="secondary" style={styles.centered}>
-          Pick a trip on the Trips tab to see its budget.
+          Pick a trip on the Trips tab to see its expenses.
         </Text>
       </View>
     );
   }
 
-  const loading = tripData.isPending || (needsRates && rates.isPending);
-  if (loading || !data || !summary) {
+  const loading = tripData.isPending || members.isPending || (needsRates && rates.isPending);
+  if (loading || !data || !summary || !memberList) {
     return (
       <View style={styles.content} testID="budget-slot">
         <Skeleton height={130} radius="card" />
@@ -123,7 +140,7 @@ export function BudgetScreen() {
           </Text>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Show amounts in ${display}. Change currency`}
+            accessibilityLabel={`Trip currency ${display}. Change currency`}
             onPress={() => setSheet('currency')}
             style={({ pressed }) => [styles.currency, pressed && styles.pressed]}
             testID="budget-currency"
@@ -192,7 +209,8 @@ export function BudgetScreen() {
                   <ExpenseRow
                     key={expense.id}
                     expense={expense}
-                    converted={convert(expense, display, rates.data)}
+                    converted={tripAmount(expense, display, rates.data)}
+                    who={group ? splitLine(expense, me, nameOf) : null}
                     timezone={trip.timezone}
                     separator={i < shown.length - 1}
                   />
@@ -214,8 +232,17 @@ export function BudgetScreen() {
         open={sheet === 'currency'}
         value={display}
         onChange={(code) => {
-          setPicked(code);
           close();
+          if (code === tripCurrencyOf(trip)) {
+            setPicked(null);
+            return;
+          }
+          // Shown right away; back to the saved one if the change doesn't save.
+          setPicked(code);
+          saveCurrency
+            .mutateAsync({ tripId: trip.id, currency: code })
+            .then(() => setPicked(null))
+            .catch(() => setPicked(null));
         }}
         onClose={close}
       />
@@ -229,7 +256,9 @@ export function BudgetScreen() {
       <AddExpenseSheet
         open={sheet === 'expense'}
         onClose={close}
-        trip={trip}
+        data={data}
+        members={memberList}
+        tripCurrency={display}
         homeCurrency={preferences.homeCurrency}
         onSaved={() => {
           setFilter(null);

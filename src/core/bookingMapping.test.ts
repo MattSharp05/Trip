@@ -148,6 +148,30 @@ describe('planImport', () => {
     });
   });
 
+  it('splits a shared booking with everyone and a private one with the importer only', () => {
+    const split = { importer: 'me', members: ['me', 'blake', 'willem'] };
+    const hotel = planImport(SAMPLE_PARSES.hotel.booking, capeTown, {
+      ...OPTIONS,
+      newId: ids(),
+      split,
+    });
+    expect(hotel.expenses[0].paidBy).toBe('me');
+    expect(hotel.expenses[0].shares).toEqual([
+      { userId: 'blake', shareMinor: 2100000 },
+      { userId: 'me', shareMinor: 2100000 },
+      { userId: 'willem', shareMinor: 2100000 },
+    ]);
+    const flight = planImport(SAMPLE_PARSES.flight.booking, capeTown, {
+      ...OPTIONS,
+      newId: ids(),
+      split,
+    });
+    expect(flight.expenses[0]).toMatchObject({
+      paidBy: 'me',
+      shares: [{ userId: 'me', shareMinor: 148640 }],
+    });
+  });
+
   it('returns the car where it was picked up when there is no return location', () => {
     const p = plan(SAMPLE_PARSES.car.booking);
     expect(p.places).toHaveLength(1);

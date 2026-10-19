@@ -1,7 +1,7 @@
 import { bookingPlaceIds } from '../bookings/placeIds';
 import { toBooking } from '../bookings/supabase';
 import { toBucket } from '../bucket/supabase';
-import { toExpense } from '../expenses/supabase';
+import { EXPENSE_SELECT, toExpense } from '../expenses/supabase';
 import { toItem } from '../itinerary/supabase';
 import { toLink } from '../links/supabase';
 import { toPlace } from '../places/supabase';
@@ -23,6 +23,7 @@ export const toTrip = (r: Row<'trips'>): Trip => ({
     r.budget_minor != null && r.budget_currency
       ? { amountMinor: r.budget_minor, currency: r.budget_currency }
       : null,
+  currency: r.currency,
 });
 
 /** The trips slice of the Supabase source. `getTripData` reads every trip table at once. */
@@ -48,6 +49,7 @@ export const supabaseTrips: TripsSource = {
           end_date: trip.endDate,
           cover_photo_url: trip.coverPhotoUrl,
           cover_photo_credit: trip.coverPhotoCredit ? { ...trip.coverPhotoCredit } : null,
+          ...(trip.currency ? { currency: trip.currency } : {}),
         })
         .select()
         .single(),
@@ -72,7 +74,7 @@ export const supabaseTrips: TripsSource = {
         .order('start_time'),
       supabase.from('bookings').select('*').eq('trip_id', tripId),
       supabase.from('bucket_items').select('*').eq('trip_id', tripId),
-      supabase.from('expenses').select('*').eq('trip_id', tripId),
+      supabase.from('expenses').select(EXPENSE_SELECT).eq('trip_id', tripId),
       supabase.from('saved_links').select('*').eq('trip_id', tripId),
     ]).then(
       ([i, b, k, e, l]) =>
@@ -113,6 +115,13 @@ export const supabaseTrips: TripsSource = {
         .eq('id', tripId)
         .select()
         .single(),
+    );
+    return toTrip(row);
+  },
+  async saveTripCurrency(tripId, currency) {
+    const supabase = client();
+    const row = checkRow(
+      await supabase.from('trips').update({ currency }).eq('id', tripId).select().single(),
     );
     return toTrip(row);
   },

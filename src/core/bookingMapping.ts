@@ -25,6 +25,7 @@ import type {
 } from '../services/data/types';
 import { daysBetween } from './dates';
 import { toMinor } from './money';
+import { equalShares } from './split';
 import { timezoneAt } from './timezone';
 
 /** Where and when a booking happens: what trip matching and "create a trip" use. */
@@ -176,6 +177,12 @@ export interface PlanOptions {
   originalPath: string | null;
   /** When the import happened (ISO instant): the expense's paid-at. */
   importedAt: string;
+  /**
+   * Who is importing and everyone on the trip (profile ids): the expense is paid by the importer
+   * and split with everyone for a shared booking, with the importer only for a private one
+   * (ADR 0030). Without them the expense has no payer or shares (the database defaults them).
+   */
+  split?: { importer: string; members: readonly string[] };
 }
 
 /**
@@ -185,7 +192,7 @@ export interface PlanOptions {
 export function planImport(
   booking: ParsedBooking,
   trip: Trip,
-  { newId, originalPath, importedAt }: PlanOptions,
+  { newId, originalPath, importedAt, split }: PlanOptions,
 ): ImportPlan {
   const places: Place[] = [];
   const items: ItineraryItem[] = [];
@@ -416,17 +423,31 @@ export function planImport(
     }
   }
 
+  // The booking's visibility as `bookingVisibility` reads it: flights private, the rest shared.
+  const first = bookings[0];
+  const shared =
+    (first.visibility ?? (first.type === 'flight' ? 'private' : 'shared')) === 'shared';
+  const amountMinor = booking.price ? toMinor(booking.price.amount, booking.price.currency) : 0;
   const expenses: Expense[] = booking.price
     ? [
         {
           id: newId(),
           tripId: trip.id,
-          amountMinor: toMinor(booking.price.amount, booking.price.currency),
+          amountMinor,
           currency: booking.price.currency,
           category,
-          bookingId: bookings[0].id,
+          bookingId: first.id,
           paidAt: importedAt,
           description,
+          ...(split
+            ? {
+                paidBy: split.importer,
+                shares: equalShares(
+                  amountMinor,
+                  shared ? [split.importer, ...split.members] : [split.importer],
+                ),
+              }
+            : {}),
         },
       ]
     : [];

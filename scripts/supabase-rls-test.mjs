@@ -413,6 +413,145 @@ try {
     original_path: `${a.id}/rls-test-flight.txt`,
   });
 
+  // TR-62 (ADR 0030): shared expenses. B records an expense A paid, split with both; C sees
+  // none of it; the payer and every participant must be on the trip.
+  const paidByA = await b.client
+    .from('expenses')
+    .insert({ trip_id: trip.id, amount_minor: 1001, currency: 'USD', paid_by: a.id })
+    .select()
+    .single();
+  check(
+    'expenses: member adds an expense paid by another member',
+    !paidByA.error && paidByA.data.paid_by === a.id && paidByA.data.user_id === b.id,
+    paidByA.error?.message,
+  );
+  const splitRpc = await b.client.rpc('set_expense_shares', {
+    expense: paidByA.data?.id,
+    shares: [
+      { user_id: a.id, share_minor: 501 },
+      { user_id: b.id, share_minor: 500 },
+    ],
+  });
+  check(
+    'expense_shares: member splits it with two members',
+    !splitRpc.error,
+    splitRpc.error?.message,
+  );
+  const aShares = await a.client
+    .from('expense_shares')
+    .select('user_id, share_minor, trip_id')
+    .eq('expense_id', paidByA.data?.id);
+  check(
+    'expense_shares: the payer reads both shares, on the trip',
+    aShares.data?.length === 2 && aShares.data.every((r) => r.trip_id === trip.id),
+    aShares.error?.message ?? JSON.stringify(aShares.data),
+  );
+  const cExpense = await c.client.from('expenses').select('id').eq('id', paidByA.data?.id);
+  const cShares = await c.client
+    .from('expense_shares')
+    .select('user_id')
+    .eq('expense_id', paidByA.data?.id);
+  check(
+    "expense_shares: non-member can't read the expense or its shares",
+    !cExpense.data?.length && !cShares.data?.length,
+  );
+  const cResplit = await c.client.rpc('set_expense_shares', {
+    expense: paidByA.data?.id,
+    shares: [{ user_id: c.id, share_minor: 1001 }],
+  });
+  const cDirect = await c.client
+    .from('expense_shares')
+    .insert({ expense_id: paidByA.data?.id, user_id: c.id, share_minor: 1, trip_id: trip.id });
+  check(
+    "expense_shares: non-member can't split or add a share",
+    Boolean(cResplit.error) && Boolean(cDirect.error),
+  );
+  const paidByC = await b.client
+    .from('expenses')
+    .insert({ trip_id: trip.id, amount_minor: 100, currency: 'USD', paid_by: c.id });
+  check('expenses: paid_by must be a member', Boolean(paidByC.error));
+  const shareForC = await b.client.rpc('set_expense_shares', {
+    expense: paidByA.data?.id,
+    shares: [
+      { user_id: b.id, share_minor: 1000 },
+      { user_id: c.id, share_minor: 1 },
+    ],
+  });
+  check("expense_shares: a non-member can't be in the split", Boolean(shareForC.error));
+  const wrongSum = await b.client.rpc('set_expense_shares', {
+    expense: paidByA.data?.id,
+    shares: [{ user_id: b.id, share_minor: 1000 }],
+  });
+  const keptShares = await a.client
+    .from('expense_shares')
+    .select('user_id')
+    .eq('expense_id', paidByA.data?.id);
+  check(
+    'expense_shares: shares must add up to the amount (a refused split changes nothing)',
+    Boolean(wrongSum.error) && keptShares.data?.length === 2,
+    JSON.stringify(keptShares.data),
+  );
+  const bDefault = await insertOne(b.client, 'expenses', {
+    trip_id: trip.id,
+    amount_minor: 100,
+    currency: 'EUR',
+    rate_to_trip: 1.1298,
+    trip_currency: 'USD',
+  });
+  check(
+    'expenses: paid_by defaults to whoever adds it; the rate is stored',
+    bDefault.paid_by === b.id && Number(bDefault.rate_to_trip) === 1.1298,
+  );
+  const bItem = await insertOne(b.client, 'itinerary_items', {
+    trip_id: bTrip.id,
+    day: '2026-12-01',
+    kind: 'place',
+  });
+  const crossItem = await b.client
+    .from('expenses')
+    .insert({ trip_id: trip.id, amount_minor: 1, currency: 'USD', itinerary_item_id: bItem.id });
+  const sameTripItem = await b.client
+    .from('expenses')
+    .insert({
+      trip_id: trip.id,
+      amount_minor: 1,
+      currency: 'USD',
+      itinerary_item_id: rows.itinerary_items.id,
+    })
+    .select('id, itinerary_item_id')
+    .single();
+  check(
+    "expenses: the activity must be on the expense's trip",
+    Boolean(crossItem.error) && sameTripItem.data?.itinerary_item_id === rows.itinerary_items.id,
+    sameTripItem.error?.message,
+  );
+  const tripCurrency = await b.client
+    .from('trips')
+    .update({ currency: 'EUR' })
+    .eq('id', trip.id)
+    .select('currency')
+    .single();
+  check(
+    'trips: currency defaults to USD and any member changes it',
+    trip.currency === 'USD' && tripCurrency.data?.currency === 'EUR',
+    tripCurrency.error?.message,
+  );
+  // B's expenses above go again: the leave checks below count B's rows on the trip.
+  const cleanup = await a.client
+    .from('expenses')
+    .delete()
+    .in('id', [paidByA.data?.id, bDefault.id, sameTripItem.data?.id].filter(Boolean))
+    .select('id');
+  const orphanShares = await admin
+    .from('expense_shares')
+    .select('expense_id')
+    .eq('expense_id', paidByA.data?.id);
+  check(
+    'expense_shares: deleting an expense deletes its shares',
+    cleanup.data?.length === 3 && orphanShares.data?.length === 0,
+    cleanup.error?.message,
+  );
+
   // Profiles: yourself and the people you share a trip with.
   const profiles = await b.client.from('profiles').select('id, display_name');
   const visible = new Set(profiles.data?.map((p) => p.id));

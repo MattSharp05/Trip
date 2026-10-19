@@ -1,0 +1,34 @@
+# QA screenshots of shared expenses (TR-62) on group-expenses: the list with who paid and the split
+# ("Blake paid · split 3 ways", the euro dinner with its dollar amount), then the Add expense sheet
+# with Paid by and Split.
+appId: com.mattsharp05.trip
+tags:
+  - shots
+---
+- runFlow:
+    file: ../scenario.yaml
+    env:
+      SCENARIO: group-expenses
+      READY_ID: budget-summary
+- tapOn: All
+- extendedWaitUntil:
+    visible:
+      id: expense-row-expense-group-sphere
+    timeout: 15000
+- assertVisible: Blake paid · split 3 ways
+- takeScreenshot: group-expenses-list
+- scrollUntilVisible:
+    element:
+      id: budget-add-expense
+    direction: DOWN
+- tapOn:
+    id: budget-add-expense
+- extendedWaitUntil:
+    visible:
+      id: add-expense-sheet
+    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 5000
+- assertVisible:
+    id: expense-split-everyone
+- takeScreenshot: group-expenses-add
