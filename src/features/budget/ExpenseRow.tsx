@@ -10,18 +10,27 @@ import { categoryIcon, categoryOf, expenseTitle } from './budget';
 
 export interface ExpenseRowProps {
   expense: Expense;
-  /** The amount in the display currency; null when rates can't convert it. */
+  /** The amount in the trip currency; null when no rate converts it. */
   converted: Money | null;
+  /** On a group trip, who paid and who it's split with ("Blake paid · split 3 ways"). */
+  who?: string | null;
   /** The trip's timezone, for the day it was paid. */
   timezone: string;
   separator?: boolean;
 }
 
 /**
- * One expense: what and when on the left; on the right the amount in the display currency and,
- * when it was paid in another one, the original amount underneath.
+ * One expense: what it was and, on a group trip, who paid and who shares it (else its category and
+ * day) on the left; on the right the amount in the currency it was paid in and, when that isn't
+ * the trip currency, the trip-currency amount underneath.
  */
-export function ExpenseRow({ expense, converted, timezone, separator = false }: ExpenseRowProps) {
+export function ExpenseRow({
+  expense,
+  converted,
+  who = null,
+  timezone,
+  separator = false,
+}: ExpenseRowProps) {
   const category = categoryOf(expense);
   const original = formatMoney(expense);
   const foreign = expense.currency !== converted?.currency;
@@ -34,10 +43,10 @@ export function ExpenseRow({ expense, converted, timezone, separator = false }: 
       accessible
       accessibilityLabel={[
         expenseTitle(expense),
-        category,
-        when,
-        converted ? formatMoney(converted) : null,
-        foreign ? `paid ${original}` : null,
+        who ?? category,
+        who ? null : when,
+        original,
+        foreign && converted ? formatMoney(converted) : null,
       ]
         .filter(Boolean)
         .join(', ')}
@@ -49,17 +58,22 @@ export function ExpenseRow({ expense, converted, timezone, separator = false }: 
         <Text variant="body" style={styles.title} numberOfLines={1}>
           {expenseTitle(expense)}
         </Text>
-        <Text variant="subhead" tone="secondary" numberOfLines={1}>
-          {when ? `${category} · ${when}` : category}
+        <Text
+          variant="subhead"
+          tone="secondary"
+          numberOfLines={1}
+          testID={`expense-row-${expense.id}-who`}
+        >
+          {who ?? (when ? `${category} · ${when}` : category)}
         </Text>
       </View>
       <View style={styles.amounts}>
         <Text variant="body" testID={`expense-row-${expense.id}-amount`}>
-          {converted ? formatMoney(converted) : original}
+          {original}
         </Text>
         {foreign && converted ? (
-          <Text variant="subhead" tone="secondary" testID={`expense-row-${expense.id}-original`}>
-            {original}
+          <Text variant="subhead" tone="secondary" testID={`expense-row-${expense.id}-converted`}>
+            {formatMoney(converted)}
           </Text>
         ) : null}
         {!converted ? (

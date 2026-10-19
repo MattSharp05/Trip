@@ -11,10 +11,10 @@ export interface CurrencySheetProps {
   onClose: () => void;
 }
 
-/** Pick the currency the budget shows in. Changes the display only; expenses keep theirs. */
+/** Pick the trip currency: totals show in it for everyone on the trip; expenses keep theirs. */
 export function CurrencySheet({ open, value, onChange, onClose }: CurrencySheetProps) {
   return (
-    <Sheet open={open} onClose={onClose} title="Show amounts in" testID="budget-currency-sheet">
+    <Sheet open={open} onClose={onClose} title="Trip currency" testID="budget-currency-sheet">
       <View style={styles.grid}>
         {HOME_CURRENCIES.map((c) => (
           <Chip
@@ -27,8 +27,8 @@ export function CurrencySheet({ open, value, onChange, onClose }: CurrencySheetP
         ))}
       </View>
       <Text variant="subhead" tone="secondary">
-        Each expense keeps the currency it was paid in. Rates come from the European Central Bank,
-        updated daily.
+        Totals show in this currency for everyone on the trip. Each expense keeps the currency it
+        was paid in, converted at the European Central Bank rate for its day.
       </Text>
     </Sheet>
   );

@@ -12,6 +12,8 @@ const draft: ExpenseDraft = {
   category: 'Food & Drinks',
   note: ' Ramen ',
   day: '2026-11-13',
+  paidBy: 'me',
+  participants: ['me'],
 };
 
 describe('expense form', () => {
@@ -35,6 +37,9 @@ describe('expense form', () => {
         bookingId: null,
         paidAt: '2026-11-13T20:00:00.000Z',
         description: 'Ramen',
+        paidBy: 'me',
+        shares: [{ userId: 'me', shareMinor: 8400 }],
+        itineraryItemId: null,
       },
     });
     const noNote = buildExpense({ ...draft, note: '  ' }, trip, 'id-2');
@@ -48,6 +53,29 @@ describe('expense form', () => {
     });
     expect(buildExpense({ ...draft, amount: 'abc', currency: 'USD' }, trip)).toEqual({
       error: 'Enter an amount like 12.50.',
+    });
+  });
+
+  it('splits equally between the participants, paid by whoever paid', () => {
+    const result = buildExpense(
+      { ...draft, amount: '10', currency: 'USD', paidBy: 'blake', participants: ['c', 'a', 'b'] },
+      trip,
+    );
+    expect('expense' in result && result.expense).toMatchObject({
+      paidBy: 'blake',
+      shares: [
+        { userId: 'a', shareMinor: 334 },
+        { userId: 'b', shareMinor: 333 },
+        { userId: 'c', shareMinor: 333 },
+      ],
+    });
+  });
+
+  it('links the activity and needs someone to split with', () => {
+    const linked = buildExpense({ ...draft, itineraryItemId: 'item-07' }, trip);
+    expect('expense' in linked && linked.expense.itineraryItemId).toBe('item-07');
+    expect(buildExpense({ ...draft, participants: [] }, trip)).toEqual({
+      error: "Pick who it's split with.",
     });
   });
 

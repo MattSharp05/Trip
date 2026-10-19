@@ -73,5 +73,13 @@ export function demoTrips(store: DemoStore): TripsSource {
       store.db = { ...db, trips: upsert(db.trips, next) };
       return copy(next);
     },
+    async saveTripCurrency(tripId, currency) {
+      const { db } = store;
+      const trip = db.trips.find((t) => t.id === tripId);
+      if (!trip) throw new Error(`No trip ${tripId}`);
+      const next: Trip = { ...trip, currency };
+      store.db = { ...db, trips: upsert(db.trips, next) };
+      return copy(next);
+    },
   };
 }

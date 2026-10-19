@@ -1,7 +1,8 @@
 import type { SFSymbol } from 'expo-symbols';
 
 import { convert, type Money, type Rates } from '@/core/money';
-import type { Expense } from '@/services/data/types';
+import { toTripCurrency, type Share } from '@/core/split';
+import type { Expense, Trip } from '@/services/data/types';
 
 /** The budget's categories, in the order the summary lists them, with their SF Symbol. */
 export const CATEGORIES = [
@@ -47,7 +48,7 @@ export interface BudgetSummary {
 }
 
 /**
- * Totals for the budget screen, all in the display currency. Each expense is converted on its own
+ * Totals for the expenses screen, all in the trip currency. Each expense is converted on its own
  * and then summed, so a category total is exactly the sum of its rows as shown.
  */
 export function summarize(
@@ -62,7 +63,7 @@ export function summarize(
   const unconverted: Expense[] = [];
   let spent = 0;
   for (const expense of expenses) {
-    const converted = convert(expense, display, rates);
+    const converted = tripAmount(expense, display, rates);
     if (!converted) {
       unconverted.push(expense);
       continue;
@@ -106,4 +107,61 @@ export function recentFirst(expenses: readonly Expense[]): Expense[] {
 /** What a row is called: its note, else its category. */
 export function expenseTitle(expense: Expense): string {
   return expense.description?.trim() || categoryOf(expense);
+}
+
+/** The trip currency (ADR 0030): the trip's own, else (v1 data) its budget's, else USD. */
+export function tripCurrencyOf(trip: Pick<Trip, 'currency' | 'budget'>): string {
+  return trip.currency ?? trip.budget?.currency ?? 'USD';
+}
+
+/**
+ * An expense in the trip currency: at the rate stored when it was saved, when that was for this
+ * currency; else at today's rates (v1 expenses, a rate that couldn't load, a changed trip
+ * currency). Null when neither covers it.
+ */
+export function tripAmount(
+  expense: Expense,
+  tripCurrency: string,
+  rates: Rates | null | undefined,
+): Money | null {
+  if (expense.currency === tripCurrency) {
+    return { amountMinor: expense.amountMinor, currency: tripCurrency };
+  }
+  if (expense.tripCurrency === tripCurrency && expense.rateToTrip) {
+    return toTripCurrency(expense, expense.rateToTrip, tripCurrency);
+  }
+  return convert(expense, tripCurrency, rates);
+}
+
+/** True when showing the expense in `tripCurrency` needs today's rates. */
+export function needsLiveRate(expense: Expense, tripCurrency: string): boolean {
+  return (
+    expense.currency !== tripCurrency &&
+    !(expense.tripCurrency === tripCurrency && expense.rateToTrip)
+  );
+}
+
+/** Who paid: `paidBy`, else (v1 data) whoever added it, else you. */
+export function payerOf(expense: Expense, me: string): string {
+  return expense.paidBy ?? expense.addedBy ?? me;
+}
+
+/** The stored shares, or (v1 data, no shares) one share of the whole amount for the payer. */
+export function sharesOf(expense: Expense, me: string): Share[] {
+  return expense.shares?.length
+    ? expense.shares
+    : [{ userId: payerOf(expense, me), shareMinor: expense.amountMinor }];
+}
+
+/**
+ * The row's "who" line: "Blake paid · split 3 ways", "You paid", "Matthew paid for Willem".
+ * `nameOf` turns a profile id into a name ("You" for you).
+ */
+export function splitLine(expense: Expense, me: string, nameOf: (id: string) => string): string {
+  const payer = payerOf(expense, me);
+  const shares = sharesOf(expense, me);
+  const paid = `${nameOf(payer)} paid`;
+  if (shares.length > 1) return `${paid} · split ${shares.length} ways`;
+  const only = shares[0]?.userId;
+  return !only || only === payer ? paid : `${paid} for ${nameOf(only)}`;
 }

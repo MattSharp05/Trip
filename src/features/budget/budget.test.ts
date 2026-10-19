@@ -3,7 +3,18 @@ import { demoRates } from '@/scenarios/fixtures/rates';
 import { expenses as vegasExpenses } from '@/scenarios/fixtures/vegas';
 import type { Expense } from '@/services/data/types';
 
-import { categoryOf, CATEGORIES, expenseTitle, recentFirst, summarize } from './budget';
+import {
+  categoryOf,
+  CATEGORIES,
+  expenseTitle,
+  needsLiveRate,
+  recentFirst,
+  sharesOf,
+  splitLine,
+  summarize,
+  tripAmount,
+  tripCurrencyOf,
+} from './budget';
 
 const expense = (id: string, amountMinor: number, currency: string, category: string): Expense => ({
   id,
@@ -102,5 +113,63 @@ describe('budget summary', () => {
     );
     expect(expenseTitle(expense('a', 1, 'USD', 'Hotels'))).toBe('Hotels');
     expect(categoryOf({ category: 'Flights' })).toBe('Flights');
+  });
+});
+
+describe('shared expenses', () => {
+  const names: Record<string, string> = { me: 'You', blake: 'Blake', willem: 'Willem' };
+  const nameOf = (id: string) => names[id] ?? 'Traveller';
+
+  it('reads v1 expenses as one share for whoever added them', () => {
+    const v1 = expense('a', 2500, 'USD', 'Other');
+    expect(sharesOf(v1, 'me')).toEqual([{ userId: 'me', shareMinor: 2500 }]);
+    expect(sharesOf({ ...v1, addedBy: 'blake' }, 'me')).toEqual([
+      { userId: 'blake', shareMinor: 2500 },
+    ]);
+    expect(splitLine(v1, 'me', nameOf)).toBe('You paid');
+  });
+
+  it('says who paid and how many share it', () => {
+    const sphere: Expense = {
+      ...expense('s', 45000, 'USD', 'Activities'),
+      paidBy: 'blake',
+      shares: [
+        { userId: 'blake', shareMinor: 15000 },
+        { userId: 'me', shareMinor: 15000 },
+        { userId: 'willem', shareMinor: 15000 },
+      ],
+    };
+    expect(splitLine(sphere, 'me', nameOf)).toBe('Blake paid · split 3 ways');
+    expect(
+      splitLine(
+        { ...sphere, paidBy: 'me', shares: [{ userId: 'willem', shareMinor: 45000 }] },
+        'me',
+        nameOf,
+      ),
+    ).toBe('You paid for Willem');
+  });
+
+  it('converts at the stored rate for the trip currency, else at today’s rates', () => {
+    const dinner: Expense = {
+      ...expense('d', 12000, 'EUR', 'Food & Drinks'),
+      rateToTrip: 1.1298,
+      tripCurrency: 'USD',
+    };
+    expect(tripAmount(dinner, 'USD', RATES)).toEqual({ amountMinor: 13558, currency: 'USD' });
+    expect(needsLiveRate(dinner, 'USD')).toBe(false);
+    // Trip currency changed since: today's rates.
+    expect(tripAmount(dinner, 'JPY', RATES)).toEqual({ amountMinor: 36000, currency: 'JPY' });
+    expect(needsLiveRate(dinner, 'JPY')).toBe(true);
+    expect(tripAmount({ ...dinner, rateToTrip: null }, 'USD', RATES)).toEqual({
+      amountMinor: 24000,
+      currency: 'USD',
+    });
+    expect(tripAmount(dinner, 'EUR', null)).toEqual({ amountMinor: 12000, currency: 'EUR' });
+  });
+
+  it('uses the trip currency, else the budget’s, else USD', () => {
+    expect(tripCurrencyOf({ currency: 'EUR', budget: null })).toBe('EUR');
+    expect(tripCurrencyOf({ budget: { amountMinor: 1, currency: 'GBP' } })).toBe('GBP');
+    expect(tripCurrencyOf({})).toBe('USD');
   });
 });

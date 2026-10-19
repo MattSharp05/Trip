@@ -302,6 +302,14 @@ export const SCENARIOS: readonly Scenario[] = [
     tripId: null,
     view: {},
   },
+  vegas({
+    name: 'group-expenses',
+    data: groupSnapshot,
+    description:
+      'Organize tab, Expenses on the group trip: Sphere paid by Blake, dinner in euros, an Uber.',
+    tab: 'organize',
+    view: { organizeView: 'budget' },
+  }),
   {
     name: 'empty-account',
     description: 'A new account with no trips: Trips tab empty state.',

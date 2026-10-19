@@ -1,19 +1,22 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, parseISO } from 'date-fns';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { now } from '@/core/clock';
 import { dayIn } from '@/core/dates';
+import { memberLabel } from '@/core/members';
 import { currencyDecimals } from '@/core/money';
+import { itemTitle } from '@/features/plan/edit/edits';
 import { HOME_CURRENCIES } from '@/features/settings';
-import { useSaveExpense, type Trip } from '@/services/data';
+import { useDataSource, useSaveExpense, type Member, type TripData } from '@/services/data';
 import { colors, spacing } from '@/theme';
 import { Button, Chip, Sheet, Text } from '@/ui';
 
 import { CATEGORIES, type Category } from './budget';
-import { buildExpense, defaultExpenseCurrency } from './expenseForm';
+import { buildExpense, defaultExpenseCurrency, newExpenseId } from './expenseForm';
 import { SheetField } from './SheetField';
+import { withTripRate } from './tripRate';
 import { useOpenCount } from './useOpenCount';
 
 const CONVERTIBLE = HOME_CURRENCIES.map((c) => c.code);
@@ -21,17 +24,27 @@ const CONVERTIBLE = HOME_CURRENCIES.map((c) => c.code);
 export interface AddExpenseSheetProps {
   open: boolean;
   onClose: () => void;
-  trip: Trip;
+  /** The trip, with its itinerary for the activity picker. */
+  data: TripData;
+  /** Everyone on the trip, you included (you first). */
+  members: Member[];
+  /** What the rate stored on the expense converts to. */
+  tripCurrency: string;
   homeCurrency: string;
   /** Called after a save, before the sheet closes. */
   onSaved?: () => void;
 }
 
-/** Add an expense: amount, currency, category, note, date. It keeps the currency it was paid in. */
+/**
+ * Add an expense: amount, currency, category, note, date and, on a group trip, who paid and who
+ * it's split with (equally), plus the activity it was for. It keeps the currency it was paid in.
+ */
 export function AddExpenseSheet({
   open,
   onClose,
-  trip,
+  data,
+  members,
+  tripCurrency,
   homeCurrency,
   onSaved,
 }: AddExpenseSheetProps) {
@@ -40,7 +53,9 @@ export function AddExpenseSheet({
     <Sheet open={open} onClose={onClose} title="Add expense" testID="add-expense-sheet">
       <ExpenseForm
         key={session}
-        trip={trip}
+        data={data}
+        members={members}
+        tripCurrency={tripCurrency}
         homeCurrency={homeCurrency}
         onDone={() => {
           onSaved?.();
@@ -52,15 +67,23 @@ export function AddExpenseSheet({
 }
 
 function ExpenseForm({
-  trip,
+  data,
+  members,
+  tripCurrency,
   homeCurrency,
   onDone,
 }: {
-  trip: Trip;
+  data: TripData;
+  members: Member[];
+  tripCurrency: string;
   homeCurrency: string;
   onDone: () => void;
 }) {
+  const trip = data.trip;
   const save = useSaveExpense();
+  const demo = useDataSource().kind === 'demo';
+  const me = members.find((m) => m.isMe) ?? members[0];
+  const group = members.length > 1;
   const initialCurrency = defaultExpenseCurrency(trip, homeCurrency, CONVERTIBLE);
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState(initialCurrency);
@@ -68,6 +91,39 @@ function ExpenseForm({
   const [note, setNote] = useState('');
   const [day, setDay] = useState(() => dayIn(trip.timezone, now()));
   const [error, setError] = useState<string | null>(null);
+  const [paidBy, setPaidBy] = useState(me?.id ?? '');
+  // Everyone (null), or the travellers picked one by one.
+  const [picked, setPicked] = useState<string[] | null>(null);
+  const [itemId, setItemId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  // One id per open sheet: a retry after a half-finished save (row written, shares not) updates
+  // that row instead of adding a second one.
+  const [expenseId] = useState(() => newExpenseId());
+
+  const everyone = members.map((m) => m.id);
+  const participants = picked ?? everyone;
+  const togglePerson = (id: string) => {
+    const current = picked ?? [];
+    const next = current.includes(id) ? current.filter((p) => p !== id) : [...current, id];
+    // Nobody, or all of them, is Everyone again.
+    setPicked(next.length === 0 || next.length === everyone.length ? null : next);
+    setError(null);
+  };
+
+  // The trip's activities in plan order, for "what was it for".
+  const activities = useMemo(
+    () =>
+      [...data.items]
+        .sort(
+          (a, b) =>
+            a.day.localeCompare(b.day) || (a.startTime ?? '').localeCompare(b.startTime ?? ''),
+        )
+        .map((item) => ({
+          id: item.id,
+          label: `${format(parseISO(item.day), 'MMM d')} · ${itemTitle(data, item)}`,
+        })),
+    [data],
+  );
 
   // The likely currencies first (the trip's, then home), then the rest.
   const currencies = useMemo(() => {
@@ -76,16 +132,33 @@ function ExpenseForm({
   }, [initialCurrency, homeCurrency]);
 
   const submit = async () => {
-    const result = buildExpense({ amount, currency, category, note, day }, trip);
+    const result = buildExpense(
+      {
+        amount,
+        currency,
+        category,
+        note,
+        day,
+        paidBy,
+        participants: group ? participants : [paidBy],
+        itineraryItemId: itemId,
+      },
+      trip,
+      expenseId,
+    );
     if ('error' in result) {
       setError(result.error);
       return;
     }
+    setSaving(true);
     try {
-      await save.mutateAsync(result.expense);
+      const expense = await withTripRate(result.expense, tripCurrency, day, { demo });
+      await save.mutateAsync(expense);
       onDone();
     } catch {
       setError("Couldn't save the expense. Check your connection and try again.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -157,18 +230,101 @@ function ExpenseForm({
           testID="expense-date"
         />
       </View>
+      {group ? (
+        <>
+          <ChipRow label="Paid by" testID="expense-paid-by">
+            {members.map((m) => (
+              <Chip
+                key={m.id}
+                label={memberLabel(m)}
+                selected={m.id === paidBy}
+                onPress={() => setPaidBy(m.id)}
+                testID={`expense-paid-by-${m.id}`}
+              />
+            ))}
+          </ChipRow>
+          <ChipRow label="Split" testID="expense-split">
+            <Chip
+              label="Everyone"
+              selected={picked === null}
+              onPress={() => {
+                setPicked(null);
+                setError(null);
+              }}
+              testID="expense-split-everyone"
+            />
+            {members.map((m) => (
+              <Chip
+                key={m.id}
+                label={memberLabel(m)}
+                selected={picked?.includes(m.id) ?? false}
+                onPress={() => togglePerson(m.id)}
+                testID={`expense-split-${m.id}`}
+              />
+            ))}
+          </ChipRow>
+        </>
+      ) : null}
+      {activities.length > 0 ? (
+        <ChipRow label="Activity" testID="expense-activity">
+          <Chip
+            label="None"
+            selected={itemId === null}
+            onPress={() => setItemId(null)}
+            testID="expense-activity-none"
+          />
+          {activities.map((a) => (
+            <Chip
+              key={a.id}
+              label={a.label}
+              selected={a.id === itemId}
+              onPress={() => setItemId(a.id)}
+              testID={`expense-activity-${a.id}`}
+            />
+          ))}
+        </ChipRow>
+      ) : null}
       <Button
         label="Add expense"
         onPress={submit}
-        disabled={save.isPending}
+        disabled={saving || save.isPending}
         testID="expense-save"
       />
     </View>
   );
 }
 
+/** A labelled row of chips that scrolls sideways. */
+function ChipRow({
+  label,
+  children,
+  testID,
+}: {
+  label: string;
+  children: ReactNode;
+  testID: string;
+}) {
+  return (
+    <View style={styles.chipRow}>
+      <Text variant="subhead" tone="secondary">
+        {label}
+      </Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.chips}
+        testID={testID}
+      >
+        {children}
+      </ScrollView>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   form: { gap: spacing.md },
+  chipRow: { gap: spacing.xs },
   chips: { gap: spacing.sm },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   dateRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
