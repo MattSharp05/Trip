@@ -1,7 +1,9 @@
 import type { ParsedBooking } from '../../../supabase/functions/_shared/parse/schema';
 import { firstPlannedDay, planImport } from '@/core/bookingMapping';
-import { dayLabel } from '@/core/dates';
+import { dayIn, dayLabel } from '@/core/dates';
 import { newId } from '@/core/ids';
+import { tripCurrencyOf } from '@/features/budget/budget';
+import { withTripRate } from '@/features/budget/tripRate';
 import type { DataSource, NewTrip, Trip } from '@/services/data';
 
 export interface SaveImportInput {
@@ -30,7 +32,15 @@ export async function saveImport(
 ): Promise<SaveImportResult> {
   const created = 'create' in target;
   const trip = 'trip' in target ? target.trip : await source.createTrip(target.create);
-  const plan = planImport(booking, trip, { newId: () => newId(), originalPath, importedAt });
+  // A priced booking's expense is split per ADR 0030, so it needs the trip's members.
+  const members = booking.price ? await source.listMembers(trip.id) : [];
+  const importer = members.find((m) => m.isMe)?.id;
+  const plan = planImport(booking, trip, {
+    newId: () => newId(),
+    originalPath,
+    importedAt,
+    ...(importer ? { split: { importer, members: members.map((m) => m.id) } } : {}),
+  });
 
   const bookingIds: string[] = [];
   const itemIds: string[] = [];
@@ -44,7 +54,12 @@ export async function saveImport(
       await source.saveItineraryItem(item);
       itemIds.push(item.id);
     }
-    for (const expense of plan.expenses) await source.saveExpense(expense);
+    for (const expense of plan.expenses) {
+      const day = dayIn(trip.timezone, new Date(importedAt));
+      await source.saveExpense(
+        await withTripRate(expense, tripCurrencyOf(trip), day, { demo: source.kind === 'demo' }),
+      );
+    }
   } catch (error) {
     await Promise.allSettled(itemIds.map((id) => source.deleteItineraryItem(id)));
     await Promise.allSettled(bookingIds.map((id) => source.deleteBooking(id)));

@@ -25,6 +25,11 @@ export interface Trip {
   coverPhotoCredit?: PhotoCredit | null;
   /** The trip's total budget, in the currency it was set in; null when none is set. */
   budget?: Money | null;
+  /**
+   * What the group's expenses and balances are shown in (ADR 0030); any member can change it.
+   * Absent in v1 fixtures: the budget's currency, else USD.
+   */
+  currency?: string;
 }
 
 /** What "create a trip" saves; the source assigns the id. */
@@ -40,4 +45,6 @@ export interface TripsSource {
   getTripData(tripId: string): Promise<TripData | null>;
   /** Set (or clear, with null) a trip's total budget. */
   saveTripBudget(tripId: string, budget: Money | null): Promise<Trip>;
+  /** Change the trip currency, for everyone on the trip. */
+  saveTripCurrency(tripId: string, currency: string): Promise<Trip>;
 }

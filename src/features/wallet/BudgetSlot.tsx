@@ -1,6 +1,6 @@
 import { BudgetScreen } from '@/features/budget';
 
-/** Organize → Budget (TR-21). */
+/** Organize → Expenses (TR-21, shared since TR-62). */
 export function BudgetSlot() {
   return <BudgetScreen />;
 }

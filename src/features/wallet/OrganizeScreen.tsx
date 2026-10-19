@@ -21,12 +21,12 @@ type OrganizeView = 'wallet' | 'budget';
 
 const SEGMENTS = [
   { value: 'wallet', label: 'Wallet' },
-  { value: 'budget', label: 'Budget' },
+  { value: 'budget', label: 'Expenses' },
 ] as const;
 
 /**
  * The Organize tab: a large title (with the orange `+` that imports a booking) over the trip title
- * dropdown, the Wallet / Budget switch, and the selected view.
+ * dropdown, the Wallet / Expenses switch, and the selected view.
  */
 export function OrganizeScreen() {
   const insets = useSafeAreaInsets();

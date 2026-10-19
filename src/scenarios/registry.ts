@@ -311,6 +311,14 @@ export const SCENARIOS: readonly Scenario[] = [
     tab: 'plan',
     view: { day: '2026-11-12', planMode: 'itinerary' },
   }),
+  vegas({
+    name: 'group-expenses',
+    data: groupSnapshot,
+    description:
+      'Organize tab, Expenses on the group trip: Sphere paid by Blake, dinner in euros, an Uber.',
+    tab: 'organize',
+    view: { organizeView: 'budget' },
+  }),
   {
     name: 'empty-account',
     description: 'A new account with no trips: Trips tab empty state.',

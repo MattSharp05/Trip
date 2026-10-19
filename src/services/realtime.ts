@@ -5,7 +5,10 @@ import { AppState } from 'react-native';
 import { type DataSource, dataKeys, queryClient, useDataSource } from './data';
 import { supabase } from './supabase';
 
-/** Trip-scoped tables in the `supabase_realtime` publication (migration 0054_realtime.sql). */
+/**
+ * Trip-scoped tables in the `supabase_realtime` publication (migration 0054_realtime.sql, plus
+ * `expense_shares` from 0062_shared_expenses.sql).
+ */
 export const LIVE_TABLES = [
   'trip_members',
   'itinerary_items',
@@ -13,6 +16,7 @@ export const LIVE_TABLES = [
   'bookings',
   'expenses',
   'places',
+  'expense_shares',
 ] as const;
 
 /** A burst of changes (a Smart Add plan, a reorder) refetches once. */

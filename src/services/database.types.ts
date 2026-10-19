@@ -198,6 +198,52 @@ export type Database = {
         };
         Relationships: [];
       };
+      expense_shares: {
+        Row: {
+          created_at: string;
+          expense_id: string;
+          share_minor: number;
+          trip_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          expense_id: string;
+          share_minor: number;
+          trip_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          expense_id?: string;
+          share_minor?: number;
+          trip_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'expense_shares_expense_id_fkey';
+            columns: ['expense_id'];
+            isOneToOne: false;
+            referencedRelation: 'expenses';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'expense_shares_trip_id_fkey';
+            columns: ['trip_id'];
+            isOneToOne: false;
+            referencedRelation: 'trips';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'expense_shares_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       expenses: {
         Row: {
           amount_minor: number;
@@ -207,7 +253,11 @@ export type Database = {
           currency: string;
           description: string | null;
           id: string;
+          itinerary_item_id: string | null;
           paid_at: string | null;
+          paid_by: string | null;
+          rate_to_trip: number | null;
+          trip_currency: string | null;
           trip_id: string;
           updated_at: string;
           user_id: string;
@@ -220,7 +270,11 @@ export type Database = {
           currency: string;
           description?: string | null;
           id?: string;
+          itinerary_item_id?: string | null;
           paid_at?: string | null;
+          paid_by?: string | null;
+          rate_to_trip?: number | null;
+          trip_currency?: string | null;
           trip_id: string;
           updated_at?: string;
           user_id?: string;
@@ -233,7 +287,11 @@ export type Database = {
           currency?: string;
           description?: string | null;
           id?: string;
+          itinerary_item_id?: string | null;
           paid_at?: string | null;
+          paid_by?: string | null;
+          rate_to_trip?: number | null;
+          trip_currency?: string | null;
           trip_id?: string;
           updated_at?: string;
           user_id?: string;
@@ -244,6 +302,20 @@ export type Database = {
             columns: ['booking_id'];
             isOneToOne: false;
             referencedRelation: 'bookings';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'expenses_itinerary_item_id_fkey';
+            columns: ['itinerary_item_id'];
+            isOneToOne: false;
+            referencedRelation: 'itinerary_items';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'expenses_paid_by_fkey';
+            columns: ['paid_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
           {
@@ -588,6 +660,7 @@ export type Database = {
           cover_photo_credit: Json | null;
           cover_photo_url: string | null;
           created_at: string;
+          currency: string;
           end_date: string;
           id: string;
           lat: number | null;
@@ -605,6 +678,7 @@ export type Database = {
           cover_photo_credit?: Json | null;
           cover_photo_url?: string | null;
           created_at?: string;
+          currency?: string;
           end_date: string;
           id?: string;
           lat?: number | null;
@@ -622,6 +696,7 @@ export type Database = {
           cover_photo_credit?: Json | null;
           cover_photo_url?: string | null;
           created_at?: string;
+          currency?: string;
           end_date?: string;
           id?: string;
           lat?: number | null;
@@ -676,6 +751,10 @@ export type Database = {
         Returns: boolean;
       };
       reset_invite: { Args: { trip: string }; Returns: string };
+      set_expense_shares: {
+        Args: { expense: string; shares: Json };
+        Returns: undefined;
+      };
       trip_flights: {
         Args: { trip: string };
         Returns: {

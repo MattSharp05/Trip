@@ -1,7 +1,7 @@
-import type { DataSnapshot, Membership, Profile } from '@/services/data/types';
+import type { DataSnapshot, Expense, Membership, Profile } from '@/services/data/types';
 import type { Booking, FlightData } from '@/services/data/bookings/types';
 
-import { VEGAS_TRIP_ID, vegasSnapshot } from './vegas';
+import { ME, VEGAS_TRIP_ID, vegasSnapshot } from './vegas';
 
 /**
  * The Vegas trip as a group trip (v2, PRD decision 8): Matthew ("you", the owner) with two
@@ -28,10 +28,76 @@ const members: Membership[] = [
 const BUCKET_ADDED_BY: Record<string, string> = { 'bucket-golden-tiki': BLAKE };
 const STOP_ADDED_BY: Record<string, string> = { 'item-04': WILLEM }; // Dinner at Peppermill, Nov 12
 
+/**
+ * Shared expenses (TR-62, ADR 0030): Blake bought the Sphere tickets for all three (it replaces
+ * Matthew's own Sphere expense), Matthew paid a dinner in euros for himself and Willem (rate from
+ * the demo rates), and Willem paid an Uber for all three.
+ */
+export const GROUP_EXPENSES: Expense[] = [
+  {
+    id: 'expense-group-sphere',
+    tripId: VEGAS_TRIP_ID,
+    amountMinor: 45000,
+    currency: 'USD',
+    category: 'Activities',
+    description: 'Sphere tickets',
+    paidAt: '2026-10-20T12:00:00-07:00',
+    bookingId: null,
+    addedBy: BLAKE,
+    paidBy: BLAKE,
+    itineraryItemId: 'item-07', // Sphere Experience, Nov 13
+    shares: [
+      { userId: ME, shareMinor: 15000 },
+      { userId: BLAKE, shareMinor: 15000 },
+      { userId: WILLEM, shareMinor: 15000 },
+    ],
+    rateToTrip: 1,
+    tripCurrency: 'USD',
+  },
+  {
+    id: 'expense-group-dinner',
+    tripId: VEGAS_TRIP_ID,
+    amountMinor: 12000,
+    currency: 'EUR',
+    category: 'Food & Drinks',
+    description: 'Dinner at Peppermill',
+    paidAt: '2026-11-12T21:30:00-08:00',
+    bookingId: null,
+    paidBy: ME,
+    itineraryItemId: 'item-04', // Dinner at Peppermill, Nov 12
+    shares: [
+      { userId: ME, shareMinor: 6000 },
+      { userId: WILLEM, shareMinor: 6000 },
+    ],
+    rateToTrip: 1.16,
+    tripCurrency: 'USD',
+  },
+  {
+    id: 'expense-group-uber',
+    tripId: VEGAS_TRIP_ID,
+    amountMinor: 3600,
+    currency: 'USD',
+    category: 'Transport',
+    description: 'Uber to the Strip',
+    paidAt: '2026-11-13T09:40:00-08:00',
+    bookingId: null,
+    addedBy: WILLEM,
+    paidBy: WILLEM,
+    shares: [
+      { userId: ME, shareMinor: 1200 },
+      { userId: BLAKE, shareMinor: 1200 },
+      { userId: WILLEM, shareMinor: 1200 },
+    ],
+    rateToTrip: 1,
+    tripCurrency: 'USD',
+  },
+];
+
 export const groupSnapshot: DataSnapshot = {
   ...vegasSnapshot,
   members,
   profiles,
+  expenses: [...vegasSnapshot.expenses.filter((e) => e.id !== 'expense-sphere'), ...GROUP_EXPENSES],
   bucketItems: vegasSnapshot.bucketItems.map((b) =>
     BUCKET_ADDED_BY[b.id] ? { ...b, addedBy: BUCKET_ADDED_BY[b.id] } : b,
   ),

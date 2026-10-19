@@ -32,3 +32,7 @@ export const useSaveTripBudget = () =>
   useWrite((s, { tripId, budget }: { tripId: string; budget: Money | null }) =>
     s.saveTripBudget(tripId, budget),
   );
+export const useSaveTripCurrency = () =>
+  useWrite((s, { tripId, currency }: { tripId: string; currency: string }) =>
+    s.saveTripCurrency(tripId, currency),
+  );
