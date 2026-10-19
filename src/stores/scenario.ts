@@ -15,6 +15,8 @@ export interface ScenarioView {
   organizeView?: 'wallet' | 'budget';
   /** Organize → Wallet on a group trip: Mine or Shared (TR-61). */
   walletScope?: 'mine' | 'shared';
+  /** Organize → Expenses: the segment to open (TR-65); Categories when unset. */
+  budgetTab?: 'categories' | 'expenses' | 'balances';
   currency?: string;
   /**
    * Organize: open the import review screen on a sample booking (a fixture parse; see

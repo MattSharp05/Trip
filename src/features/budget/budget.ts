@@ -1,7 +1,7 @@
 import type { SFSymbol } from 'expo-symbols';
 
 import { convert, type Money, type Rates } from '@/core/money';
-import { toTripCurrency, type Share } from '@/core/split';
+import { atTripRate, type Share } from '@/core/split';
 import type { Expense, Trip } from '@/services/data/types';
 
 /** The budget's categories, in the order the summary lists them, with their SF Symbol. */
@@ -124,13 +124,7 @@ export function tripAmount(
   tripCurrency: string,
   rates: Rates | null | undefined,
 ): Money | null {
-  if (expense.currency === tripCurrency) {
-    return { amountMinor: expense.amountMinor, currency: tripCurrency };
-  }
-  if (expense.tripCurrency === tripCurrency && expense.rateToTrip) {
-    return toTripCurrency(expense, expense.rateToTrip, tripCurrency);
-  }
-  return convert(expense, tripCurrency, rates);
+  return atTripRate(expense, expense, tripCurrency, rates);
 }
 
 /** True when showing the expense in `tripCurrency` needs today's rates. */

@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { dateRangeLabel } from '@/core/dates';
 import { FALLBACK_NAME, memberLabel } from '@/core/members';
 import { formatMoney } from '@/core/money';
+import { pairBalances } from '@/core/settle';
 import { usePreferences } from '@/features/settings';
 import { useSaveTripCurrency, useTripData, useTripMembers } from '@/services/data';
 import { useRates } from '@/services/rates';
@@ -13,6 +14,8 @@ import { colors, continuous, radii, screenPadding, spacing } from '@/theme';
 import { Button, Icon, ListRow, Segmented, Skeleton, Surface, Text, useTabBarInset } from '@/ui';
 
 import { AddExpenseSheet } from './AddExpenseSheet';
+import { toLedger } from './balances';
+import { BalancesList } from './BalancesList';
 import {
   categoryIcon,
   categoryOf,
@@ -29,12 +32,15 @@ import { BudgetTotalSheet } from './BudgetTotalSheet';
 import { CurrencySheet } from './CurrencySheet';
 import { ExpenseRow } from './ExpenseRow';
 
-type BudgetTab = 'categories' | 'expenses';
+type BudgetTab = 'categories' | 'expenses' | 'balances';
 
 const TABS = [
   { value: 'categories', label: 'Categories' },
   { value: 'expenses', label: 'All' },
 ] as const;
+
+/** On a group trip, a third segment: who owes whom (TR-65). */
+const GROUP_TABS = [...TABS, { value: 'balances', label: 'Balances' }] as const;
 
 /**
  * Organize → Expenses for the selected trip, shared by everyone on it (ADR 0030): the total, spent
@@ -55,7 +61,10 @@ export function BudgetScreen() {
   );
   const display = picked ?? (tripData.data ? tripCurrencyOf(tripData.data.trip) : 'USD');
   const rates = useRates(display);
-  const [tab, setTab] = useState<BudgetTab>('categories');
+  // A scenario can open a segment; read once, on mount.
+  const [tab, setTab] = useState<BudgetTab>(
+    () => useScenarioStore.getState().view.budgetTab ?? 'categories',
+  );
   const [filter, setFilter] = useState<Category | null>(null);
   const [sheet, setSheet] = useState<'currency' | 'total' | 'expense' | null>(null);
   const [currencyFailed, setCurrencyFailed] = useState(false);
@@ -80,6 +89,17 @@ export function BudgetScreen() {
     return member ? memberLabel(member) : FALLBACK_NAME;
   };
   const group = (memberList?.length ?? 0) > 1;
+  const balances = useMemo(
+    () =>
+      expenses && memberList && me
+        ? pairBalances(
+            toLedger(expenses, me, display, rates.data),
+            me,
+            memberList.map((m) => m.id),
+          )
+        : [],
+    [expenses, memberList, me, display, rates.data],
+  );
 
   if (tripData.isError || members.isError) {
     return (
@@ -128,6 +148,8 @@ export function BudgetScreen() {
 
   const trip = data.trip;
   const shown = filter ? rows.filter((e) => categoryOf(e) === filter) : rows;
+  // Balances only on a group trip (someone may have left since).
+  const shownTab = tab === 'balances' && !group ? 'categories' : tab;
 
   return (
     <>
@@ -167,9 +189,16 @@ export function BudgetScreen() {
           </Text>
         ) : null}
 
-        <Segmented segments={TABS} value={tab} onChange={setTab} testID="budget-tabs" />
+        <Segmented
+          segments={group ? GROUP_TABS : TABS}
+          value={shownTab}
+          onChange={setTab}
+          testID="budget-tabs"
+        />
 
-        {tab === 'categories' ? (
+        {shownTab === 'balances' ? (
+          <BalancesList balances={balances} members={memberList} currency={display} />
+        ) : shownTab === 'categories' ? (
           <Surface padding="none" testID="budget-categories">
             {summary.categories.map((c, i) => (
               <ListRow
