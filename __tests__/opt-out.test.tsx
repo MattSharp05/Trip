@@ -228,6 +228,19 @@ describe('Opting out takes you out of the expense split (TR-66)', () => {
     expect(await withBlake(WILLEM)).toBe('youOwe 13800');
   });
 
+  it("keeps the switch when the opt-out saved but the split didn't", async () => {
+    await openSphere('group-vegas-member', 'item-03');
+    jest.spyOn(source(), 'setExpenseShares').mockRejectedValueOnce(new Error('offline'));
+    await act(async () =>
+      fireEvent(screen.getByTestId('detail-going-switch'), 'valueChange', false),
+    );
+    expect(
+      await screen.findByText("Saved, but the expense split didn't update."),
+    ).toBeOnTheScreen();
+    await waitFor(() => expect(goingLines()).toContain("I'm going: off"));
+    expect(await sphereShares()).toHaveLength(3);
+  });
+
   it('leaves a custom split alone and says so', async () => {
     await open('group-plan-opt-out', BRUNCH);
     const custom = [

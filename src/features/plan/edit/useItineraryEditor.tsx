@@ -9,6 +9,7 @@ import {
   useDataSource,
   useSavePlace,
   useSetGoing,
+  SplitNotUpdatedError,
   type DataSource,
   type ItineraryItem,
   type Member,
@@ -272,7 +273,14 @@ export function useItineraryEditor({
             setError(null);
             setGoing(
               { itemId: item.id, going },
-              { onError: () => setError("Couldn't save that change. Try again.") },
+              {
+                onError: (e) =>
+                  setError(
+                    e instanceof SplitNotUpdatedError
+                      ? "Saved, but the expense split didn't update."
+                      : "Couldn't save that change. Try again.",
+                  ),
+              },
             );
           }}
         />

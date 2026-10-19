@@ -11,6 +11,14 @@ export const useSaveItineraryItem = () =>
   useWrite((s, item: ItineraryItem) => s.saveItineraryItem(item));
 export const useDeleteItineraryItem = () => useWrite((s, id: string) => s.deleteItineraryItem(id));
 
+/** The going change saved, but its expenses' new split didn't (TR-66): the switch stays. */
+export class SplitNotUpdatedError extends Error {
+  constructor(cause: unknown) {
+    super("The expense split couldn't be updated", { cause });
+    this.name = 'SplitNotUpdatedError';
+  }
+}
+
 /**
  * I'm going / I'm out on a stop (TR-60), applied to the cached trip at once (the switch moves
  * straight away) and rolled back if the save fails. The stop's expenses still split equally
@@ -34,7 +42,11 @@ export function useSetGoing(
         const resplits =
           data && item && me ? resplitsForGoing(data.expenses, item, memberIds, me, going) : [];
         await (going ? source.optIn(itemId) : source.optOut(itemId, tripId));
-        await Promise.all(resplits.map((r) => source.setExpenseShares(r.expenseId, r.shares)));
+        try {
+          await Promise.all(resplits.map((r) => source.setExpenseShares(r.expenseId, r.shares)));
+        } catch (cause) {
+          throw new SplitNotUpdatedError(cause);
+        }
       },
       onMutate: async ({ itemId, going }) => {
         await queryClient.cancelQueries({ queryKey: key });
@@ -47,7 +59,9 @@ export function useSetGoing(
         }
         return { previous };
       },
-      onError: (_error, _vars, context) => {
+      onError: (error, _vars, context) => {
+        // Only a failed opt-out or opt-in puts the switch back.
+        if (error instanceof SplitNotUpdatedError) return;
         if (context?.previous) queryClient.setQueryData(key, context.previous);
       },
       onSettled: () => queryClient.invalidateQueries({ queryKey: dataKeys.all(source) }),
