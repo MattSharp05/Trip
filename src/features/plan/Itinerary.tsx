@@ -1,6 +1,6 @@
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import * as Haptics from 'expo-haptics';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import Sortable, {
@@ -43,6 +43,8 @@ export interface ItineraryProps {
   editing?: ItineraryEditing;
   /** Edit mode: each row shows a drag handle (DayHeader's Edit / Done). */
   reordering?: boolean;
+  /** Above the first row (and the free-day state): the day's Arrivals card (TR-58). */
+  header?: ReactNode;
 }
 
 /** A row plus, under it, the travel leg to the next stop when there is one. */
@@ -64,9 +66,11 @@ export function Itinerary({
   bottomInset,
   editing,
   reordering = false,
+  header,
 }: ItineraryProps) {
   const scroll = useAnimatedRef<Animated.ScrollView>();
   const [viewHeight, setViewHeight] = useState(0);
+  const [headerHeight, setHeaderHeight] = useState(0);
   const unit = useDistanceUnit();
   const index = entries && selectedId ? entries.findIndex((e) => e.id === selectedId) : -1;
 
@@ -83,10 +87,13 @@ export function Itinerary({
     revealed.current = revealKey;
     if (reveal && index >= 0) {
       const height = offsets[index + 1] - offsets[index];
-      const y = offsets[index] - REVEAL_POSITION * Math.max(0, viewHeight - height);
+      const y =
+        (header ? headerHeight : 0) +
+        offsets[index] -
+        REVEAL_POSITION * Math.max(0, viewHeight - height);
       scroll.current?.scrollTo({ y: Math.max(0, y), animated: true });
     }
-  }, [revealKey, reveal, index, offsets, viewHeight, scroll]);
+  }, [revealKey, reveal, index, offsets, viewHeight, headerHeight, scroll]);
 
   const { lifted, sortable } = useReorder(editing, reordering);
 
@@ -119,16 +126,19 @@ export function Itinerary({
 
   if (entries.length === 0) {
     return (
-      <View style={styles.empty} testID="itinerary-free-day">
-        <Text variant="body" tone="secondary" style={styles.emptyText}>
-          Free day. Use Smart Add on your Bucket List to fill it.
-        </Text>
-        <Button
-          label="Open Bucket List"
-          variant="secondary"
-          icon="list.bullet"
-          onPress={onOpenBucketList}
-        />
+      <View>
+        {header}
+        <View style={styles.empty} testID="itinerary-free-day">
+          <Text variant="body" tone="secondary" style={styles.emptyText}>
+            Free day. Use Smart Add on your Bucket List to fill it.
+          </Text>
+          <Button
+            label="Open Bucket List"
+            variant="secondary"
+            icon="list.bullet"
+            onPress={onOpenBucketList}
+          />
+        </View>
       </View>
     );
   }
@@ -141,6 +151,7 @@ export function Itinerary({
       contentContainerStyle={{ paddingBottom: bottomInset }}
       testID="itinerary-list"
     >
+      <View onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>{header}</View>
       {editing ? (
         <Sortable.Grid
           // Edit mode swaps how a drag starts (the handle, at once); a refused drop puts the rows

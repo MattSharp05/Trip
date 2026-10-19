@@ -24,6 +24,7 @@ export type * from './bookings/types';
 export type * from './bucket/types';
 export type * from './documents/types';
 export type * from './expenses/types';
+export type * from './flights/types';
 export type * from './itinerary/types';
 export type * from './links/types';
 export type * from './members/types';
