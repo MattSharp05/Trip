@@ -135,3 +135,61 @@ describe('Passport and visa documents (TR-20)', () => {
     expect(screen.getByText('567 890 123')).toBeOnTheScreen();
   });
 });
+
+describe('Sharing a passport with a group trip (TR-61)', () => {
+  afterEach(() => act(() => exitScenario()));
+
+  it('starts private; sharing it tags it Shared under Mine and stopping undoes it', async () => {
+    await openWallet('group-wallet-mine');
+    expect(screen.queryByTestId('tag-wallet-card-document-passport')).toBeNull();
+    fireEvent.press(screen.getByTestId('wallet-card-document-passport'));
+    expect(await screen.findByTestId('document-sharing-status')).toHaveTextContent(/Only you/);
+    fireEvent.press(screen.getByText('Share with this trip'));
+    expect(await screen.findByText('Stop sharing')).toBeOnTheScreen();
+    expect(screen.getByTestId('document-sharing-status')).toHaveTextContent(
+      /Shared with this trip/,
+    );
+    const [passport] = await useActiveSource.getState().source.listDocuments();
+    expect(passport.sharedTripIds).toEqual(['trip-vegas']);
+
+    act(() => nav.back());
+    expect(await screen.findByTestId('tag-wallet-card-document-passport')).toHaveTextContent(
+      'Shared',
+    );
+  });
+
+  it("shows someone else's shared passport under Shared, read-only", async () => {
+    act(() => {
+      loadScenario('group-wallet-shared');
+    });
+    const source = useActiveSource.getState().source;
+    act(() =>
+      useActiveSource.getState().setSource(
+        Object.assign(Object.create(null), source, {
+          listDocuments: async () => [
+            {
+              id: 'document-blake',
+              type: 'passport',
+              country: 'United States',
+              number: null,
+              expiresOn: null,
+              imagePaths: [],
+              addedBy: 'user-blake',
+              sharedTripIds: ['trip-vegas'],
+            },
+          ],
+        }),
+      ),
+    );
+    renderRouter(routes, { initialUrl: '/organize' });
+    expect(await screen.findByTestId('tag-wallet-card-document-blake')).toHaveTextContent(
+      'Added by Blake',
+    );
+    fireEvent.press(screen.getByTestId('wallet-card-document-blake'));
+    expect(await screen.findByTestId('document-sharing-status')).toHaveTextContent(
+      /Added by Blake/,
+    );
+    expect(screen.queryByTestId('document-sharing-toggle')).toBeNull();
+    expect(screen.queryByTestId('document-edit')).toBeNull();
+  });
+});

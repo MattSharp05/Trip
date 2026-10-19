@@ -57,7 +57,7 @@ export function WalletCard({
             variant="caption"
             tone="secondary"
             numberOfLines={1}
-            testID={testID && `${testID}-tag`}
+            testID={testID && `tag-${testID}`}
           >
             {tag}
           </Text>

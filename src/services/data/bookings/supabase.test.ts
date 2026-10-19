@@ -1,4 +1,4 @@
-import { mockInserts, mockTables, mockUpdates } from '../shared/supabaseMock';
+import { mockCalls, mockInserts, mockTables, mockUpdates } from '../shared/supabaseMock';
 import { supabaseBookings } from './supabase';
 
 jest.mock('../../supabase', () => jest.requireActual('../shared/supabaseMock').mockSupabaseModule);
@@ -42,5 +42,40 @@ describe('supabase bookings', () => {
       original_path: 'u1/imports/a.pdf',
     });
     expect(saved).toMatchObject({ id: 'b9', tripId: 't1', type: 'ticket' });
+  });
+
+  it("sends the review screen's visibility, and leaves it to the database otherwise", async () => {
+    mockTables.bookings = {
+      data: { id: 'b5', trip_id: 't1', type: 'hotel', data: {}, visibility: 'private' },
+      error: null,
+    };
+    const saved = await supabaseBookings.createBooking({
+      id: 'b5',
+      tripId: 't1',
+      originalPath: null,
+      visibility: 'private',
+      type: 'hotel',
+      data: {} as never,
+    });
+    expect(mockInserts.at(-1)).toMatchObject({ visibility: 'private' });
+    expect(saved.visibility).toBe('private');
+  });
+
+  it('flips a booking between Mine and Shared', async () => {
+    mockTables.bookings = {
+      data: {
+        id: 'b1',
+        trip_id: 't1',
+        user_id: 'u1',
+        type: 'hotel',
+        data: {},
+        visibility: 'private',
+      },
+      error: null,
+    };
+    const saved = await supabaseBookings.setBookingVisibility('b1', 'private');
+    expect(mockUpdates.at(-1)).toEqual({ visibility: 'private' });
+    expect(mockCalls.at(-1)).toEqual(['bookings', 'eq', 'id', 'b1']);
+    expect(saved).toMatchObject({ id: 'b1', visibility: 'private', addedBy: 'u1' });
   });
 });
