@@ -4,6 +4,8 @@ import OrganizeLayout from '../app/(tabs)/organize/_layout';
 import ImportRoute from '../app/(tabs)/organize/import';
 import OrganizeRoute from '../app/(tabs)/organize/index';
 import { exitScenario, loadScenario } from '@/scenarios';
+import { vegasSnapshot } from '@/scenarios/fixtures/vegas';
+import { createDemoSource } from '@/services/data';
 import { useActiveSource } from '@/services/data/active';
 import { useImportStore } from '@/stores/import';
 import { useTripStore } from '@/stores/trip';
@@ -109,6 +111,55 @@ describe('booking import', () => {
     expect(data.expenses).toEqual([
       expect.objectContaining({ amountMinor: 6300000, currency: 'ZAR', category: 'Hotels' }),
     ]);
+  });
+
+  it('on a group trip, saves a hotel shared by default, or kept to you from the review row', async () => {
+    mockGetDocument.mockResolvedValue({
+      canceled: false,
+      assets: [
+        {
+          uri: 'file:///tmp/sample-hotel.pdf',
+          name: 'sample-hotel.pdf',
+          mimeType: 'application/pdf',
+        },
+      ],
+    });
+    open('vegas-wallet');
+    // Blake is on the Cape Town trip too.
+    act(() =>
+      useActiveSource.getState().setSource(
+        createDemoSource({
+          ...vegasSnapshot,
+          profiles: [...vegasSnapshot.profiles, { id: 'user-blake', displayName: 'Blake' }],
+          members: [
+            ...vegasSnapshot.members,
+            { tripId: 'trip-cape-town', userId: 'user-blake', role: 'member' },
+          ],
+        }),
+      ),
+    );
+    fireEvent.press(await screen.findByTestId('organize-add'));
+    fireEvent.press(await screen.findByTestId('add-booking-pdf'));
+    expect(await screen.findByText('Review booking', {}, { timeout: 3000 })).toBeOnTheScreen();
+    expect(await screen.findByText('Shared with the group')).toBeOnTheScreen();
+    expect(screen.getByTestId('import-visibility-switch').props.value).toBe(true);
+
+    fireEvent(screen.getByTestId('import-visibility-switch'), 'valueChange', false);
+    expect(screen.getByText('Only you')).toBeOnTheScreen();
+    fireEvent.press(screen.getByTestId('import-save'));
+    await screen.findByText(/Saved to your wallet/);
+
+    const data = (await source().getTripData('trip-cape-town'))!;
+    expect(data.bookings).toEqual([
+      expect.objectContaining({ type: 'hotel', visibility: 'private' }),
+    ]);
+    expect(data.expenses[0].shares).toEqual([{ userId: 'user-matthew', shareMinor: 6300000 }]);
+  });
+
+  it('shows no visibility row on a trip you are alone on', async () => {
+    open('import-review-flight');
+    expect(await screen.findByText('Review booking', {}, { timeout: 3000 })).toBeOnTheScreen();
+    expect(screen.queryByTestId('import-visibility')).toBeNull();
   });
 
   it('offers to create a trip when none matches, and saves the booking in it', async () => {

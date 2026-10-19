@@ -8,6 +8,8 @@ export interface WalletCardRendererProps<T extends WalletType> {
   places: PlaceLookup;
   /** Opens the detail screen; absent when the card is shown inside a detail screen. */
   onPress?: () => void;
+  /** "Added by Blake" or "Shared", on a group trip's wallet (TR-61). */
+  tag?: string | null;
 }
 
 /** One booking type's entry in the card registry. */

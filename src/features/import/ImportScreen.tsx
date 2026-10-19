@@ -13,10 +13,13 @@ import {
   dataKeys,
   queryClient,
   useDataSource,
+  useTripMembers,
   useTrips,
+  type BookingVisibility,
   type NewTrip,
   type Trip,
 } from '@/services/data';
+import { defaultVisibility } from '@/services/data/bookings/visibility';
 import { findCoverPhoto, trackPhotoDownload } from '@/services/photos';
 import { useImportStore } from '@/stores/import';
 import { useTripStore } from '@/stores/trip';
@@ -27,6 +30,7 @@ import { draftFrom, fieldsFor, finishDraft, switchType, TYPE_OPTIONS, type Draft
 import { importErrorMessage, readBooking, type ReadBooking } from './readBooking';
 import { ReviewFields } from './ReviewFields';
 import { saveImport } from './saveImport';
+import { VisibilityRow } from './VisibilityRow';
 
 /**
  * Booking import (TR-25): reads the picked file ("Reading your booking"), then the review screen:
@@ -158,7 +162,12 @@ function Review({ read }: { read: ReadBooking }) {
   const [draft, setDraft] = useState(() => draftFrom(read.result.booking, read.result.uncertain));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
+  // Null until the traveller flips it: then the type's default, which follows a type switch.
+  const [visibility, setVisibility] = useState<BookingVisibility | null>(null);
   const target = useTarget(read.result, draft);
+  // Only a trip with others on it asks; anywhere else the type's default applies.
+  const targetMembers = useTripMembers(target && 'trip' in target ? target.trip.id : null).data;
+  const asksVisibility = (targetMembers?.length ?? 0) > 1;
   const fields = fieldsFor(draft.base);
 
   const save = useMutation(
@@ -198,6 +207,7 @@ function Review({ read }: { read: ReadBooking }) {
           target: resolved,
           originalPath: read.originalPath,
           importedAt: now().toISOString(),
+          ...(visibility && asksVisibility ? { visibility } : {}),
         });
         if (photoLocation) void trackPhotoDownload(photoLocation).catch(() => {});
         return result;
@@ -268,6 +278,12 @@ function Review({ read }: { read: ReadBooking }) {
           ))}
         </ScrollView>
         <TripTarget target={target} />
+        {asksVisibility ? (
+          <VisibilityRow
+            value={visibility ?? defaultVisibility(draft.base.type)}
+            onChange={setVisibility}
+          />
+        ) : null}
         <ReviewFields
           fields={fields}
           values={draft.values}

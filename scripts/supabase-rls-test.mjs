@@ -787,6 +787,38 @@ try {
     }
   }
 
+  // TR-61: the owner makes the shared hotel private; B can no longer open its original (the app
+  // opens originals through signed URLs; a plain download may be answered from Storage's cache),
+  // and can again once it's shared.
+  const hotelOriginal = `${a.id}/rls-test.txt`;
+  const makePrivate = await a.client
+    .from('bookings')
+    .update({ visibility: 'private' })
+    .eq('id', booking.id)
+    .select('visibility');
+  check(
+    'bookings: owner makes a shared booking private',
+    makePrivate.data?.[0]?.visibility === 'private',
+    makePrivate.error?.message,
+  );
+  const hiddenUrl = await b.client.storage.from('originals').createSignedUrl(hotelOriginal, 60);
+  check(
+    "originals: member can't open a booking's original once it's private",
+    Boolean(hiddenUrl.error),
+  );
+  const shareAgain = await a.client
+    .from('bookings')
+    .update({ visibility: 'shared' })
+    .eq('id', booking.id)
+    .select('visibility');
+  check(
+    'bookings: owner shares it again',
+    shareAgain.data?.[0]?.visibility === 'shared',
+    shareAgain.error?.message,
+  );
+  const sharedUrl = await b.client.storage.from('originals').createSignedUrl(hotelOriginal, 60);
+  check('originals: member opens it again once shared', !sharedUrl.error, sharedUrl.error?.message);
+
   // Sharing a passport with the trip: B reads it and its photo; C still can't.
   const passportPhoto = `${a.id}/documents/rls-test.txt`;
   const cShare = await c.client

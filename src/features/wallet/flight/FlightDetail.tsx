@@ -11,6 +11,7 @@ import { FlightRoute } from './FlightRoute';
 import { StatusPill } from './FlightStatusPill';
 import { liveFacts } from './status';
 import { useFlightBooking } from './useFlightBooking';
+import { BookingSharing } from '../details';
 import { useWallet } from '../useWallet';
 
 /**
@@ -128,6 +129,7 @@ export function FlightDetail({ id }: { id: string }) {
                 testID="flight-calendar"
               />
             </Surface>
+            {booking ? <BookingSharing booking={booking} /> : null}
           </>
         ) : loadError ? (
           <LoadError message="Couldn't load this flight. Check your connection." onRetry={retry} />

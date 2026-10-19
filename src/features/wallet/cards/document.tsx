@@ -10,7 +10,7 @@ import { WalletCard } from './WalletCard';
  * A passport or visa (TR-20): country and expiry, or a warning when it expires within six months
  * of an upcoming trip's end (or already has).
  */
-function DocumentCard({ entry, onPress }: WalletCardRendererProps<'document'>) {
+function DocumentCard({ entry, onPress, tag }: WalletCardRendererProps<'document'>) {
   const { document } = entry;
   const warning = useExpiryWarning(document.expiresOn);
   const expires = document.expiresOn
@@ -32,6 +32,7 @@ function DocumentCard({ entry, onPress }: WalletCardRendererProps<'document'>) {
           : documentName(document.type)
       }
       lines={lines.filter((line): line is string => line !== null)}
+      tag={tag}
       onPress={onPress}
       testID={`wallet-card-${entry.id}`}
     />

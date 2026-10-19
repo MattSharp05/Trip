@@ -1,10 +1,12 @@
 import {
   avatarRow,
+  hideWarning,
   initialOf,
   inviteCompanyLine,
   type MemberLike,
   memberLabel,
   memberRoleLine,
+  nameList,
   sortMembers,
   toMember,
 } from './members';
@@ -114,5 +116,19 @@ describe('inviteCompanyLine', () => {
     expect(inviteCompanyLine('Matthew', 2)).toBe('with Matthew and 1 other');
     expect(inviteCompanyLine('Matthew', 3)).toBe('with Matthew and 2 others');
     expect(inviteCompanyLine('Matthew', 0)).toBe('with Matthew');
+  });
+});
+
+describe('nameList and hideWarning', () => {
+  it('lists names as a sentence does', () => {
+    expect(nameList([])).toBe('');
+    expect(nameList(['Blake'])).toBe('Blake');
+    expect(nameList(['Blake', 'Willem'])).toBe('Blake and Willem');
+    expect(nameList(['Alex', 'Blake', 'Willem'])).toBe('Alex, Blake and Willem');
+  });
+
+  it("names who won't see a booking made private", () => {
+    expect(hideWarning(['Blake', 'Willem'])).toBe("Blake and Willem won't see it any more.");
+    expect(hideWarning([])).toBe('Only you will see it.');
   });
 });

@@ -74,3 +74,16 @@ export function inviteCompanyLine(inviterName: string, memberCount: number): str
   if (others === 0) return `with ${inviterName}`;
   return `with ${inviterName} and ${others} ${others === 1 ? 'other' : 'others'}`;
 }
+
+/** Names as a sentence lists them: "Blake", "Blake and Willem", "Alex, Blake and Willem". */
+export function nameList(names: readonly string[]): string {
+  if (names.length <= 1) return names[0] ?? '';
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
+/** What making a shared booking private warns (TR-61): "Blake and Willem won't see it any more." */
+export function hideWarning(otherNames: readonly string[]): string {
+  return otherNames.length > 0
+    ? `${nameList(otherNames)} won't see it any more.`
+    : 'Only you will see it.';
+}

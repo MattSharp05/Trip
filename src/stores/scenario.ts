@@ -9,6 +9,8 @@ export interface ScenarioView {
   planMode?: 'itinerary' | 'bucket';
   /** Organize: Wallet or Budget, and the currency budgets display in. */
   organizeView?: 'wallet' | 'budget';
+  /** Organize → Wallet on a group trip: Mine or Shared (TR-61). */
+  walletScope?: 'mine' | 'shared';
   currency?: string;
   /**
    * Organize: open the import review screen on a sample booking (a fixture parse; see

@@ -15,3 +15,7 @@ export function useDocuments() {
 export const useSaveDocument = () =>
   useWrite((s, document: DocumentInput) => s.saveDocument(document));
 export const useDeleteDocument = () => useWrite((s, id: string) => s.deleteDocument(id));
+export const useSetDocumentShared = () =>
+  useWrite((s, { id, tripId, shared }: { id: string; tripId: string; shared: boolean }) =>
+    s.setDocumentShared(id, tripId, shared),
+  );
