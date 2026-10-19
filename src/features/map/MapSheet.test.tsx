@@ -8,26 +8,23 @@ const layout = (height: number) => ({
 });
 
 describe('MapSheet', () => {
-  it('pads its content up to the bottom of the area when laid out taller than it (TR-59)', () => {
+  it('sizes its content to the area under the grabber, however tall the library lays it out (TR-59)', () => {
     render(
       <MapSheet halfHeight={386} bottomInset={98} top={<Text>Fri, Nov 13</Text>} testID="sheet">
         <Text>List</Text>
       </MapSheet>,
     );
-    // On device: a 686 pt area, the 15 pt grabber row, and content laid out 766 pt tall.
+    // On device: a 686 pt area and the 15 pt grabber row; the content ran ~95 pt past the screen.
     fireEvent(screen.getByTestId('sheet-area'), 'layout', layout(686));
-    fireEvent(screen.getByTestId('sheet'), 'layout', layout(766));
-    expect(screen.getByTestId('sheet')).toHaveStyle({ paddingBottom: 95 });
+    expect(screen.getByTestId('sheet')).toHaveStyle({ height: 671 });
   });
 
-  it('adds nothing when the content fits', () => {
+  it('fills the sheet until the area has been measured', () => {
     render(
       <MapSheet halfHeight={386} bottomInset={98} top={<Text>Fri, Nov 13</Text>} testID="sheet">
         <Text>List</Text>
       </MapSheet>,
     );
-    fireEvent(screen.getByTestId('sheet-area'), 'layout', layout(686));
-    fireEvent(screen.getByTestId('sheet'), 'layout', layout(671));
-    expect(screen.getByTestId('sheet')).toHaveStyle({ paddingBottom: 0 });
+    expect(screen.getByTestId('sheet')).toHaveStyle({ flex: 1 });
   });
 });
