@@ -10,6 +10,17 @@ tags:
     env:
       SCENARIO: vegas-bucket
       READY_ID: bucket-list
+# Recent order (TR-59) puts Golden Tiki last, under the tab bar at half height: drag the Plan sheet
+# up by its day header (a plain scroll would move the map) so every row is clear of the tab bar.
+- swipe:
+    from:
+      id: day-header
+    direction: UP
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      id: smart-add-bucket-golden-tiki
+    direction: DOWN
 - tapOn:
     id: smart-add-bucket-golden-tiki
 - extendedWaitUntil:

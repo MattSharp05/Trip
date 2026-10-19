@@ -15,6 +15,13 @@ tags:
       id: day-header
     direction: UP
 - waitForAnimationToEnd
+# Scroll the list to its end: "Add a place" is on screen before that, but under the floating tab
+# bar, which Maestro can't tell (a tap there hits the tab bar).
+- swipe:
+    from:
+      id: bucket-row-bucket-lotus-of-siam
+    direction: UP
+- waitForAnimationToEnd
 - scrollUntilVisible:
     element:
       id: bucket-add
