@@ -13,6 +13,8 @@ export interface ScenarioView {
   planMode?: 'itinerary' | 'bucket';
   /** Plan: the Bucket List's order (TR-59); Recent when unset. */
   bucketSort?: BucketSort;
+  /** Plan: open the Suggest times sheet for liked Bucket List items (TR-64). */
+  suggestTimes?: boolean;
   /** Organize: Wallet or Budget, and the currency budgets display in. */
   organizeView?: 'wallet' | 'budget';
   /** Organize → Wallet on a group trip: Mine or Shared (TR-61). */

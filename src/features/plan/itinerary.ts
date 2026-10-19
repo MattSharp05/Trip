@@ -40,6 +40,11 @@ export interface ItineraryEntry {
   going: GoingMember[] | null;
   /** You opted out of it ("You're out" on the row). */
   youreOut: boolean;
+  /**
+   * Group trips (TR-64): who added it, when it wasn't you ("Added by Blake" on the row), also when
+   * you planned their Bucket List item. Null on your own stops and on a trip of one.
+   */
+  addedBy: string | null;
 }
 
 /** A member and whether they're going to a stop (TR-60). */
@@ -71,6 +76,13 @@ export function goingList(
     isMe,
     going: !out.has(id),
   }));
+}
+
+/** Another member's name when they added the stop; null for yours (unmarked stops are yours). */
+function adderName(item: Pick<ItineraryItem, 'addedBy'>, members: readonly Member[]) {
+  if (members.length < 2 || !item.addedBy) return null;
+  const by = members.find((m) => m.id === item.addedBy);
+  return by && !by.isMe ? by.name : null;
 }
 
 /** The estimated trip between two consecutive stops (`core/travel`). */
@@ -157,6 +169,7 @@ export function itineraryEntries(
       booked: item.bookingId !== null,
       going: going.some((m) => !m.going) ? going.filter((m) => m.going) : null,
       youreOut: going.some((m) => m.isMe && !m.going),
+      addedBy: adderName(item, members),
     };
   });
 }

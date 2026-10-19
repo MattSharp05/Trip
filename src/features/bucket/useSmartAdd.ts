@@ -1,11 +1,13 @@
 import { useMutation } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 
+import type { Suggestion } from '@/core/smartAdd';
 import { dataKeys, queryClient, useDataSource, type TripData } from '@/services/data';
 
 import type { BucketEntry } from './bucket';
 import { planBucketAll } from './planAll';
 import { applyChange, planBucketSmartAdd, type SmartAddChange } from './smartAdd';
+import { planSuggestions } from './suggest';
 
 /** The toast after Smart Add: where it went, with Undo (the writes that put everything back). */
 export interface SmartAddToast {
@@ -24,7 +26,8 @@ export interface SmartAddPlaced {
  * from the Bucket List to the itinerary in one optimistic write, and keeps one Undo record that
  * snapshots everything it changed (the new stop, the bucket item, any stop it moved).
  * `planAll` (Plan my bucket list, TR-32) does the same for every item at once, with one Undo for
- * the whole set, and keeps a note on each item that didn't fit.
+ * the whole set, and keeps a note on each item that didn't fit. `accept` (Suggest times for liked
+ * items, TR-64) places suggested items at their suggested times through the same write and Undo.
  */
 export function useSmartAdd(tripId: string | null, data: TripData | null | undefined) {
   const source = useDataSource();
@@ -91,6 +94,18 @@ export function useSmartAdd(tripId: string | null, data: TripData | null | undef
     return Object.keys(plan.notes).length === 0 ? plan.first : null;
   }, [data, mutate]);
 
+  /** Place accepted suggestions where they were suggested. Returns the earliest new stop. */
+  const accept = useCallback(
+    (accepted: readonly Suggestion[]): SmartAddPlaced | null => {
+      const plan = data ? planSuggestions(data, accepted) : null;
+      if (!plan) return null;
+      mutate(plan.change);
+      setToast({ message: plan.message, undo: plan.undo });
+      return plan.first;
+    },
+    [data, mutate],
+  );
+
   const undo = useCallback(() => {
     if (!toast?.undo) return;
     mutate(toast.undo);
@@ -100,6 +115,7 @@ export function useSmartAdd(tripId: string | null, data: TripData | null | undef
   return {
     add,
     planAll,
+    accept,
     notes,
     undo,
     toast,

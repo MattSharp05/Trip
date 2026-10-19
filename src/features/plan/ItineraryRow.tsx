@@ -51,16 +51,18 @@ export const ItineraryRow = memo(function ItineraryRow({
   accessibilityActions,
   onAccessibilityAction,
 }: ItineraryRowProps) {
+  const addedBy = entry.addedBy ? `Added by ${entry.addedBy}` : null;
   const spoken = [
     entry.time,
     entry.title,
     entry.youreOut ? "You're out" : null,
     entry.going ? goingSpoken(entry.going) : null,
+    addedBy,
     entry.subtitle,
   ]
     .filter(Boolean)
     .join(', ');
-  const subtitle = [entry.youreOut ? "You're out" : null, entry.subtitle]
+  const subtitle = [entry.youreOut ? "You're out" : null, addedBy, entry.subtitle]
     .filter(Boolean)
     .join(' · ');
   const node = selected ? NODE_SELECTED : NODE;

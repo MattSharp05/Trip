@@ -1,10 +1,11 @@
+import { likeCount } from '@/core/bucket';
 import { dayOfMonth, timeLabel, tripDays, weekdayShort } from '@/core/dates';
 import { newId } from '@/core/ids';
 import { planAll } from '@/core/planAll';
-import { itemTitle, kindForPlace } from '@/features/plan/edit/edits';
+import { itemTitle } from '@/features/plan/edit/edits';
 import type { BucketItem, ItineraryItem, TripData } from '@/services/data/types';
 
-import { candidateFor, plannerItems, type SmartAddChange } from './smartAdd';
+import { candidateFor, plannerItems, stopFor, type SmartAddChange } from './smartAdd';
 
 /** What tapping Plan my bucket list leads to: the writes, the toast, and notes for what didn't fit. */
 export interface PlanAllPlan {
@@ -28,7 +29,7 @@ function daysLabel(days: string[]): string {
 }
 
 /** "Overlaps UFC 310 at 7:00 PM": a stop already planned, or an event placed in this same run. */
-function clashNote(data: TripData, conflictId: string): string {
+export function clashNote(data: TripData, conflictId: string): string {
   const stop = data.items.find((item) => item.id === conflictId);
   if (stop) return `Overlaps ${itemTitle(data, stop)} at ${timeLabel(stop.startTime ?? '00:00')}`;
   const event = data.bucketItems.find((b) => b.id === conflictId);
@@ -49,7 +50,11 @@ export function planBucketAll(data: TripData, ids: () => string = newId): PlanAl
   const result = planAll({
     days: tripDays(data.trip.startDate, data.trip.endDate),
     items: plannerItems(data),
-    candidates: data.bucketItems.map((b) => ({ id: b.id, candidate: candidateFor(data, b) })),
+    candidates: data.bucketItems.map((b) => ({
+      id: b.id,
+      candidate: candidateFor(data, b),
+      likes: likeCount(b),
+    })),
   });
 
   const notes: Record<string, string> = {};
@@ -75,24 +80,12 @@ export function planBucketAll(data: TripData, ids: () => string = newId): PlanAl
   // Final day and time of every planner item (later events can move stops placed earlier).
   const final = new Map(result.items.map((item) => [item.id, item]));
   const added: ItineraryItem[] = result.placed.map(({ id: bucketId, placement }) => {
-    const bucketItem = byId.get(bucketId) as BucketItem;
-    const place = data.places.find((p) => p.id === bucketItem.placeId);
-    const fixedTime = bucketItem.fixedDate !== null && bucketItem.fixedTime !== null;
     const at = final.get(bucketId)!;
-    return {
-      id: ids(),
-      tripId: data.trip.id,
+    return stopFor(data, byId.get(bucketId) as BucketItem, ids(), {
       day: at.day,
       startTime: at.startTime,
       durationMinutes: placement.durationMinutes,
-      placeId: bucketItem.placeId,
-      kind: fixedTime ? 'event' : kindForPlace(place?.kind ?? null),
-      bookingId: null,
-      fixed: fixedTime,
-      ...(bucketItem.title ? { title: bucketItem.title } : {}),
-      // Planning someone's Bucket List item keeps them as its adder (ADR 0027).
-      ...(bucketItem.addedBy ? { addedBy: bucketItem.addedBy } : {}),
-    };
+    });
   });
   const movedIds = new Set(result.moved.map((m) => m.id));
   const before = data.items.filter((item) => movedIds.has(item.id));
