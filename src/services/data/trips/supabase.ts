@@ -1,6 +1,6 @@
 import { bookingPlaceIds } from '../bookings/placeIds';
 import { toBooking } from '../bookings/supabase';
-import { toBucket } from '../bucket/supabase';
+import { BUCKET_SELECT, toBucket } from '../bucket/supabase';
 import { EXPENSE_SELECT, toExpense } from '../expenses/supabase';
 import { toItem } from '../itinerary/supabase';
 import { toLink } from '../links/supabase';
@@ -73,7 +73,7 @@ export const supabaseTrips: TripsSource = {
         .order('day')
         .order('start_time'),
       supabase.from('bookings').select('*').eq('trip_id', tripId),
-      supabase.from('bucket_items').select('*').eq('trip_id', tripId),
+      supabase.from('bucket_items').select(BUCKET_SELECT).eq('trip_id', tripId).order('created_at'),
       supabase.from('expenses').select(EXPENSE_SELECT).eq('trip_id', tripId),
       supabase.from('saved_links').select('*').eq('trip_id', tripId),
     ]).then(

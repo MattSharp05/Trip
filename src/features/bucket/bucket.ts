@@ -1,10 +1,18 @@
 import type { SFSymbol } from 'expo-symbols';
 
-import { DEFAULT_WINDOW, durationForKind, kindLabel, sourceLabel } from '@/core/bucket';
+import {
+  DEFAULT_WINDOW,
+  durationForKind,
+  kindLabel,
+  likeCount,
+  sortBucket,
+  sourceLabel,
+  type BucketSort,
+} from '@/core/bucket';
 import { dayLabel, timeLabel } from '@/core/dates';
 import { newId } from '@/core/ids';
 import { pinSymbol, type MapPin } from '@/features/map';
-import type { BucketItem, Place, PlaceInput, SavedLink } from '@/services/data/types';
+import type { BucketItem, Member, Place, PlaceInput, SavedLink } from '@/services/data/types';
 import type { SpotResult } from '@/services/places';
 
 /** One Bucket List row, ready to draw. */
@@ -20,6 +28,16 @@ export interface BucketEntry {
   symbol: SFSymbol;
   /** The video it was saved from: the row shows a play button that opens it. */
   watch: { url: string; label: string } | null;
+  /** "Added by Blake", "Added by you"; null on a trip you're alone on (TR-59). */
+  addedBy: string | null;
+  likes: number;
+  likedByMe: boolean;
+}
+
+/** Who's on the trip, for "Added by" and your likes; absent while they load. */
+export interface BucketEntryOptions {
+  members?: readonly Member[];
+  sort?: BucketSort;
 }
 
 type BucketData = { places: Place[]; bucketItems: BucketItem[] };
@@ -27,10 +45,29 @@ type BucketData = { places: Place[]; bucketItems: BucketItem[] };
 /** The first part of an address, as the itinerary shows it ("Paris Las Vegas", "255 Sands Ave"). */
 const area = (address: string | null) => address?.split(',')[0].trim() || null;
 
-/** The trip's bucket items as rows, in the order they were saved. */
-export function bucketEntries({ places, bucketItems }: BucketData): BucketEntry[] {
+/**
+ * "Added by Blake" on a group trip; items with no adder (v1 fixtures) are yours. Null when you're
+ * alone on the trip, or the adder has left it.
+ */
+function addedByLine(item: BucketItem, members: readonly Member[]): string | null {
+  if (members.length < 2) return null;
+  const me = members.find((m) => m.isMe);
+  const adder = item.addedBy ? members.find((m) => m.id === item.addedBy) : me;
+  if (!adder) return null;
+  return `Added by ${adder.isMe ? 'you' : adder.name}`;
+}
+
+/**
+ * The trip's bucket items as rows: newest first (Recent, the default) or most liked first
+ * (Popular).
+ */
+export function bucketEntries(
+  { places, bucketItems }: BucketData,
+  { members = [], sort = 'recent' }: BucketEntryOptions = {},
+): BucketEntry[] {
   const placeById = new Map(places.map((p) => [p.id, p]));
-  return bucketItems.map((item) => {
+  const me = members.find((m) => m.isMe)?.id;
+  return sortBucket(bucketItems, sort).map((item) => {
     const place = placeById.get(item.placeId);
     const when =
       item.fixedDate && item.fixedTime
@@ -53,6 +90,9 @@ export function bucketEntries({ places, bucketItems }: BucketData): BucketEntry[
             label: `Watch on ${item.link.platform === 'tiktok' ? 'TikTok' : 'Instagram'}`,
           }
         : null,
+      addedBy: addedByLine(item, members),
+      likes: likeCount(item),
+      likedByMe: me !== undefined && (item.likedBy ?? []).includes(me),
     };
   });
 }

@@ -1,5 +1,7 @@
 import { pinStyle } from '@/features/map';
+import { groupSnapshot } from '@/scenarios/fixtures/group';
 import { vegasSnapshot } from '@/scenarios/fixtures/vegas';
+import type { Member } from '@/services/data/types';
 
 import { bucketEntries, bucketPins, newBucketItem, placeFromPin, placeFromSpot } from './bucket';
 
@@ -13,6 +15,49 @@ describe('Bucket List rows and pins', () => {
       subtitle: 'Wynn Las Vegas · Nightlife',
       source: 'From Discover · Sat, Nov 14, 8:00 PM',
       symbol: 'music.note',
+    });
+  });
+
+  describe('together (TR-59)', () => {
+    const member = (id: string, name: string, isMe = false): Member => ({
+      id,
+      name,
+      initial: name[0],
+      role: isMe ? 'owner' : 'member',
+      isMe,
+    });
+    const members = [
+      member('user-matthew', 'Matthew', true),
+      member('user-blake', 'Blake'),
+      member('user-willem', 'Willem'),
+    ];
+    const group = { places: groupSnapshot.places, bucketItems: groupSnapshot.bucketItems };
+
+    it('says who added each item on a group trip, and counts likes', () => {
+      const rows = bucketEntries(group, { members, sort: 'popular' });
+      expect(rows.map((r) => [r.id, r.addedBy, r.likes])).toEqual([
+        ['bucket-golden-tiki', 'Added by Blake', 2],
+        ['bucket-lotus-of-siam', 'Added by you', 1],
+        ['bucket-fred-again', 'Added by you', 0],
+        ['bucket-pinball', 'Added by you', 0],
+        ['bucket-fremont', 'Added by you', 0],
+      ]);
+    });
+
+    it('marks your own likes', () => {
+      const asBlake = members.map((m) => ({ ...m, isMe: m.id === 'user-blake' }));
+      const rows = bucketEntries(group, { members: asBlake });
+      expect(rows.filter((r) => r.likedByMe).map((r) => r.id)).toEqual([
+        'bucket-lotus-of-siam',
+        'bucket-golden-tiki',
+      ]);
+      expect(rows.find((r) => r.id === 'bucket-fremont')?.addedBy).toBe('Added by Matthew');
+    });
+
+    it('has no "Added by" when you are alone on the trip, or the adder left', () => {
+      expect(bucketEntries(group, { members: [members[0]] }).every((r) => !r.addedBy)).toBe(true);
+      const blakeLeft = bucketEntries(group, { members: [members[0], members[2]] });
+      expect(blakeLeft.find((r) => r.id === 'bucket-golden-tiki')?.addedBy).toBeNull();
     });
   });
 

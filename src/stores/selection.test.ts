@@ -3,7 +3,7 @@ import { act, renderHook } from '@testing-library/react-native';
 import { setNow } from '@/core/clock';
 
 import { useScenarioStore } from './scenario';
-import { openingDay, useSelectionStore, useTripSelection } from './selection';
+import { openingDay, useBucketSort, useSelectionStore, useTripSelection } from './selection';
 
 const trip = {
   id: 'trip-vegas',
@@ -102,5 +102,26 @@ describe('useTripSelection', () => {
     expect(result.current.planMode).toBe('bucket');
     act(() => result.current.setPlanMode('itinerary'));
     expect(result.current.planMode).toBe('itinerary');
+  });
+});
+
+describe('useBucketSort (TR-59)', () => {
+  it("is Recent by default, or the scenario's", () => {
+    expect(renderHook(() => useBucketSort('trip-vegas')).result.current[0]).toBe('recent');
+    act(() => useScenarioStore.getState().start('a', { bucketSort: 'popular' }));
+    expect(renderHook(() => useBucketSort('trip-vegas')).result.current[0]).toBe('popular');
+  });
+
+  it('remembers the pick per trip, across trip switches', () => {
+    const { result, rerender } = renderHook(({ id }: { id: string }) => useBucketSort(id), {
+      initialProps: { id: 'trip-vegas' },
+    });
+    act(() => result.current[1]('popular'));
+    expect(result.current[0]).toBe('popular');
+    act(() => useSelectionStore.getState().initForTrip({ ...trip, id: 'trip-tokyo' }));
+    rerender({ id: 'trip-tokyo' });
+    expect(result.current[0]).toBe('recent');
+    rerender({ id: 'trip-vegas' });
+    expect(result.current[0]).toBe('popular');
   });
 });

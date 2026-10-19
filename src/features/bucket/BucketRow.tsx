@@ -22,7 +22,11 @@ export interface BucketRowProps {
   action?: ReactNode;
   /** Why Plan my bucket list left it here (TR-32); shown instead of where it came from. */
   note?: string;
+  /** Toggles your like (TR-59). */
+  onLike?: (entry: BucketEntry) => void;
 }
+
+const likesLabel = (n: number) => `${n} ${n === 1 ? 'like' : 'likes'}`;
 
 /**
  * One saved place, drawn like an itinerary row: name, area and kind, where it came from, and its
@@ -35,8 +39,18 @@ export const BucketRow = memo(function BucketRow({
   onDelete,
   action,
   note,
+  onLike,
 }: BucketRowProps) {
-  const spoken = [entry.title, entry.subtitle, note ?? entry.source].filter(Boolean).join(', ');
+  // "Added by Blake · Saved from TikTok": on the short last line, so a long address can't hide it.
+  const origin = [entry.addedBy, entry.source].filter(Boolean).join(' · ') || null;
+  const spoken = [
+    entry.title,
+    entry.subtitle,
+    note ?? origin,
+    entry.likes ? likesLabel(entry.likes) : null,
+  ]
+    .filter(Boolean)
+    .join(', ');
   return (
     <ReanimatedSwipeable
       friction={2}
@@ -87,12 +101,46 @@ export const BucketRow = memo(function BucketRow({
             >
               {note}
             </Text>
-          ) : entry.source ? (
-            <Text variant="caption" tone="secondary" numberOfLines={1}>
-              {entry.source}
+          ) : origin ? (
+            <Text
+              variant="caption"
+              tone="secondary"
+              numberOfLines={1}
+              testID={`bucket-origin-${entry.id}`}
+            >
+              {origin}
             </Text>
           ) : null}
         </View>
+        {onLike ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={entry.likedByMe ? 'Unlike' : 'Like'}
+            accessibilityValue={{ text: likesLabel(entry.likes) }}
+            accessibilityState={{ selected: entry.likedByMe }}
+            hitSlop={spacing.sm}
+            onPress={() => onLike(entry)}
+            style={({ pressed }) => [styles.like, pressed && styles.likePressed]}
+            testID={`bucket-like-${entry.id}`}
+          >
+            <Icon
+              name={entry.likedByMe ? 'heart.fill' : 'heart'}
+              size="md"
+              tone="secondary"
+              selected={entry.likedByMe}
+            />
+            {entry.likes ? (
+              <Text
+                variant="subhead"
+                tone={entry.likedByMe ? 'accent' : 'secondary'}
+                style={styles.likeCount}
+                testID={`bucket-likes-${entry.id}`}
+              >
+                {entry.likes}
+              </Text>
+            ) : null}
+          </Pressable>
+        ) : null}
         {action}
         {entry.watch ? (
           // Saved from a video (TR-30): the thumbnail is a play button that opens it.
@@ -149,6 +197,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   thumbPressed: { opacity: 0.7 },
+  // Wide enough for "99" so a count appearing doesn't shift the row.
+  like: {
+    minWidth: 40,
+    height: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
+  },
+  likePressed: { opacity: 0.6 },
+  likeCount: { fontVariant: ['tabular-nums'] },
   photo: { width: '100%', height: '100%' },
   playOnPhoto: {
     position: 'absolute',

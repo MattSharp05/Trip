@@ -335,6 +335,14 @@ export const SCENARIOS: readonly Scenario[] = [
     tab: 'organize',
     view: { organizeView: 'wallet', walletScope: 'shared' },
   }),
+  vegas({
+    name: 'group-bucket-popular',
+    data: groupSnapshot,
+    description:
+      'Bucket List on the group trip, Popular: who added each item, likes (Golden Tiki 2, Lotus 1).',
+    tab: 'plan',
+    view: { day: '2026-11-12', planMode: 'bucket', bucketSort: 'popular' },
+  }),
   {
     name: 'empty-account',
     description: 'A new account with no trips: Trips tab empty state.',

@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+import type { BucketSort } from '@/core/bucket';
+
 /** What a scenario asks the screens to open on. Screens read it once when they mount. */
 export interface ScenarioView {
   /** Plan: the day to show (`YYYY-MM-DD`) and the item to highlight. */
@@ -7,6 +9,8 @@ export interface ScenarioView {
   itemId?: string;
   /** Plan: itinerary or Bucket List. */
   planMode?: 'itinerary' | 'bucket';
+  /** Plan: the Bucket List's order (TR-59); Recent when unset. */
+  bucketSort?: BucketSort;
   /** Organize: Wallet or Budget, and the currency budgets display in. */
   organizeView?: 'wallet' | 'budget';
   /** Organize → Wallet on a group trip: Mine or Shared (TR-61). */
