@@ -41,6 +41,13 @@ interface SelectionState {
    */
   selectItem: (itemId: string | null, by?: SelectionSource, day?: string) => void;
   setPlanMode: (mode: PlanMode) => void;
+  /**
+   * The traveller whose flight arc the globe highlights (TR-63), picked in the Arrivals card;
+   * null shows everyone's alike. A new day clears it.
+   */
+  focusedTraveler: string | null;
+  /** Highlight a traveller's arc; their id again (or null) clears it. */
+  focusTraveler: (travelerId: string | null) => void;
   /** The Bucket List's order, by trip: kept while you switch trips (TR-59). */
   bucketSorts: Record<string, BucketSort>;
   setBucketSort: (tripId: string, sort: BucketSort) => void;
@@ -67,6 +74,7 @@ const CLEARED = {
   selectedItemId: null,
   selectedBy: null,
   planMode: 'itinerary',
+  focusedTraveler: null,
   bucketSorts: {},
 } as const;
 
@@ -80,10 +88,12 @@ export const useSelectionStore = create<SelectionState>()((set) => ({
       selectedItemId: view.itemId ?? null,
       selectedBy: null,
       planMode: view.planMode ?? 'itinerary',
+      focusedTraveler: null,
     });
   },
-  // A new day clears the item: it belonged to the old day.
-  selectDay: (selectedDay) => set({ selectedDay, selectedItemId: null, selectedBy: null }),
+  // A new day clears the item and the highlighted arc: they belonged to the old day.
+  selectDay: (selectedDay) =>
+    set({ selectedDay, selectedItemId: null, selectedBy: null, focusedTraveler: null }),
   selectItem: (selectedItemId, by = 'list', day) =>
     set((s) => ({
       selectedDay: day ?? s.selectedDay,
@@ -92,6 +102,8 @@ export const useSelectionStore = create<SelectionState>()((set) => ({
       picks: s.picks + 1,
     })),
   setPlanMode: (planMode) => set({ planMode }),
+  focusTraveler: (travelerId) =>
+    set((s) => ({ focusedTraveler: travelerId === s.focusedTraveler ? null : travelerId })),
   setBucketSort: (tripId, sort) =>
     set((s) => ({ bucketSorts: { ...s.bucketSorts, [tripId]: sort } })),
 }));
@@ -138,8 +150,10 @@ export function useTripSelection(trip: SelectionTrip | undefined) {
     selectedBy: current ? state.selectedBy : null,
     picks: state.picks,
     planMode: current ? state.planMode : (view.planMode ?? 'itinerary'),
+    focusedTraveler: current ? state.focusedTraveler : null,
     selectDay: state.selectDay,
     selectItem: state.selectItem,
     setPlanMode: state.setPlanMode,
+    focusTraveler: state.focusTraveler,
   };
 }

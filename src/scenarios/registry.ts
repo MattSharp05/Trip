@@ -360,6 +360,15 @@ export const SCENARIOS: readonly Scenario[] = [
     tab: 'organize',
     view: { organizeView: 'budget', budgetTab: 'balances' },
   }),
+  vegas({
+    name: 'group-flight-globe',
+    data: groupArrivalsSnapshot,
+    description:
+      'group-vegas on arrival day, Nov 12: the flight globe with Matthew, Blake and Willem converging on LAS.',
+    tab: 'plan',
+    today: '2026-11-12T07:30:00-05:00',
+    view: { day: '2026-11-12', planMode: 'itinerary', globe: true },
+  }),
   {
     name: 'empty-account',
     description: 'A new account with no trips: Trips tab empty state.',

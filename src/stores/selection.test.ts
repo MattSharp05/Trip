@@ -125,3 +125,20 @@ describe('useBucketSort (TR-59)', () => {
     expect(result.current[0]).toBe('popular');
   });
 });
+
+describe('focusTraveler (TR-63)', () => {
+  it("highlights a traveller's arc, clears on a second tap or a new day", () => {
+    const { result } = renderHook(() => useTripSelection(trip));
+    expect(result.current.focusedTraveler).toBeNull();
+    act(() => result.current.focusTraveler('user-blake'));
+    expect(result.current.focusedTraveler).toBe('user-blake');
+    act(() => result.current.focusTraveler('user-willem'));
+    expect(result.current.focusedTraveler).toBe('user-willem');
+    act(() => result.current.focusTraveler('user-willem'));
+    expect(result.current.focusedTraveler).toBeNull();
+
+    act(() => result.current.focusTraveler('user-blake'));
+    act(() => result.current.selectDay('2026-11-13'));
+    expect(result.current.focusedTraveler).toBeNull();
+  });
+});

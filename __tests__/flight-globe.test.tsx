@@ -11,6 +11,10 @@ import { along, greatCircle } from '@/core/flights';
 import { resetFakeAuth } from '@/features/auth/testing';
 import { AppleGlobe, flight as sample } from '@/features/map/globe';
 import { exitScenario } from '@/scenarios';
+import { BLAKE, WILLEM } from '@/scenarios/fixtures/group';
+import { useSelectionStore } from '@/stores/selection';
+import { mapColors } from '@/theme';
+import { mapCalls } from '../__mocks__/react-native-maps';
 
 jest.mock('@/services/supabase', () => ({
   supabase: { auth: require('@/features/auth/testing').fakeAuth },
@@ -131,6 +135,108 @@ describe('Plan on a travel day', () => {
 it('a day without a flight has no plane button', async () => {
   await openPlan('vegas-plan-day-2');
   expect(screen.queryByRole('button', { name: 'Show the flight' })).toBeNull();
+});
+
+describe('converging flight paths (TR-63)', () => {
+  const ORD = { latitude: 41.9742, longitude: -87.9073 };
+  const JFK = { latitude: 40.6413, longitude: -73.7781 };
+  const line = (testID: string) => screen.getByTestId(testID).props;
+  const ends = (testID: string) => {
+    const coords = line(testID).coordinates as (typeof TPA)[];
+    return [coords[0], coords[coords.length - 1]];
+  };
+
+  async function openGlobe() {
+    renderRouter(routes, { initialUrl: '/scenario/group-flight-globe' });
+    await screen.findByTestId('flight-globe');
+    await screen.findByTestId(`globe-arc-${BLAKE}`);
+  }
+
+  it('group-flight-globe opens on three arcs into LAS, labelled B and W', async () => {
+    await openGlobe();
+    expect(screen.queryByTestId('trip-map')).toBeNull();
+    expect(screen.getAllByTestId(/^globe-arc/)).toHaveLength(3);
+    expect(ends('globe-arc')).toEqual([near(TPA), near(LAS)]);
+    expect(ends(`globe-arc-${BLAKE}`)).toEqual([near(ORD), near(LAS)]);
+    expect(ends(`globe-arc-${WILLEM}`)).toEqual([near(JFK), near(LAS)]);
+    // Yours is the full-weight line with the plane; the others are thinner and lighter.
+    expect(line('globe-arc')).toMatchObject({ strokeColor: mapColors.route, strokeWidth: 3 });
+    expect(line(`globe-arc-${BLAKE}`)).toMatchObject({
+      strokeColor: mapColors.routeOther,
+      strokeWidth: 2,
+    });
+    expect(screen.getAllByTestId('globe-plane')).toHaveLength(1);
+    // Each initial sits at the traveller's home airport.
+    const blake = screen.getByTestId(`globe-initial-${BLAKE}`);
+    expect(blake).toHaveTextContent('B');
+    expect(blake.props.coordinate).toEqual(near(ORD));
+    expect(screen.getByTestId(`globe-initial-${WILLEM}`)).toHaveTextContent('W');
+    // The camera opens framing every airport: centred between the coasts.
+    const { center } = line('flight-globe-map').initialCamera;
+    expect(center.longitude).toBeLessThan(TPA.longitude);
+    expect(center.longitude).toBeGreaterThan(LAS.longitude);
+  });
+
+  it('tapping Blake in Arrivals highlights his arc, dims the rest and frames it', async () => {
+    await openGlobe();
+    const everyone = line('flight-globe-map').initialCamera.altitude;
+    mapCalls.length = 0;
+    fireEvent.press(await screen.findByTestId(`arrivals-LAS-${BLAKE}`));
+
+    expect(useSelectionStore.getState().focusedTraveler).toBe(BLAKE);
+    expect(line(`globe-arc-${BLAKE}`)).toMatchObject({
+      strokeColor: mapColors.route,
+      strokeWidth: 3,
+    });
+    expect(line(`globe-arc-${WILLEM}`).strokeColor).toBe(mapColors.routeDim);
+    expect(line('globe-arc').strokeColor).toBe(mapColors.routeDim);
+    expect(screen.getByTestId(`arrivals-LAS-${BLAKE}`)).toBeSelected();
+    const [camera] = mapCalls.filter((c) => c.method === 'animateCamera');
+    const { center, altitude } = camera.args[0] as { center: typeof TPA; altitude: number };
+    // Down on Chicago → Las Vegas: between them, and closer in than the view of everyone.
+    expect(center.longitude).toBeLessThan(ORD.longitude);
+    expect(center.longitude).toBeGreaterThan(LAS.longitude);
+    expect(altitude).toBeLessThan(everyone);
+
+    // Blake again shows everyone alike.
+    fireEvent.press(screen.getByTestId(`arrivals-LAS-${BLAKE}`));
+    expect(useSelectionStore.getState().focusedTraveler).toBeNull();
+    expect(line(`globe-arc-${WILLEM}`).strokeColor).toBe(mapColors.routeOther);
+  });
+
+  it('tapping a traveller on the city map opens the globe; another day clears the highlight', async () => {
+    renderRouter(routes, { initialUrl: '/scenario/group-plan-arrivals' });
+    await screen.findByTestId('trip-map');
+    fireEvent.press(await screen.findByTestId(`arrivals-LAS-${WILLEM}`));
+    expect(screen.getByTestId('flight-globe')).toBeTruthy();
+    expect(line(`globe-arc-${WILLEM}`).strokeColor).toBe(mapColors.route);
+    // The globe opens already framed on New York → Las Vegas.
+    const { center } = line('flight-globe-map').initialCamera;
+    expect(center.longitude).toBeGreaterThan(-97);
+    expect(center.longitude).toBeLessThan(JFK.longitude);
+
+    fireEvent.press(screen.getByText('13'));
+    expect(useSelectionStore.getState().focusedTraveler).toBeNull();
+  });
+
+  it('on the last day the arcs go outward from LAS', async () => {
+    renderRouter(routes, { initialUrl: '/scenario/group-plan-arrivals' });
+    await screen.findByTestId('trip-map');
+    fireEvent.press(screen.getByTestId('pill-2026-11-16'));
+    fireEvent.press(screen.getByRole('button', { name: 'Show the flight' }));
+    await screen.findByTestId(`globe-arc-${BLAKE}`);
+    expect(ends('globe-arc')).toEqual([near(LAS), near(TPA)]);
+    expect(ends(`globe-arc-${BLAKE}`)).toEqual([near(LAS), near(ORD)]);
+    expect(ends(`globe-arc-${WILLEM}`)).toEqual([near(LAS), near(JFK)]);
+    expect(screen.getByTestId(`globe-initial-${WILLEM}`).props.coordinate).toEqual(near(JFK));
+  });
+
+  it('a solo trip still shows just your flight', async () => {
+    await openPlan('vegas-flight-day');
+    fireEvent.press(screen.getByTestId('itinerary-row-item-01'));
+    await act(async () => {});
+    expect(screen.getAllByTestId(/^globe-arc/)).toHaveLength(1);
+  });
 });
 
 describe('the plane', () => {

@@ -9,6 +9,8 @@ export interface ScenarioView {
   itemId?: string;
   /** Plan: open the detail sheet of `itemId` (TR-60). */
   openDetails?: boolean;
+  /** Plan: open the day's flight globe instead of the city map (TR-63). */
+  globe?: boolean;
   /** Plan: itinerary or Bucket List. */
   planMode?: 'itinerary' | 'bucket';
   /** Plan: the Bucket List's order (TR-59); Recent when unset. */

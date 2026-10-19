@@ -177,9 +177,36 @@ const memberFlight = (
   },
 });
 
+/**
+ * Blake's and Willem's home airports: places on the trip, as importing their bookings makes them,
+ * so the flight globe can draw their arcs (TR-63). No itinerary item uses them.
+ */
+const AIRPORT_PLACES: Place[] = [
+  {
+    id: 'place-ord',
+    name: "Chicago O'Hare (ORD)",
+    address: "10000 W O'Hare Ave, Chicago, IL",
+    lat: 41.9742,
+    lng: -87.9073,
+    kind: 'airport',
+    photoUrl: null,
+    sourceUrl: null,
+  },
+  {
+    id: 'place-jfk',
+    name: 'New York JFK (JFK)',
+    address: 'Queens, NY 11430',
+    lat: 40.6413,
+    lng: -73.7781,
+    kind: 'airport',
+    photoUrl: null,
+    sourceUrl: null,
+  },
+];
+
 const LAS = { code: 'LAS', city: 'Las Vegas', placeId: 'place-las' };
-const ORD = { code: 'ORD', city: 'Chicago', placeId: null };
-const JFK = { code: 'JFK', city: 'New York', placeId: null };
+const ORD = { code: 'ORD', city: 'Chicago', placeId: 'place-ord' };
+const JFK = { code: 'JFK', city: 'New York', placeId: 'place-jfk' };
 const PT = 'America/Los_Angeles';
 
 /** Blake's and Willem's flights in and out of Vegas (TR-58): landing 2:10 and 2:45 PM on Nov 12. */
@@ -228,6 +255,7 @@ export const memberFlights: Booking[] = [
  */
 export const groupArrivalsSnapshot: DataSnapshot = {
   ...groupSnapshot,
+  places: [...groupSnapshot.places, ...AIRPORT_PLACES],
   // Matthew's flights say so, so the scenario reads the same as any of the three.
   bookings: [
     ...groupSnapshot.bookings.map((b) =>

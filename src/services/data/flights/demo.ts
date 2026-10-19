@@ -1,5 +1,6 @@
 import type { DemoStore } from '../shared/demo';
-import type { FlightsSource, TripFlight } from './types';
+import type { Airport } from '../bookings/types';
+import type { FlightAirport, FlightsSource, TripFlight } from './types';
 
 /**
  * The flights slice of the demo source: the flight bookings of everyone on the trip, whatever
@@ -13,6 +14,12 @@ export function demoFlights(store: DemoStore): FlightsSource {
       const onTrip = (userId: string) =>
         db.members.some((m) => m.tripId === tripId && m.userId === userId);
       if (!onTrip(db.me)) return [];
+      const at = (airport: Airport): FlightAirport => {
+        const place = db.places.find((p) => p.id === airport.placeId);
+        return place && place.lat !== null && place.lng !== null
+          ? { ...airport, lat: place.lat, lng: place.lng }
+          : { ...airport };
+      };
       return db.bookings
         .flatMap((b): TripFlight[] =>
           // A shared booking outlives its traveller leaving; their legs don't show.
@@ -23,8 +30,8 @@ export function demoFlights(store: DemoStore): FlightsSource {
                   travelerId: b.addedBy ?? db.me,
                   airline: b.data.airline,
                   flightNumber: b.data.flightNumber,
-                  from: { ...b.data.from },
-                  to: { ...b.data.to },
+                  from: at(b.data.from),
+                  to: at(b.data.to),
                   departs: { ...b.data.departs },
                   arrives: { ...b.data.arrives },
                 },

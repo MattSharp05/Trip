@@ -23,6 +23,10 @@ const row = {
 } as unknown as Parameters<typeof toTripFlight>[0];
 
 describe('supabase trip flights', () => {
+  beforeEach(() => {
+    mockTables.places = { data: [], error: null };
+  });
+
   it('calls trip_flights and maps its rows', async () => {
     mockTables['rpc:trip_flights'] = { data: [row], error: null };
     mockCalls.length = 0;
@@ -39,6 +43,27 @@ describe('supabase trip flights', () => {
       },
     ]);
     expect(mockCalls).toEqual([['rpc', 'trip_flights', { trip: 't1' }]]);
+  });
+
+  it('adds where each airport is from its place on the trip (TR-63)', async () => {
+    mockTables['rpc:trip_flights'] = { data: [{ ...row, from_place_id: 'p2' }], error: null };
+    mockTables.places = {
+      data: [
+        { id: 'p1', lat: 36.084, lng: -115.1537 },
+        { id: 'p2', lat: null, lng: null },
+      ],
+      error: null,
+    };
+    const [leg] = await supabaseFlights.listTripFlights('t1');
+    expect(leg.to).toEqual({
+      code: 'LAS',
+      city: 'Las Vegas',
+      placeId: 'p1',
+      lat: 36.084,
+      lng: -115.1537,
+    });
+    // A place without coordinates leaves the airport as it was.
+    expect(leg.from).toEqual({ code: 'ORD', city: 'Chicago', placeId: 'p2' });
   });
 
   it('skips a leg without times, and names a city by its code when missing', async () => {

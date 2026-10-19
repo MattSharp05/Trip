@@ -1,6 +1,6 @@
 import type { Database } from '../../database.types';
 import { checkRow, client } from '../shared/supabase';
-import type { FlightsSource, TripFlight } from './types';
+import type { FlightAirport, FlightsSource, TripFlight } from './types';
 
 type FlightRow = Database['public']['Functions']['trip_flights']['Returns'][number];
 
@@ -23,10 +23,29 @@ export function toTripFlight(r: FlightRow): TripFlight | null {
   };
 }
 
-/** The flights slice of the Supabase source: the `trip_flights` RPC (0058_trip_flights.sql). */
+/**
+ * The flights slice of the Supabase source: the `trip_flights` RPC (0058_trip_flights.sql), and
+ * where its airports are (TR-63). A booking's airports are places on its trip, which every member
+ * can read.
+ */
 export const supabaseFlights: FlightsSource = {
   async listTripFlights(tripId) {
-    const rows = checkRow(await client().rpc('trip_flights', { trip: tripId }));
-    return rows.flatMap((r) => toTripFlight(r) ?? []);
+    const supabase = client();
+    const rows = checkRow(await supabase.rpc('trip_flights', { trip: tripId }));
+    const flights = rows.flatMap((r) => toTripFlight(r) ?? []);
+    const ids = [
+      ...new Set(
+        flights.flatMap((f) => [f.from.placeId, f.to.placeId]).filter((id) => id !== null),
+      ),
+    ];
+    if (ids.length === 0) return flights;
+    const places = checkRow(await supabase.from('places').select('id, lat, lng').in('id', ids));
+    const at = (airport: FlightAirport): FlightAirport => {
+      const place = places.find((p) => p.id === airport.placeId);
+      return place && place.lat !== null && place.lng !== null
+        ? { ...airport, lat: place.lat, lng: place.lng }
+        : airport;
+    };
+    return flights.map((f) => ({ ...f, from: at(f.from), to: at(f.to) }));
   },
 };

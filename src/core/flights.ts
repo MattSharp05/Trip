@@ -4,7 +4,15 @@
  * TypeScript, no React Native. The globe's maths started in the TR-5 spike's `geo.ts`, which now
  * re-exports it from here.
  */
-import type { FlightData, ItineraryItem, Place, TripData } from '@/services/data/types';
+import type {
+  FlightData,
+  ItineraryItem,
+  Place,
+  Trip,
+  TripData,
+  TripFlight,
+} from '@/services/data/types';
+import { dayMoves, tripMoves, type FlightDirection } from './arrivals';
 
 /** A point on the Earth, in degrees. */
 export interface GeoPoint {
@@ -87,7 +95,14 @@ export interface DayFlight {
   to: FlightEnd;
 }
 
-const end = (airport: FlightData['from'], places: readonly Place[]): FlightEnd | null => {
+const end = (
+  airport: FlightData['from'] & { lat?: number; lng?: number },
+  places: readonly Place[],
+): FlightEnd | null => {
+  // A leg that says where its airport is (another member's, TR-63) needs no place of yours.
+  if (airport.lat !== undefined && airport.lng !== undefined) {
+    return { lat: airport.lat, lng: airport.lng, code: airport.code, city: airport.city };
+  }
   const place = places.find((p) => p.id === airport.placeId);
   if (!place || place.lat === null || place.lng === null) return null;
   return { lat: place.lat, lng: place.lng, code: airport.code, city: airport.city };
@@ -134,6 +149,74 @@ export function routeCamera(from: GeoPoint, to: GeoPoint): { center: GeoPoint; a
     center: arc[1],
     altitude: Math.round(Math.min(MAX_ALTITUDE, Math.max(MIN_ALTITUDE, altitude))),
   };
+}
+
+/**
+ * Where the globe's camera looks to show several airports at once (TR-63): straight down on their
+ * centre on the sphere, high enough that the farthest of them shows with room around it. For two
+ * airports it frames the same as `routeCamera`. `radius` is that farthest airport's angle from the
+ * centre, in radians.
+ */
+export function convergingCamera(points: readonly GeoPoint[]): {
+  center: GeoPoint;
+  altitude: number;
+  radius: number;
+} {
+  // The centre: the normalised sum of the points' unit vectors.
+  let [x, y, z] = [0, 0, 0];
+  for (const p of points) {
+    x += Math.cos(rad(p.lat)) * Math.cos(rad(p.lng));
+    y += Math.cos(rad(p.lat)) * Math.sin(rad(p.lng));
+    z += Math.sin(rad(p.lat));
+  }
+  const center =
+    Math.hypot(x, y, z) < 1e-9
+      ? (points[0] ?? { lat: 0, lng: 0 })
+      : { lat: deg(Math.atan2(z, Math.hypot(x, y))), lng: deg(Math.atan2(y, x)) };
+  const radius = Math.max(0, ...points.map((p) => angularDistance(center, p)));
+  const altitude = 2 * radius * ALTITUDE_PER_RADIAN;
+  return {
+    center,
+    altitude: Math.round(Math.min(MAX_ALTITUDE, Math.max(MIN_ALTITUDE, altitude))),
+    radius,
+  };
+}
+
+/**
+ * One traveller's leg on the globe (TR-63): into the trip's city (`to` is there) or out of it
+ * (`from` is there), so every arc of a day touches the destination.
+ */
+export interface TravelerLeg {
+  bookingId: string;
+  travelerId: string;
+  direction: FlightDirection;
+  from: FlightEnd;
+  to: FlightEnd;
+}
+
+/**
+ * Everyone's legs landing at or leaving from the trip's airports on `day`, arrivals first, each in
+ * the order they land or take off. Which airports count is the Arrivals card's rule
+ * (`tripMoves`); a leg with an airport that has no coordinates (on the leg, or as one of `places`)
+ * is left out: nothing to draw.
+ */
+export function travelerLegs(
+  flights: readonly TripFlight[],
+  trip: Pick<Trip, 'city' | 'lat' | 'lng'>,
+  places: readonly Place[],
+  day: string,
+): TravelerLeg[] {
+  const moves = dayMoves(tripMoves(flights, trip, places), day);
+  return [...moves.arrivals, ...moves.departures].flatMap((group) =>
+    group.moves.flatMap((move) => {
+      const leg = flights.find((f) => f.bookingId === move.bookingId);
+      const from = leg && end(leg.from, places);
+      const to = leg && end(leg.to, places);
+      if (!leg || !from || !to) return [];
+      const { bookingId, travelerId } = leg;
+      return [{ bookingId, travelerId, direction: group.direction, from, to }];
+    }),
+  );
 }
 
 /** The plane flies the arc in `flightMs`, then waits at the gate until `loopMs`. */
