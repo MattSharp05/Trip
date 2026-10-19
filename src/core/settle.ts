@@ -7,7 +7,7 @@
  */
 
 import type { Money, Rates } from './money';
-import { atTripRate, type Share, type StoredRate } from './split';
+import { atTripRate, compareIds, type Share, type StoredRate } from './split';
 
 /** An expense as the balances need it: who paid and the stored shares, already resolved. */
 export interface LedgerExpense extends StoredRate {
@@ -189,6 +189,6 @@ const time = (date: string | null) => (date ? Date.parse(date) : Number.NEGATIVE
  */
 export function history(a: string, b: string, ledger: Ledger): HistoryLine[] {
   return linesBetween(a, b, ledger).sort(
-    (x, y) => time(y.date) - time(x.date) || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0),
+    (x, y) => time(y.date) - time(x.date) || compareIds(x.id, y.id),
   );
 }

@@ -44,8 +44,7 @@ export function PersonBalanceScreen({ id }: { id: string }) {
   };
 
   const needsRates = !!data && data.expenses.some((e) => needsLiveRate(e, currency));
-  const loading =
-    tripData.isPending || members.isPending || (needsRates && rates.isPending && !rates.isError);
+  const loading = tripData.isPending || members.isPending || (needsRates && rates.isPending);
   const name = member?.name ?? '';
 
   let body: ReactNode;
@@ -90,6 +89,12 @@ export function PersonBalanceScreen({ id }: { id: string }) {
             </Text>
           ) : null}
         </Surface>
+
+        {rates.isError && needsRates ? (
+          <Text variant="subhead" tone="secondary" testID="person-rates-error">
+            {`Couldn't load today's exchange rates. Amounts not in ${currency} are left out.`}
+          </Text>
+        ) : null}
 
         <Text variant="headline">History</Text>
         {lines.length === 0 ? (

@@ -89,16 +89,18 @@ export function BudgetScreen() {
     return member ? memberLabel(member) : FALLBACK_NAME;
   };
   const group = (memberList?.length ?? 0) > 1;
+  // Balances are always in the saved trip currency (ADR 0030), as on the Person screen.
+  const balanceCurrency = data ? tripCurrencyOf(data.trip) : display;
   const balances = useMemo(
     () =>
       expenses && memberList && me
         ? pairBalances(
-            toLedger(expenses, me, display, rates.data),
+            toLedger(expenses, me, balanceCurrency, rates.data),
             me,
             memberList.map((m) => m.id),
           )
         : [],
-    [expenses, memberList, me, display, rates.data],
+    [expenses, memberList, me, balanceCurrency, rates.data],
   );
 
   if (tripData.isError || members.isError) {
@@ -185,7 +187,7 @@ export function BudgetScreen() {
 
         {rates.isError && needsRates ? (
           <Text variant="subhead" tone="secondary" testID="budget-rates-error">
-            {`Couldn't load today's exchange rates. Amounts not in ${display} are left out of the totals.`}
+            {`Couldn't load today's exchange rates. Amounts not in ${display} are left out of the totals and balances.`}
           </Text>
         ) : null}
 
@@ -197,7 +199,7 @@ export function BudgetScreen() {
         />
 
         {shownTab === 'balances' ? (
-          <BalancesList balances={balances} members={memberList} currency={display} />
+          <BalancesList balances={balances} members={memberList} currency={balanceCurrency} />
         ) : shownTab === 'categories' ? (
           <Surface padding="none" testID="budget-categories">
             {summary.categories.map((c, i) => (
