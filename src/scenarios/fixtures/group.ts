@@ -1,4 +1,4 @@
-import type { DataSnapshot, Expense, Membership, Profile } from '@/services/data/types';
+import type { DataSnapshot, Expense, Membership, Place, Profile } from '@/services/data/types';
 import type { Booking, FlightData } from '@/services/data/bookings/types';
 
 import { ME, VEGAS_TRIP_ID, vegasSnapshot } from './vegas';
@@ -229,5 +229,52 @@ export const groupArrivalsSnapshot: DataSnapshot = {
       b.type === 'flight' ? { ...b, addedBy: b.addedBy ?? vegasSnapshot.me } : b,
     ),
     ...memberFlights,
+  ],
+};
+
+/** Blake's Airbnb near the Strip (TR-61): a stay he booked for the group, so it's shared. */
+const AIRBNB_PLACE: Place = {
+  id: 'place-airbnb-arts-district',
+  name: 'Arts District loft',
+  address: '1017 S 1st St, Las Vegas, NV 89101',
+  lat: 36.1597,
+  lng: -115.1526,
+  kind: 'hotel',
+  photoUrl: null,
+  sourceUrl: null,
+};
+
+const BLAKE_AIRBNB: Booking = {
+  id: 'booking-blake-airbnb',
+  tripId: VEGAS_TRIP_ID,
+  addedBy: BLAKE,
+  visibility: 'shared',
+  originalPath: null,
+  type: 'hotel',
+  data: {
+    name: 'Arts District loft (Airbnb)',
+    placeId: AIRBNB_PLACE.id,
+    checkIn: { date: '2026-11-14', time: '16:00', timezone: 'America/Los_Angeles' },
+    checkOut: { date: '2026-11-16', time: '11:00', timezone: 'America/Los_Angeles' },
+    confirmation: 'HMQ4T8ZP2K',
+    room: 'Entire loft, 2 bedrooms',
+    address: AIRBNB_PLACE.address ?? '',
+    phone: null,
+    website: null,
+    email: null,
+  },
+};
+
+/**
+ * `group-vegas` for Organize → Wallet, Mine / Shared (TR-61): Blake's Airbnb and Willem's rental
+ * car (the sample Hertz booking, added by Willem here) are shared with the group, as are Matthew's
+ * Cosmopolitan and UFC tickets; Matthew's flights and passport stay his.
+ */
+export const groupWalletSnapshot: DataSnapshot = {
+  ...groupSnapshot,
+  places: [...groupSnapshot.places, AIRBNB_PLACE],
+  bookings: [
+    ...groupSnapshot.bookings.map((b) => (b.id === 'booking-car' ? { ...b, addedBy: WILLEM } : b)),
+    BLAKE_AIRBNB,
   ],
 };

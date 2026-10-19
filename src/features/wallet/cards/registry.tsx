@@ -25,6 +25,7 @@ interface WalletEntryCardProps {
   entry: WalletEntry;
   places: PlaceLookup;
   onPress?: () => void;
+  tag?: string | null;
 }
 
 /** A registry entry seen through any wallet entry (what the list holds). */
@@ -48,7 +49,7 @@ export function walletLabel(entry: WalletEntry): string {
 }
 
 /** Renders any wallet entry with its type's card. */
-export function WalletEntryCard({ entry, places, onPress }: WalletEntryCardProps) {
+export function WalletEntryCard({ entry, places, onPress, tag }: WalletEntryCardProps) {
   const { Card } = defFor(entry);
-  return <Card entry={entry} places={places} onPress={onPress} />;
+  return <Card entry={entry} places={places} onPress={onPress} tag={tag} />;
 }

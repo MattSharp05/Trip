@@ -2,27 +2,59 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { useScenarioStore } from '@/stores/scenario';
 import { screenPadding, spacing } from '@/theme';
-import { Button, Chip, LoadError, Skeleton, Text, useTabBarInset } from '@/ui';
+import { Button, Chip, LoadError, Segmented, Skeleton, Text, useTabBarInset } from '@/ui';
 
 import { walletDetailHref, WalletEntryCard } from './cards/registry';
 import { useWallet } from './useWallet';
-import { EMPTY_COPY, filterWallet, WALLET_FILTERS, type WalletFilter } from './walletItems';
+import {
+  EMPTY_COPY,
+  filterWallet,
+  scopeEmptyCopy,
+  scopeWallet,
+  WALLET_FILTERS,
+  WALLET_SCOPES,
+  walletTag,
+  type WalletFilter,
+  type WalletScope,
+} from './walletItems';
 
-/** Organize → Wallet: filter chips over the trip's booking cards and the account's documents. */
+/**
+ * Organize → Wallet: filter chips over the trip's booking cards and the account's documents. On a
+ * group trip, Mine / Shared above the chips (TR-61): your private things, or everyone's shared ones.
+ */
 export function WalletList() {
   const router = useRouter();
   const tabBarInset = useTabBarInset();
   const [filter, setFilter] = useState<WalletFilter>('all');
-  const { entries, places, isLoading, noTrip, loadError, retry } = useWallet();
-  const shown = filterWallet(entries, filter);
+  // A scenario can open either side; read once, on mount.
+  const [scope, setScope] = useState<WalletScope>(
+    () => useScenarioStore.getState().view.walletScope ?? 'mine',
+  );
+  const { entries, places, isLoading, noTrip, loadError, retry, me, tripId, isGroup, nameOf } =
+    useWallet();
+  const scoped = isGroup && me !== null ? scopeWallet(entries, scope, me, tripId) : entries;
+  const shown = filterWallet(scoped, filter);
   const empty =
     noTrip && filter !== 'document'
       ? { title: 'No trip selected', body: 'Pick a trip on the Trips tab to see its bookings.' }
-      : EMPTY_COPY[filter];
+      : isGroup
+        ? scopeEmptyCopy(scope, filter)
+        : EMPTY_COPY[filter];
 
   return (
     <View style={styles.container}>
+      {isGroup ? (
+        <View style={styles.scope}>
+          <Segmented
+            segments={WALLET_SCOPES}
+            value={scope}
+            onChange={setScope}
+            testID="wallet-scope"
+          />
+        </View>
+      ) : null}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -65,11 +97,12 @@ export function WalletList() {
               key={entry.id}
               entry={entry}
               places={places}
+              tag={isGroup && me !== null ? walletTag(entry, me, tripId, nameOf) : null}
               onPress={() => router.push(walletDetailHref(entry))}
             />
           ))
         )}
-        {filter === 'document' && !isLoading ? (
+        {filter === 'document' && !isLoading && !(isGroup && scope === 'shared') ? (
           <Button
             label="Add passport or visa"
             variant="secondary"
@@ -85,6 +118,7 @@ export function WalletList() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, gap: spacing.md },
+  scope: { paddingHorizontal: screenPadding },
   // A horizontal ScrollView grows by default; keep the chip row its own height.
   chipRow: { flexGrow: 0 },
   chips: { gap: spacing.sm, paddingHorizontal: screenPadding },

@@ -40,6 +40,8 @@ export const supabaseBookings: BookingsSource = {
           type: booking.type,
           data: JSON.parse(JSON.stringify(booking.data)),
           original_path: booking.originalPath,
+          // Without one the database picks the type's default.
+          ...(booking.visibility ? { visibility: booking.visibility } : {}),
         })
         .select()
         .single(),
@@ -49,5 +51,12 @@ export const supabaseBookings: BookingsSource = {
   async deleteBooking(id) {
     const supabase = client();
     check(await supabase.from('bookings').delete().eq('id', id));
+  },
+  async setBookingVisibility(id, visibility) {
+    const supabase = client();
+    const row = checkRow(
+      await supabase.from('bookings').update({ visibility }).eq('id', id).select().single(),
+    );
+    return toBooking(row);
   },
 };

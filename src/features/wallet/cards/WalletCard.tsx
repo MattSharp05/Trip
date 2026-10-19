@@ -15,13 +15,23 @@ export interface WalletCardProps {
   lines: readonly string[];
   /** Shown before the chevron, e.g. a flight's live status pill. */
   accessory?: ReactNode;
+  /** A small line under the others: who added it ("Added by Blake"), or "Shared". */
+  tag?: string | null;
   /** Makes the card tappable and shows a chevron. */
   onPress?: () => void;
   testID?: string;
 }
 
 /** The shared shell of every wallet card: badge, title and detail lines, chevron. */
-export function WalletCard({ badge, title, lines, accessory, onPress, testID }: WalletCardProps) {
+export function WalletCard({
+  badge,
+  title,
+  lines,
+  accessory,
+  tag,
+  onPress,
+  testID,
+}: WalletCardProps) {
   const content = (
     <>
       <View style={styles.badge}>
@@ -42,6 +52,16 @@ export function WalletCard({ badge, title, lines, accessory, onPress, testID }: 
             {line}
           </Text>
         ))}
+        {tag ? (
+          <Text
+            variant="caption"
+            tone="secondary"
+            numberOfLines={1}
+            testID={testID && `tag-${testID}`}
+          >
+            {tag}
+          </Text>
+        ) : null}
       </View>
       {accessory}
       {onPress ? <Icon name="chevron.right" size="sm" tone="secondary" /> : null}
@@ -58,7 +78,7 @@ export function WalletCard({ badge, title, lines, accessory, onPress, testID }: 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={[title, ...lines].join(', ')}
+      accessibilityLabel={[title, ...lines, ...(tag ? [tag] : [])].join(', ')}
       onPress={onPress}
       testID={testID}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}

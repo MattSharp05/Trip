@@ -1,5 +1,6 @@
 import {
   BookingDetailScreen,
+  BookingSharing,
   BookingHeader,
   BookingLinks,
   destinationOf,
@@ -49,6 +50,7 @@ export function CarDetail({ id }: { id: string }) {
             onOpen={open}
             onViewOriginal={viewOriginal}
           />
+          {booking ? <BookingSharing booking={booking} /> : null}
         </>
       ) : null}
     </BookingDetailScreen>

@@ -14,3 +14,4 @@ export {
 } from './links';
 export { useBooking, type BookingOf } from './useBooking';
 export { useLinkActions } from './useLinkActions';
+export { BookingSharing } from './BookingSharing';

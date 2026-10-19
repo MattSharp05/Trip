@@ -13,8 +13,10 @@ import type {
   ParsedLocation,
   When,
 } from '../../supabase/functions/_shared/parse/schema';
+import { defaultVisibility } from '../services/data/bookings/visibility';
 import type {
   Booking,
+  BookingVisibility,
   Expense,
   ItemKind,
   ItineraryItem,
@@ -183,6 +185,11 @@ export interface PlanOptions {
    * (ADR 0030). Without them the expense has no payer or shares (the database defaults them).
    */
   split?: { importer: string; members: readonly string[] };
+  /**
+   * Who sees the bookings (ADR 0027): the traveller's choice on the review screen, else the type's
+   * default (flights private, everything else shared).
+   */
+  visibility?: BookingVisibility;
 }
 
 /**
@@ -192,7 +199,7 @@ export interface PlanOptions {
 export function planImport(
   booking: ParsedBooking,
   trip: Trip,
-  { newId, originalPath, importedAt, split }: PlanOptions,
+  { newId, originalPath, importedAt, split, visibility }: PlanOptions,
 ): ImportPlan {
   const places: Place[] = [];
   const items: ItineraryItem[] = [];
@@ -247,7 +254,8 @@ export function planImport(
     });
   };
 
-  const base = (id: string) => ({ id, tripId: trip.id, originalPath });
+  const shownTo = visibility ?? defaultVisibility(booking.type);
+  const base = (id: string) => ({ id, tripId: trip.id, originalPath, visibility: shownTo });
   const bookings: Booking[] = [];
   let category: string;
   let description: string;
@@ -423,10 +431,8 @@ export function planImport(
     }
   }
 
-  // The booking's visibility as `bookingVisibility` reads it: flights private, the rest shared.
   const first = bookings[0];
-  const shared =
-    (first.visibility ?? (first.type === 'flight' ? 'private' : 'shared')) === 'shared';
+  const shared = shownTo === 'shared';
   const amountMinor = booking.price ? toMinor(booking.price.amount, booking.price.currency) : 0;
   const expenses: Expense[] = booking.price
     ? [

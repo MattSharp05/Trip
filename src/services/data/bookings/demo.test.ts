@@ -1,3 +1,4 @@
+import { groupWalletSnapshot } from '@/scenarios/fixtures/group';
 import { vegasSnapshot } from '@/scenarios/fixtures/vegas';
 
 import { createDemoSource } from '../source';
@@ -54,5 +55,18 @@ describe('demo bookings', () => {
     expect((await source.getTripData('trip-vegas'))!.bookings.map((b) => b.id)).not.toContain(
       'booking-new',
     );
+  });
+
+  it("flips your booking between Mine and Shared, and never someone else's", async () => {
+    const source = createDemoSource(groupWalletSnapshot);
+    const hotel = await source.setBookingVisibility('booking-hotel', 'private');
+    expect(hotel.visibility).toBe('private');
+    await expect(source.setBookingVisibility('booking-blake-airbnb', 'private')).rejects.toThrow(
+      'owner',
+    );
+    const shared = (await source.getTripData('trip-vegas'))!.bookings.find(
+      (b) => b.id === 'booking-blake-airbnb',
+    );
+    expect(shared?.visibility).toBe('shared');
   });
 });

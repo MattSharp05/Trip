@@ -172,6 +172,24 @@ describe('planImport', () => {
     });
   });
 
+  it('saves a flight private and everything else shared, unless the traveller chose', () => {
+    const visibility = (type: keyof typeof SAMPLE_PARSES) =>
+      plan(SAMPLE_PARSES[type].booking).bookings.map((b) => b.visibility);
+    expect(visibility('flight')).toEqual(['private', 'private']);
+    expect(visibility('hotel')).toEqual(['shared']);
+    expect(visibility('car')).toEqual(['shared']);
+    expect(visibility('restaurant')).toEqual(['shared']);
+    const chosen = planImport(SAMPLE_PARSES.hotel.booking, capeTown, {
+      ...OPTIONS,
+      newId: ids(),
+      visibility: 'private',
+      split: { importer: 'me', members: ['me', 'blake'] },
+    });
+    expect(chosen.bookings[0].visibility).toBe('private');
+    // A hotel kept to yourself is your expense alone.
+    expect(chosen.expenses[0].shares).toEqual([{ userId: 'me', shareMinor: 6300000 }]);
+  });
+
   it('returns the car where it was picked up when there is no return location', () => {
     const p = plan(SAMPLE_PARSES.car.booking);
     expect(p.places).toHaveLength(1);

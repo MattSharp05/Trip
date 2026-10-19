@@ -3,7 +3,14 @@ import { StyleSheet, View } from 'react-native';
 import { spacing } from '@/theme';
 import { Icon, ListRow, Surface, Text } from '@/ui';
 
-import { BookingDetailScreen, ContactActions, Facts, useBooking, useLinkActions } from '../details';
+import {
+  BookingDetailScreen,
+  BookingSharing,
+  ContactActions,
+  Facts,
+  useBooking,
+  useLinkActions,
+} from '../details';
 import { HotelHero } from './HotelHero';
 import { hotelActions, hotelFacts, hotelPhotoQuery, stayLine } from './hotelInfo';
 import { useHotelPhoto } from './useHotelPhoto';
@@ -60,6 +67,7 @@ export function HotelDetail({ id }: { id: string }) {
               />
             </Surface>
           ) : null}
+          {booking ? <BookingSharing booking={booking} /> : null}
         </>
       ) : null}
     </BookingDetailScreen>

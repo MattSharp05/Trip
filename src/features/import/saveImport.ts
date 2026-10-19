@@ -4,7 +4,7 @@ import { dayIn, dayLabel } from '@/core/dates';
 import { newId } from '@/core/ids';
 import { tripCurrencyOf } from '@/features/budget/budget';
 import { withTripRate } from '@/features/budget/tripRate';
-import type { DataSource, NewTrip, Trip } from '@/services/data';
+import type { BookingVisibility, DataSource, NewTrip, Trip } from '@/services/data';
 
 export interface SaveImportInput {
   booking: ParsedBooking;
@@ -12,6 +12,8 @@ export interface SaveImportInput {
   target: { trip: Trip } | { create: NewTrip };
   originalPath: string | null;
   importedAt: string;
+  /** Shared with the group or only you (the review screen's row); else the type's default. */
+  visibility?: BookingVisibility;
 }
 
 export interface SaveImportResult {
@@ -28,7 +30,7 @@ export interface SaveImportResult {
  */
 export async function saveImport(
   source: DataSource,
-  { booking, target, originalPath, importedAt }: SaveImportInput,
+  { booking, target, originalPath, importedAt, visibility }: SaveImportInput,
 ): Promise<SaveImportResult> {
   const created = 'create' in target;
   const trip = 'trip' in target ? target.trip : await source.createTrip(target.create);
@@ -39,6 +41,7 @@ export async function saveImport(
     newId: () => newId(),
     originalPath,
     importedAt,
+    ...(visibility ? { visibility } : {}),
     ...(importer ? { split: { importer, members: members.map((m) => m.id) } } : {}),
   });
 
