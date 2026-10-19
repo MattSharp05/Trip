@@ -95,11 +95,11 @@ export function MapSheet({
 
   // The library lays the content out taller than the area leaves it at full height (on device it
   // ran ~95 pt past the bottom of the screen), so a list's last row and its padding for the tab
-  // bar could never scroll into view (TR-59: Add a place stayed under the tab bar). Pad the
-  // content by the difference, so its bottom edge is the area's bottom edge.
+  // bar could never scroll into view (TR-59: Add a place stayed under the tab bar). Padding the
+  // content didn't help: the content grew by the padding. Give it the area's height instead, so
+  // its bottom edge is the area's bottom edge and a list in it scrolls to its end.
   const [area, setArea] = useState(0);
-  const [contentHeight, setContentHeight] = useState(0);
-  const overflow = area > 0 ? Math.max(Math.round(contentHeight - (area - HANDLE_HEIGHT)), 0) : 0;
+  const contentHeight = area > HANDLE_HEIGHT ? area - HANDLE_HEIGHT : undefined;
 
   return (
     <>
@@ -126,8 +126,7 @@ export function MapSheet({
       >
         <View
           testID={testID}
-          style={[styles.content, { paddingBottom: overflow }]}
-          onLayout={(e) => setContentHeight(e.nativeEvent.layout.height)}
+          style={contentHeight === undefined ? styles.content : { height: contentHeight }}
         >
           <View onLayout={onTopLayout}>{top}</View>
           <View style={styles.body}>{children}</View>
