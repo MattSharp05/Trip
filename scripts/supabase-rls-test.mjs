@@ -791,13 +791,31 @@ try {
   // opens originals through signed URLs; a plain download may be answered from Storage's cache),
   // and can again once it's shared.
   const hotelOriginal = `${a.id}/rls-test.txt`;
-  await a.client.from('bookings').update({ visibility: 'private' }).eq('id', booking.id);
+  const makePrivate = await a.client
+    .from('bookings')
+    .update({ visibility: 'private' })
+    .eq('id', booking.id)
+    .select('visibility');
+  check(
+    'bookings: owner makes a shared booking private',
+    makePrivate.data?.[0]?.visibility === 'private',
+    makePrivate.error?.message,
+  );
   const hiddenUrl = await b.client.storage.from('originals').createSignedUrl(hotelOriginal, 60);
   check(
     "originals: member can't open a booking's original once it's private",
     Boolean(hiddenUrl.error),
   );
-  await a.client.from('bookings').update({ visibility: 'shared' }).eq('id', booking.id);
+  const shareAgain = await a.client
+    .from('bookings')
+    .update({ visibility: 'shared' })
+    .eq('id', booking.id)
+    .select('visibility');
+  check(
+    'bookings: owner shares it again',
+    shareAgain.data?.[0]?.visibility === 'shared',
+    shareAgain.error?.message,
+  );
   const sharedUrl = await b.client.storage.from('originals').createSignedUrl(hotelOriginal, 60);
   check('originals: member opens it again once shared', !sharedUrl.error, sharedUrl.error?.message);
 

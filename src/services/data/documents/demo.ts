@@ -37,6 +37,9 @@ export function demoDocuments(store: DemoStore): DocumentsSource {
       if (!document || (document.addedBy ?? db.me) !== db.me) {
         throw new Error("Only the document's owner shares it");
       }
+      if (shared && !db.members.some((m) => m.tripId === tripId && m.userId === db.me)) {
+        throw new Error('Not a member of that trip');
+      }
       const others = (document.sharedTripIds ?? []).filter((t) => t !== tripId);
       const next = { ...document, sharedTripIds: shared ? [...others, tripId] : others };
       store.db = { ...db, documents: upsert(db.documents, next) };

@@ -49,14 +49,13 @@ export function useWallet(): WalletState {
   return useMemo(() => {
     const bookings = tripData.data?.bookings ?? [];
     const loadError = tripFailed || documentsFailed;
-    // Without your id (offline before it ever loaded) every document listed shows, as before v2.
     const docs = documents.data ?? [];
     const nameOf = (id: string) => {
       const member = memberList?.find((m) => m.id === id);
       return member ? memberLabel(member) : FALLBACK_NAME;
     };
     return {
-      entries: buildWallet(bookings, me === null ? docs : documentsFor(docs, me, tripId)),
+      entries: buildWallet(bookings, documentsFor(docs, me, tripId)),
       places: placeLookup(tripData.data?.places ?? []),
       isLoading:
         !loadError && (documents.isPending || meLoading || (tripId !== null && tripData.isPending)),

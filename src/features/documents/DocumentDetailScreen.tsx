@@ -9,7 +9,7 @@ import { colors, screenPadding, spacing } from '@/theme';
 import { Button, Icon, ListRow, LoadError, Skeleton, Surface, Text } from '@/ui';
 
 import { DocumentPhoto } from './DocumentPhoto';
-import { DocumentSharing } from './DocumentSharing';
+import { DocumentSharing, isOwnDocument } from './DocumentSharing';
 import { warningText } from './expiry';
 import { documentName } from './form';
 import { PhotoViewer } from './PhotoViewer';
@@ -96,9 +96,11 @@ function Detail({ document, mine }: { document: TravelDocument; mine: boolean })
       <DocumentSharing document={document} />
 
       <Text variant="caption" tone="secondary" style={styles.privacy}>
-        {document.sharedTripIds?.length
-          ? 'Shared only with the trips you chose and never sent to AI.'
-          : 'Saved to your account only and never sent to AI.'}
+        {!mine
+          ? 'Shared with this trip by its owner. Never sent to AI.'
+          : document.sharedTripIds?.length
+            ? 'Shared only with the trips you chose and never sent to AI.'
+            : 'Saved to your account only and never sent to AI.'}
       </Text>
 
       <PhotoViewer
@@ -119,7 +121,7 @@ export function DocumentDetailScreen({ id }: { id: string }) {
   const title = document ? documentName(document.type) : '';
   // Someone else's shared passport is read-only: only its owner edits it (RLS).
   const profile = useMyProfile();
-  const mine = !!document && (!document.addedBy || document.addedBy === profile.data?.id);
+  const mine = !!document && isOwnDocument(document, profile.data?.id);
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>

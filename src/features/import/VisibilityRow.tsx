@@ -1,24 +1,20 @@
 import { StyleSheet, Switch, View } from 'react-native';
 
-import { useTripMembers, type BookingVisibility } from '@/services/data';
+import type { BookingVisibility } from '@/services/data';
 import { colors, continuous, radii, spacing } from '@/theme';
 import { Icon, Text } from '@/ui';
 
 /**
  * On the review screen for a group trip (TR-61): one row saying who will see the booking, with a
- * switch. Hidden on a trip you're alone on, where it would mean nothing.
+ * switch. The screen shows it only for a trip with others on it, where it means something.
  */
 export function VisibilityRow({
-  tripId,
   value,
   onChange,
 }: {
-  tripId: string;
   value: BookingVisibility;
   onChange: (value: BookingVisibility) => void;
 }) {
-  const members = useTripMembers(tripId).data;
-  if (!members || members.length < 2) return null;
   const shared = value === 'shared';
   return (
     <View style={styles.row} testID="import-visibility">

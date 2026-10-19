@@ -8,6 +8,15 @@ import type { TravelDocument } from '@/services/data/types';
 import { useTripStore } from '@/stores/trip';
 
 /**
+ * Whether a document is yours: no owner (v1, demo), or yours by id. Before your id is known, a
+ * document shared with no trip can only be yours (others' reach you only through a share).
+ */
+export function isOwnDocument(document: TravelDocument, me: string | undefined): boolean {
+  if (!document.addedBy) return true;
+  return me ? document.addedBy === me : !document.sharedTripIds?.length;
+}
+
+/**
  * A passport or visa on a group trip (TR-61): private by default; its owner can share it with the
  * selected trip (its members can then read it and its photos) or stop sharing. Someone else's
  * shows who shared it.
@@ -24,6 +33,8 @@ export function DocumentSharing({ document }: { document: TravelDocument }) {
 
   const owner = document.addedBy ?? me;
   const shared = (document.sharedTripIds ?? []).includes(tripId);
+  // Someone else's shows only on a trip they shared it with.
+  if (owner !== me && !shared) return null;
   const flip = async () => {
     setBusy(true);
     try {

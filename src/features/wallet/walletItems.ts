@@ -133,17 +133,20 @@ export function isSharedWithTrip(entry: WalletEntry, tripId: string | null): boo
 
 /**
  * The documents a trip's wallet shows: yours, and others' that they shared with this trip (others'
- * shared with another trip of yours stay off it).
+ * shared with another trip of yours stay off it). Before your id is known (offline, never loaded),
+ * those shared with no other trip: a document shared nowhere can only be yours.
  */
 export function documentsFor(
   documents: readonly TravelDocument[],
-  me: string,
+  me: string | null,
   tripId: string | null,
 ): TravelDocument[] {
-  return documents.filter(
-    (d) =>
-      (d.addedBy ?? me) === me || (tripId !== null && (d.sharedTripIds ?? []).includes(tripId)),
-  );
+  return documents.filter((d) => {
+    const trips = d.sharedTripIds ?? [];
+    const here = tripId !== null && trips.includes(tripId);
+    if (me === null) return trips.length === 0 || here;
+    return (d.addedBy ?? me) === me || here;
+  });
 }
 
 /**

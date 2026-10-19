@@ -106,6 +106,19 @@ describe('Mine / Shared (TR-61)', () => {
     expect(walletTag(entries[1], me, trip, (id) => names[id])).toBe('Added by Blake');
   });
 
+  it('before your id is known, keeps documents shared nowhere or with this trip', () => {
+    const passport = groupWalletSnapshot.documents[0];
+    const docs: TravelDocument[] = [
+      { ...passport, addedBy: 'user-unknown-yet' },
+      { ...passport, id: 'document-blake', addedBy: BLAKE, sharedTripIds: [trip] },
+      { ...passport, id: 'document-willem', addedBy: WILLEM, sharedTripIds: ['trip-other'] },
+    ];
+    expect(documentsFor(docs, null, trip).map((d) => d.id)).toEqual([
+      'document-passport',
+      'document-blake',
+    ]);
+  });
+
   it('has empty-state copy for each side', () => {
     expect(scopeEmptyCopy('mine', 'all').title).toBe('Nothing private on this trip');
     expect(scopeEmptyCopy('shared', 'document').title).toBe('No shared passports or visas');

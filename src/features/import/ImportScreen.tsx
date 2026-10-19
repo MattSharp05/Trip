@@ -13,6 +13,7 @@ import {
   dataKeys,
   queryClient,
   useDataSource,
+  useTripMembers,
   useTrips,
   type BookingVisibility,
   type NewTrip,
@@ -164,6 +165,9 @@ function Review({ read }: { read: ReadBooking }) {
   // Null until the traveller flips it: then the type's default, which follows a type switch.
   const [visibility, setVisibility] = useState<BookingVisibility | null>(null);
   const target = useTarget(read.result, draft);
+  // Only a trip with others on it asks; anywhere else the type's default applies.
+  const targetMembers = useTripMembers(target && 'trip' in target ? target.trip.id : null).data;
+  const asksVisibility = (targetMembers?.length ?? 0) > 1;
   const fields = fieldsFor(draft.base);
 
   const save = useMutation(
@@ -203,7 +207,7 @@ function Review({ read }: { read: ReadBooking }) {
           target: resolved,
           originalPath: read.originalPath,
           importedAt: now().toISOString(),
-          ...(visibility ? { visibility } : {}),
+          ...(visibility && asksVisibility ? { visibility } : {}),
         });
         if (photoLocation) void trackPhotoDownload(photoLocation).catch(() => {});
         return result;
@@ -274,9 +278,8 @@ function Review({ read }: { read: ReadBooking }) {
           ))}
         </ScrollView>
         <TripTarget target={target} />
-        {target && 'trip' in target ? (
+        {asksVisibility ? (
           <VisibilityRow
-            tripId={target.trip.id}
             value={visibility ?? defaultVisibility(draft.base.type)}
             onChange={setVisibility}
           />
