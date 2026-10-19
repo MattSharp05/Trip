@@ -28,5 +28,14 @@ export {
   type SmartAddPlan,
 } from './smartAdd';
 export { SmartAddButton, type SmartAddButtonProps } from './SmartAddButton';
+export {
+  bucketSuggestions,
+  hasLikedItems,
+  planSuggestions,
+  type SuggestionPlan,
+  type SuggestionRow,
+} from './suggest';
+export { SuggestTimesSheet, type SuggestTimesSheetProps } from './SuggestTimesSheet';
+export { useSuggestTimes } from './useSuggestTimes';
 export { useBucketActions } from './useBucketActions';
 export { useSmartAdd, type SmartAddPlaced, type SmartAddToast } from './useSmartAdd';

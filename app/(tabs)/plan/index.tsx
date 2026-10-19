@@ -13,8 +13,10 @@ import {
   BucketList,
   bucketEntries,
   bucketPins,
+  SuggestTimesSheet,
   useBucketActions,
   useSmartAdd,
+  useSuggestTimes,
   type BucketEntry,
 } from '@/features/bucket';
 import {
@@ -253,6 +255,36 @@ export default function PlanScreen() {
     setGlobeDay(null);
     selectItem(first.itemId, 'map', first.day);
   }, [planAll, setPlanMode, selectItem, dismissEditToast, dismissBucketToast]);
+  // Suggest times for liked items (TR-64): each Accept places its item like Smart Add, with Undo;
+  // once nothing that fits is left (or after Accept all) the sheet closes on the earliest new stop.
+  const suggest = useSuggestTimes(trip.data);
+  const { accept, notes: smartNotes } = smart;
+  const { close: closeSuggest, rows: suggestRows } = suggest;
+  const acceptSuggestions = useCallback(
+    (accepted: Parameters<typeof accept>[0]) => {
+      dismissEditToast();
+      dismissBucketToast();
+      const taken = new Set(accepted.map((s) => s.id));
+      const left = suggestRows.some((row) => row.suggestion && !taken.has(row.bucketId));
+      const first = accept(accepted);
+      if (left) return;
+      closeSuggest();
+      if (!first) return;
+      setPlanMode('itinerary');
+      setGlobeDay(null);
+      selectItem(first.itemId, 'map', first.day);
+    },
+    [
+      accept,
+      suggestRows,
+      closeSuggest,
+      setPlanMode,
+      selectItem,
+      dismissEditToast,
+      dismissBucketToast,
+    ],
+  );
+  const group = (members?.length ?? 0) > 1;
   // The newest toast wins: an edit or a bucket change replaces Smart Add's.
   useEffect(() => {
     if (editor.toast || actions.toast || links.toast) dismissSmartToast();
@@ -440,7 +472,8 @@ export default function PlanScreen() {
               onDelete={actions.remove}
               onSmartAdd={smartAdd}
               onPlanAll={planAllBucket}
-              notes={smart.notes}
+              onSuggest={group && suggest.canSuggest ? suggest.show : undefined}
+              notes={smartNotes}
               onAdd={actions.openSearch}
               onLike={me ? actions.like : undefined}
               sort={bucketSort}
@@ -470,6 +503,13 @@ export default function PlanScreen() {
         saving={actions.saving}
       />
       <LinkResultsSheet flow={links} near={near} />
+      <SuggestTimesSheet
+        open={suggest.open}
+        rows={suggest.rows}
+        onAccept={acceptSuggestions}
+        onSkip={suggest.skip}
+        onClose={closeSuggest}
+      />
       {editor.sheets}
     </View>
   );

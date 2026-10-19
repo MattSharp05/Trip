@@ -1,6 +1,7 @@
 import {
   DAY_LOAD_KM,
   planSmartAdd,
+  suggestTimes,
   windowMinutes,
   type PlannerItem,
   type SmartAddCandidate,
@@ -241,5 +242,105 @@ describe('Smart Add: fixed-time events', () => {
       kind: 'none',
       reason: 'outside-trip',
     });
+  });
+});
+
+describe('Suggest times for liked items (TR-64)', () => {
+  const liked = (id: string, likes: number, c: Partial<SmartAddCandidate> = {}) => ({
+    id,
+    likes,
+    candidate: candidate(c),
+  });
+  const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
+
+  it('never overlaps a fixed item or another suggestion, and puts the most liked first', () => {
+    const items = DAYS.map((day, i) =>
+      item(`show-${i}`, day, '13:00', 180, at(1), { fixed: true, kind: 'event' }),
+    );
+    const { suggestions } = suggestTimes({
+      days: DAYS,
+      items,
+      candidates: [
+        liked('one', 1, { durationMinutes: 120 }),
+        liked('three', 3, { durationMinutes: 180 }),
+        liked('two', 2, { durationMinutes: 120, position: at(2) }),
+        liked('also-two', 2, { durationMinutes: 90, position: at(3) }),
+      ],
+      travel,
+    });
+    // Ties keep the given order.
+    expect(suggestions.map((s) => s.id)).toEqual(['three', 'two', 'also-two', 'one']);
+
+    const busy = [
+      ...items.map((i) => ({
+        day: i.day,
+        start: toMin(i.startTime!),
+        end: toMin(i.startTime!) + 180,
+      })),
+      ...suggestions.map(({ placement: p }) => ({
+        day: p.day,
+        start: toMin(p.startTime),
+        end: toMin(p.startTime) + p.durationMinutes,
+      })),
+    ];
+    for (const [i, a] of busy.entries()) {
+      for (const b of busy.slice(i + 1)) {
+        if (a.day === b.day) expect(a.end <= b.start || b.end <= a.start).toBe(true);
+      }
+    }
+  });
+
+  it('leaves out items nobody liked', () => {
+    const { suggestions, skipped } = suggestTimes({
+      days: DAYS,
+      items: [],
+      candidates: [liked('none', 0), liked('liked', 1)],
+      travel,
+    });
+    expect(suggestions.map((s) => s.id)).toEqual(['liked']);
+    expect(skipped).toEqual([]);
+  });
+
+  it('skips a liked event that would move a stop, instead of moving it', () => {
+    const walk = item('walk', DAYS[1], '20:00', 60, at(0));
+    const result = suggestTimes({
+      days: DAYS,
+      items: [walk],
+      candidates: [
+        liked('show', 2, { fixedDate: DAYS[1], fixedTime: '19:30', durationMinutes: 120 }),
+      ],
+      travel,
+    });
+    expect(result.suggestions).toEqual([]);
+    expect(result.skipped).toEqual([{ id: 'show', reason: 'conflict', conflictId: 'walk' }]);
+  });
+
+  it('plans a less-liked event before a flexible item, so the item goes around it', () => {
+    const { suggestions, skipped } = suggestTimes({
+      days: [DAYS[0]],
+      items: [],
+      candidates: [
+        liked('walk', 2),
+        liked('show', 1, { fixedDate: DAYS[0], fixedTime: '09:00', durationMinutes: 120 }),
+      ],
+      travel,
+    });
+    expect(skipped).toEqual([]);
+    expect(suggestions.map((s) => [s.id, s.placement.startTime])).toEqual([
+      ['walk', '11:15'],
+      ['show', '09:00'],
+    ]);
+  });
+
+  it('places a liked event that fits on its own date and time', () => {
+    const { suggestions } = suggestTimes({
+      days: DAYS,
+      items: [],
+      candidates: [
+        liked('show', 1, { fixedDate: DAYS[2], fixedTime: '20:00', durationMinutes: 120 }),
+      ],
+      travel,
+    });
+    expect(suggestions[0].placement).toMatchObject({ day: DAYS[2], startTime: '20:00' });
   });
 });

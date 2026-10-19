@@ -73,8 +73,35 @@ export function smartAddResult(data: TripData, bucketItem: BucketItem): SmartAdd
   });
 }
 
+/**
+ * The itinerary stop a bucket item becomes at `at`. Planning someone's Bucket List item keeps them
+ * as its adder (ADR 0027), whoever planned it.
+ */
+export function stopFor(
+  data: Pick<TripData, 'trip' | 'places'>,
+  bucketItem: BucketItem,
+  id: string,
+  at: { day: string; startTime: string | null; durationMinutes: number },
+): ItineraryItem {
+  const place = data.places.find((p) => p.id === bucketItem.placeId);
+  const fixedTime = bucketItem.fixedDate !== null && bucketItem.fixedTime !== null;
+  return {
+    id,
+    tripId: data.trip.id,
+    day: at.day,
+    startTime: at.startTime,
+    durationMinutes: at.durationMinutes,
+    placeId: bucketItem.placeId,
+    kind: fixedTime ? 'event' : kindForPlace(place?.kind ?? null),
+    bookingId: null,
+    fixed: fixedTime,
+    ...(bucketItem.title ? { title: bucketItem.title } : {}),
+    ...(bucketItem.addedBy ? { addedBy: bucketItem.addedBy } : {}),
+  };
+}
+
 /** "Fri 13, 5:15 PM" */
-const whenLabel = (day: string, time: string) =>
+export const whenLabel = (day: string, time: string) =>
   `${weekdayShort(day)} ${dayOfMonth(day)}, ${timeLabel(time)}`;
 
 /**
@@ -101,22 +128,7 @@ export function planBucketSmartAdd(
   }
 
   const { placement, moved } = result;
-  const place = data.places.find((p) => p.id === bucketItem.placeId);
-  const fixedTime = bucketItem.fixedDate !== null && bucketItem.fixedTime !== null;
-  const added: ItineraryItem = {
-    id,
-    tripId: data.trip.id,
-    day: placement.day,
-    startTime: placement.startTime,
-    durationMinutes: placement.durationMinutes,
-    placeId: bucketItem.placeId,
-    kind: fixedTime ? 'event' : kindForPlace(place?.kind ?? null),
-    bookingId: null,
-    fixed: fixedTime,
-    ...(bucketItem.title ? { title: bucketItem.title } : {}),
-    // Planning someone's Bucket List item keeps them as its adder (ADR 0027).
-    ...(bucketItem.addedBy ? { addedBy: bucketItem.addedBy } : {}),
-  };
+  const added = stopFor(data, bucketItem, id, placement);
   const before = moved.map((m) => data.items.find((item) => item.id === m.id)!);
   const after = moved.map((m, i) => ({ ...before[i], day: m.day, startTime: m.startTime }));
 

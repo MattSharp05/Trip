@@ -361,6 +361,14 @@ export const SCENARIOS: readonly Scenario[] = [
     view: { organizeView: 'budget', budgetTab: 'balances' },
   }),
   vegas({
+    name: 'group-bucket-suggest',
+    data: groupSnapshot,
+    description:
+      'Bucket List on the group trip, Suggested times open: Golden Tiki (2 likes), Lotus of Siam (1).',
+    tab: 'plan',
+    view: { day: '2026-11-12', planMode: 'bucket', bucketSort: 'popular', suggestTimes: true },
+  }),
+  vegas({
     name: 'group-flight-globe',
     data: groupArrivalsSnapshot,
     description:
