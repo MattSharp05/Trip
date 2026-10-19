@@ -1,3 +1,4 @@
+export { ArrivalsCard, type ArrivalsCardProps } from './ArrivalsCard';
 export { DatePills, pillOffset, PILL_WIDTH, type DatePillsProps } from './DatePills';
 export { DayHeader, type DayHeaderProps } from './DayHeader';
 export { useItineraryEditor, type ItineraryEditing } from './edit';

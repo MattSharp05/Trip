@@ -2,9 +2,9 @@
  * Where screens' data comes from, composed from one module per domain.
  *
  * Each domain folder (`trips`, `places`, `itinerary`, `bookings`, `links`, `bucket`, `expenses`,
- * `documents`, `members`) holds `types.ts` (its models and its slice of `DataSource`), `demo.ts`
- * (its slice of the in-memory demo source), `supabase.ts` (its slice of the Supabase source and
- * row mappers), `hooks.ts` (its React Query hooks) and their tests.
+ * `documents`, `members`, `flights`) holds `types.ts` (its models and its slice of `DataSource`),
+ * `demo.ts` (its slice of the in-memory demo source), `supabase.ts` (its slice of the Supabase
+ * source and row mappers), `hooks.ts` (its React Query hooks) and their tests.
  *
  * Adding a method to a domain touches only that domain's folder: the slice interface in its
  * `types.ts`, both implementations and its hook. This file and `index.ts` change only for a new
@@ -21,6 +21,8 @@ import { demoDocuments } from './documents/demo';
 import { supabaseDocuments } from './documents/supabase';
 import { demoExpenses } from './expenses/demo';
 import { supabaseExpenses } from './expenses/supabase';
+import { demoFlights } from './flights/demo';
+import { supabaseFlights } from './flights/supabase';
 import { demoItinerary } from './itinerary/demo';
 import { supabaseItinerary } from './itinerary/supabase';
 import { demoLinks } from './links/demo';
@@ -38,6 +40,7 @@ import type {
   DataSnapshot,
   DocumentsSource,
   ExpensesSource,
+  FlightsSource,
   ItinerarySource,
   LinksSource,
   MembersSource,
@@ -61,7 +64,8 @@ export interface DataSource
     BucketSource,
     ExpensesSource,
     DocumentsSource,
-    MembersSource {
+    MembersSource,
+    FlightsSource {
   /** Unique per source instance; part of every query key, so switching sources never mixes caches. */
   readonly id: string;
   readonly kind: 'demo' | 'supabase';
@@ -88,6 +92,7 @@ export function createDemoSource(snapshot: DataSnapshot, name = 'demo'): DataSou
     ...demoExpenses(store),
     ...demoDocuments(store),
     ...demoMembers(store),
+    ...demoFlights(store),
   };
 }
 
@@ -104,4 +109,5 @@ export const supabaseSource: DataSource = {
   ...supabaseExpenses,
   ...supabaseDocuments,
   ...supabaseMembers,
+  ...supabaseFlights,
 };

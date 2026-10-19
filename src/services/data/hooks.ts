@@ -5,6 +5,7 @@ export * from './bookings/hooks';
 export * from './bucket/hooks';
 export * from './documents/hooks';
 export * from './expenses/hooks';
+export * from './flights/hooks';
 export * from './itinerary/hooks';
 export * from './links/hooks';
 export * from './members/hooks';
