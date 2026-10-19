@@ -7,6 +7,7 @@ import { now } from '@/core/clock';
 import { dayIn } from '@/core/dates';
 import { memberLabel } from '@/core/members';
 import { currencyDecimals } from '@/core/money';
+import { goingIds } from '@/core/split';
 import { itemTitle } from '@/features/plan/edit/edits';
 import { HOME_CURRENCIES } from '@/features/settings';
 import { useDataSource, useSaveExpense, type Member, type TripData } from '@/services/data';
@@ -37,7 +38,8 @@ export interface AddExpenseSheetProps {
 
 /**
  * Add an expense: amount, currency, category, note, date and, on a group trip, who paid and who
- * it's split with (equally), plus the activity it was for. It keeps the currency it was paid in.
+ * it's split with (equally; for an activity, everyone going by default), plus the activity it was
+ * for. It keeps the currency it was paid in.
  */
 export function AddExpenseSheet({
   open,
@@ -101,12 +103,19 @@ function ExpenseForm({
   const [expenseId] = useState(() => newExpenseId());
 
   const everyone = members.map((m) => m.id);
-  const participants = picked ?? everyone;
+  // For an activity, the default is everyone going to it (TR-66); someone opting out later
+  // splits it again between who's left.
+  const optedOut = data.items.find((i) => i.id === itemId)?.optedOut;
+  const going = goingIds(everyone, optedOut);
+  const defaultIds = going.length > 0 ? going : everyone;
+  const participants = picked ?? defaultIds;
   const togglePerson = (id: string) => {
     const current = picked ?? [];
     const next = current.includes(id) ? current.filter((p) => p !== id) : [...current, id];
-    // Nobody, or all of them, is Everyone again.
-    setPicked(next.length === 0 || next.length === everyone.length ? null : next);
+    // Nobody, or exactly the default, is Everyone (going) again.
+    const isDefault =
+      next.length === defaultIds.length && defaultIds.every((d) => next.includes(d));
+    setPicked(next.length === 0 || isDefault ? null : next);
     setError(null);
   };
 
@@ -245,7 +254,7 @@ function ExpenseForm({
           </ChipRow>
           <ChipRow label="Split" testID="expense-split">
             <Chip
-              label="Everyone"
+              label={defaultIds.length < everyone.length ? 'Everyone going' : 'Everyone'}
               selected={picked === null}
               onPress={() => {
                 setPicked(null);

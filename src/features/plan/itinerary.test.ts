@@ -11,6 +11,7 @@ import {
   itemForPin,
   itineraryEntries,
   legCaption,
+  stopExpenses,
   type ItineraryLeg,
 } from './itinerary';
 
@@ -188,5 +189,25 @@ describe('who is going (TR-60)', () => {
     expect(mine.going?.map((m) => m.name)).toEqual(['Blake', 'Willem']);
     // Without members (a trip of one, or still loading): nothing extra.
     expect(itineraryEntries(out, '2026-11-13')[0]).toMatchObject({ going: null, youreOut: false });
+  });
+});
+
+describe('stopExpenses (TR-66)', () => {
+  const ids = [vegasSnapshot.me, BLAKE, WILLEM];
+  const sphere = { id: 'item-07', optedOut: [] as string[] };
+
+  it('lists the expenses linked to a stop with their split', () => {
+    expect(stopExpenses(sphere, groupSnapshot.expenses, ids)).toEqual({
+      lines: [{ id: 'expense-group-sphere', text: 'Sphere tickets $450.00 · split 3 ways' }],
+      custom: false,
+    });
+    expect(stopExpenses({ id: 'item-06' }, groupSnapshot.expenses, ids).lines).toEqual([]);
+  });
+
+  it('flags a split that is not everyone going', () => {
+    // Willem is out, but the Sphere is still split three ways: someone chose that.
+    expect(
+      stopExpenses({ ...sphere, optedOut: [WILLEM] }, groupSnapshot.expenses, ids).custom,
+    ).toBe(true);
   });
 });
