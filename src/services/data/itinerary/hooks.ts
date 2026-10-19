@@ -3,17 +3,12 @@ import { useMutation } from '@tanstack/react-query';
 import { useDataSource } from '../active';
 import { dataKeys, queryClient, useWrite } from '../shared/query';
 import type { TripData } from '../types';
+import { withGoing } from './optOuts';
 import type { ItineraryItem } from './types';
 
 export const useSaveItineraryItem = () =>
   useWrite((s, item: ItineraryItem) => s.saveItineraryItem(item));
 export const useDeleteItineraryItem = () => useWrite((s, id: string) => s.deleteItineraryItem(id));
-
-/** The stop with you in or out of it (TR-60). */
-export function withGoing(item: ItineraryItem, me: string, going: boolean): ItineraryItem {
-  const others = (item.optedOut ?? []).filter((id) => id !== me);
-  return { ...item, optedOut: going ? others : [...others, me] };
-}
 
 /**
  * I'm going / I'm out on a stop (TR-60), applied to the cached trip at once (the switch moves
@@ -24,8 +19,10 @@ export function useSetGoing(tripId: string | null, me: string | null) {
   const key = dataKeys.trip(source, tripId ?? '');
   return useMutation(
     {
-      mutationFn: ({ itemId, going }: { itemId: string; going: boolean }) =>
-        going ? source.optIn(itemId) : source.optOut(itemId, tripId ?? ''),
+      mutationFn: async ({ itemId, going }: { itemId: string; going: boolean }) => {
+        if (!tripId) throw new Error('No trip');
+        await (going ? source.optIn(itemId) : source.optOut(itemId, tripId));
+      },
       onMutate: async ({ itemId, going }) => {
         await queryClient.cancelQueries({ queryKey: key });
         const previous = queryClient.getQueryData<TripData | null>(key);

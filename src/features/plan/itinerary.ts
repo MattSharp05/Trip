@@ -43,7 +43,9 @@ export interface ItineraryEntry {
 }
 
 /** A member and whether they're going to a stop (TR-60). */
-export type GoingMember = Pick<Member, 'id' | 'name' | 'initial' | 'isMe'> & { going: boolean };
+export type GoingMember = Pick<Member, 'id' | 'name' | 'initial' | 'role' | 'isMe'> & {
+  going: boolean;
+};
 
 /** Stops the whole group shares as a matter of course: flights, the hotel, the rental car. */
 const LOGISTICS: readonly ItemKind[] = ['flight', 'hotel', 'car'];
@@ -57,14 +59,15 @@ export const hasGoing = (item: Pick<ItineraryItem, 'kind'>) => !LOGISTICS.includ
  */
 export function goingList(
   item: Pick<ItineraryItem, 'kind' | 'optedOut'>,
-  members: readonly Pick<Member, 'id' | 'name' | 'initial' | 'isMe'>[],
+  members: readonly Pick<Member, 'id' | 'name' | 'initial' | 'role' | 'isMe'>[],
 ): GoingMember[] {
   if (members.length < 2 || !hasGoing(item)) return [];
   const out = new Set(item.optedOut ?? []);
-  return members.map(({ id, name, initial, isMe }) => ({
+  return members.map(({ id, name, initial, role, isMe }) => ({
     id,
     name,
     initial,
+    role,
     isMe,
     going: !out.has(id),
   }));

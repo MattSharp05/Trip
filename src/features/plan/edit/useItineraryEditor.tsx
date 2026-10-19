@@ -107,6 +107,7 @@ export function useItineraryEditor({
   // Plan screen that mounts opens it; closing the sheet it opened uses it up.
   const source = useDataSource();
   const detailsOpened = useRef<DataSource | null>(null);
+  const detailsShown = useRef(false);
   useEffect(() => {
     const { view } = useScenarioStore.getState();
     if (!view.openDetails || !view.itemId || source.kind !== 'demo') return;
@@ -115,7 +116,12 @@ export function useItineraryEditor({
     open({ kind: 'details', itemId: view.itemId });
   }, [data, source, open]);
   useEffect(() => {
-    if (sheet || detailsOpened.current !== source) return;
+    if (detailsOpened.current !== source) return;
+    if (sheet) {
+      detailsShown.current = true;
+      return;
+    }
+    if (!detailsShown.current) return;
     const { view } = useScenarioStore.getState();
     if (view.openDetails) useScenarioStore.setState({ view: { ...view, openDetails: undefined } });
   }, [sheet, source]);
@@ -260,7 +266,13 @@ export function useItineraryEditor({
           onSave={saveDetails}
           addedBy={addedByName(item)}
           going={goingList(item, members)}
-          onGoingChange={(going) => setGoing({ itemId: item.id, going })}
+          onGoingChange={(going) => {
+            setError(null);
+            setGoing(
+              { itemId: item.id, going },
+              { onError: () => setError("Couldn't save that change. Try again.") },
+            );
+          }}
         />
       );
     }

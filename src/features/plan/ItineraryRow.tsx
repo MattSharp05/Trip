@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { memo } from 'react';
 import { Pressable, StyleSheet, View, type AccessibilityActionEvent } from 'react-native';
 
-import { nameList } from '@/core/members';
+import { avatarRow, nameList } from '@/core/members';
 import { MemberAvatar } from '@/features/members';
 import { colors, continuous, radii, screenPadding, spacing } from '@/theme';
 import { Icon, Skeleton, Text } from '@/ui';
@@ -147,13 +147,13 @@ export const ItineraryRow = memo(function ItineraryRow({
 
 /** "Going: Blake and Willem" for VoiceOver. */
 const goingSpoken = (going: GoingMember[]) =>
-  `Going: ${nameList(going.map((m) => (m.isMe ? 'you' : m.name)))}`;
+  going.length ? `Going: ${nameList(going.map((m) => (m.isMe ? 'you' : m.name)))}` : 'Nobody going';
 
 /** Who's going (TR-60), overlapping like the header's avatars, you last with the orange ring. */
 function GoingStack({ going, id }: { going: GoingMember[]; id: string }) {
-  const ordered = [...going.filter((m) => !m.isMe), ...going.filter((m) => m.isMe)];
-  const shown = ordered.slice(0, GOING_MAX);
-  const more = ordered.length - shown.length;
+  // The header's rule (you always among the circles), which skips a single avatar.
+  const { shown, more } =
+    going.length > 1 ? avatarRow(going, GOING_MAX) : { shown: going, more: 0 };
   return (
     <View style={styles.going} testID={`itinerary-going-${id}`}>
       {shown.map((member, i) => (

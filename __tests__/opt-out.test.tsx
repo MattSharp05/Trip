@@ -144,6 +144,20 @@ describe('Shared itinerary: who is going (TR-60)', () => {
     expect(saved?.items.find((i) => i.id === FOUNTAINS)?.optedOut).toEqual([WILLEM]);
   });
 
+  it("puts the switch back and says so when the opt-out can't be saved", async () => {
+    await open('group-plan-opt-out', BRUNCH);
+    await screen.findByTestId('detail-going');
+    const source = useActiveSource.getState().source;
+    jest.spyOn(source, 'optOut').mockRejectedValueOnce(new Error('offline'));
+
+    await act(async () =>
+      fireEvent(screen.getByTestId('detail-going-switch'), 'valueChange', false),
+    );
+    expect(await screen.findByText("Couldn't save that change. Try again.")).toBeOnTheScreen();
+    expect(goingLines()).toEqual(["I'm going: on", 'Blake: Going', 'Willem: Out']);
+    expect(screen.queryByTestId(`itinerary-out-${FOUNTAINS}`)).toBeNull();
+  });
+
   it('shows no Going section or Added by line on a trip of one', async () => {
     await open('vegas-plan-day-2', BRUNCH);
     await editStop(FOUNTAINS);
