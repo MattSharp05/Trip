@@ -19,3 +19,4 @@ export { ItineraryRow, ROW_HEIGHT, type ItineraryRowProps } from './ItineraryRow
 export { PlanHeader, type PlanHeaderProps } from './PlanHeader';
 export { PlanSheet, type PlanSheetProps } from './PlanSheet';
 export { LEG_HEIGHT, TravelLeg, type TravelLegProps } from './TravelLeg';
+export { useTravelerArcs } from './useTravelerArcs';

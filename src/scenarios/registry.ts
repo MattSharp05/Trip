@@ -368,6 +368,15 @@ export const SCENARIOS: readonly Scenario[] = [
     tab: 'plan',
     view: { day: '2026-11-12', planMode: 'bucket', bucketSort: 'popular', suggestTimes: true },
   }),
+  vegas({
+    name: 'group-flight-globe',
+    data: groupArrivalsSnapshot,
+    description:
+      'group-vegas on arrival day, Nov 12: the flight globe with Matthew, Blake and Willem converging on LAS.',
+    tab: 'plan',
+    today: '2026-11-12T07:30:00-05:00',
+    view: { day: '2026-11-12', planMode: 'itinerary', globe: true },
+  }),
   {
     name: 'empty-account',
     description: 'A new account with no trips: Trips tab empty state.',

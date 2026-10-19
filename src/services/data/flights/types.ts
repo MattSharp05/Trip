@@ -5,6 +5,15 @@
 
 import type { Airport, LocalDateTime } from '../bookings/types';
 
+/**
+ * One end of a leg. Where it is (TR-63) when the airport is a place on the trip, which an import
+ * makes it: the flight globe draws the arc from it. Left out when it isn't.
+ */
+export interface FlightAirport extends Airport {
+  lat?: number;
+  lng?: number;
+}
+
 /** One flight leg on the trip, as every member sees it: no seat, confirmation or pass. */
 export interface TripFlight {
   bookingId: string;
@@ -12,8 +21,8 @@ export interface TripFlight {
   travelerId: string;
   airline: string;
   flightNumber: string;
-  from: Airport;
-  to: Airport;
+  from: FlightAirport;
+  to: FlightAirport;
   departs: LocalDateTime;
   arrives: LocalDateTime;
 }

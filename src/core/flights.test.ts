@@ -1,13 +1,17 @@
-import { vegasSnapshot } from '@/scenarios/fixtures/vegas';
+import { BLAKE, groupArrivalsSnapshot, WILLEM } from '@/scenarios/fixtures/group';
+import { ME, vegasSnapshot } from '@/scenarios/fixtures/vegas';
+import { createDemoSource } from '@/services/data/source';
 
 import {
   along,
   bearing,
+  convergingCamera,
   dayFlight,
   greatCircle,
   planeProgress,
   planeTiming,
   routeCamera,
+  travelerLegs,
 } from './flights';
 
 const TPA = { lat: 27.9755, lng: -82.5332 };
@@ -105,6 +109,82 @@ describe('routeCamera', () => {
     expect(long).toBeGreaterThan(short);
     expect(routeCamera(TPA, { lat: 28, lng: -82.6 }).altitude).toBe(4_000_000);
     expect(routeCamera(JFK, { lat: -33.9, lng: 151.2 }).altitude).toBe(24_000_000);
+  });
+});
+
+describe('travelerLegs (TR-63)', () => {
+  const trip = groupArrivalsSnapshot.trips.find((t) => t.id === 'trip-vegas')!;
+  const { places } = groupArrivalsSnapshot;
+  const flights = () => createDemoSource(groupArrivalsSnapshot).listTripFlights('trip-vegas');
+  const code = (e: { code: string }) => e.code;
+
+  it('gives three arcs into LAS on arrival day, in landing order', async () => {
+    const legs = travelerLegs(await flights(), trip, places, '2026-11-12');
+    expect(legs.map((l) => [l.travelerId, code(l.from), code(l.to), l.direction])).toEqual([
+      [ME, 'TPA', 'LAS', 'arrival'],
+      [BLAKE, 'ORD', 'LAS', 'arrival'],
+      [WILLEM, 'JFK', 'LAS', 'arrival'],
+    ]);
+    expect(legs[1].from).toMatchObject({ lat: 41.9742, lng: -87.9073, city: 'Chicago' });
+  });
+
+  it('sends departures outward, from LAS', async () => {
+    const legs = travelerLegs(await flights(), trip, places, '2026-11-16');
+    expect(legs.map((l) => [l.travelerId, code(l.from), code(l.to), l.direction])).toEqual([
+      [ME, 'LAS', 'TPA', 'departure'],
+      [BLAKE, 'LAS', 'ORD', 'departure'],
+      [WILLEM, 'LAS', 'JFK', 'departure'],
+    ]);
+  });
+
+  it('is empty on a day nobody flies, and skips a leg whose airport is not on the map', async () => {
+    expect(travelerLegs(await flights(), trip, places, '2026-11-14')).toEqual([]);
+    // Blake's Chicago airport without coordinates (not a place anyone can see).
+    const unplaced = (await flights()).map((f) =>
+      f.from.code === 'ORD' ? { ...f, from: { code: 'ORD', city: 'Chicago', placeId: null } } : f,
+    );
+    const legs = travelerLegs(unplaced, trip, places, '2026-11-12');
+    expect(legs.map((l) => l.travelerId)).toEqual([ME, WILLEM]);
+  });
+
+  it("places your own legs from the trip's places when the leg has no coordinates", async () => {
+    const bare = (await flights()).map((f) => ({
+      ...f,
+      from: { code: f.from.code, city: f.from.city, placeId: f.from.placeId },
+      to: { code: f.to.code, city: f.to.city, placeId: f.to.placeId },
+    }));
+    const legs = travelerLegs(bare, trip, places, '2026-11-12');
+    expect(legs[0]).toMatchObject({ travelerId: ME, from: { code: 'TPA', lat: 27.9755 } });
+  });
+});
+
+describe('convergingCamera (TR-63)', () => {
+  const ORD = { lat: 41.9742, lng: -87.9073 };
+  const ends = [TPA, ORD, JFK, LAS];
+
+  it('frames every origin and the destination', () => {
+    const { center, altitude, radius } = convergingCamera(ends);
+    const r = (d: number) => (d * Math.PI) / 180;
+    for (const p of ends) {
+      // The angle between the centre and the airport (spherical law of cosines).
+      const angle = Math.acos(
+        Math.sin(r(center.lat)) * Math.sin(r(p.lat)) +
+          Math.cos(r(center.lat)) * Math.cos(r(p.lat)) * Math.cos(r(p.lng - center.lng)),
+      );
+      expect(angle).toBeLessThanOrEqual(radius + 1e-9);
+    }
+    // The centre sits between the coasts, and the camera is high enough for the widest pair.
+    expect(center.lng).toBeLessThan(TPA.lng);
+    expect(center.lng).toBeGreaterThan(LAS.lng);
+    expect(altitude).toBeGreaterThanOrEqual(routeCamera(JFK, LAS).altitude);
+  });
+
+  it('frames two airports like routeCamera', () => {
+    const two = convergingCamera([TPA, LAS]);
+    const route = routeCamera(TPA, LAS);
+    expect(two.center.lat).toBeCloseTo(route.center.lat, 9);
+    expect(two.center.lng).toBeCloseTo(route.center.lng, 9);
+    expect(Math.abs(two.altitude - route.altitude)).toBeLessThanOrEqual(1);
   });
 });
 

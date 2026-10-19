@@ -1,4 +1,4 @@
-export { AppleGlobe, type AppleGlobeProps, type GlobeRoute } from './AppleGlobe';
+export { AppleGlobe, type AppleGlobeProps, type GlobeRoute, type TravelerArc } from './AppleGlobe';
 export { FlightGlobe, type FlightGlobeProps } from './FlightGlobe';
 export { along, bearing, greatCircle } from './geo';
 export { GLOBE_DOT, GlobeDot } from './GlobeDot';

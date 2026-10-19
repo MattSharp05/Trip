@@ -39,6 +39,7 @@ import {
   PlanHeader,
   PlanSheet,
   useItineraryEditor,
+  useTravelerArcs,
 } from '@/features/plan';
 import { FlightStatusPill } from '@/features/wallet/flight';
 import { LINK_SAMPLES } from '../../../supabase/functions/_shared/parse/linkFixtures';
@@ -92,7 +93,11 @@ export default function PlanScreen() {
     () => (trip.data && selectedDay ? dayFlight(trip.data, selectedDay) : null),
     [trip.data, selectedDay],
   );
-  const [globeDay, setGlobeDay] = useState<string | null>(null);
+  // A scenario can open on the globe (TR-63).
+  const [globeDay, setGlobeDay] = useState<string | null>(() => {
+    const { view } = useScenarioStore.getState();
+    return view.globe ? (view.day ?? null) : null;
+  });
   const showFlight = useCallback(() => setGlobeDay(selectedDay), [selectedDay]);
   const showMap = useCallback(() => setGlobeDay(null), []);
   // A trip opened from Trips or the switcher shows its city map, not a flight's globe (TR-56).
@@ -144,6 +149,19 @@ export default function PlanScreen() {
   const inBucket = selection.planMode === 'bucket';
   const me = members?.find((m) => m.isMe)?.id;
   const [bucketSort, setBucketSort] = useBucketSort(tripId);
+
+  // Everyone else's legs into and out of the city that day converge on the globe too (TR-63), so
+  // a day where only others fly has a globe as well. A traveller tapped in Arrivals is highlighted.
+  const others = useTravelerArcs(trip.data, selectedDay, members);
+  const hasGlobe = flight !== null || others.length > 0;
+  const { focusedTraveler, focusTraveler } = selection;
+  const pickTraveler = useCallback(
+    (travelerId: string) => {
+      focusTraveler(travelerId);
+      if (hasGlobe) setGlobeDay(selectedDay);
+    },
+    [focusTraveler, hasGlobe, selectedDay],
+  );
   const bucket = useMemo(
     () => (trip.data ? bucketEntries(trip.data, { members, sort: bucketSort }) : undefined),
     [trip.data, members, bucketSort],
@@ -321,7 +339,7 @@ export default function PlanScreen() {
 
   const weather = forecast.data ?? {};
   const bucketCount = trip.data?.bucketItems.length;
-  const onGlobe = flight !== null && !inBucket && globeDay === selectedDay;
+  const onGlobe = hasGlobe && !inBucket && globeDay === selectedDay;
   // Edit / Done (drag handles) only when the day has stops to reorder.
   const canReorder = !inBucket && (entries?.length ?? 0) > 1;
   const reordering = canReorder && editor.reordering;
@@ -367,7 +385,14 @@ export default function PlanScreen() {
       <View style={styles.body} onLayout={(e) => setBodyHeight(e.nativeEvent.layout.height)}>
         <View style={{ height: mapHeight }} testID="plan-map-area">
           {onGlobe ? (
-            <FlightGlobe key={flight.bookingId} route={flight} onShowMap={showMap} />
+            <FlightGlobe
+              key={flight?.bookingId ?? 'others'}
+              route={flight}
+              routeTraveler={me}
+              others={others}
+              focus={focusedTraveler}
+              onShowMap={showMap}
+            />
           ) : trip.data && selectedDay ? (
             <TripDayMap
               ref={map}
@@ -378,7 +403,7 @@ export default function PlanScreen() {
               extraPins={inBucket ? savedPins : undefined}
               fitIds={inBucket && savedIds.length ? savedIds : undefined}
               onLongPress={inBucket ? actions.dropPin : undefined}
-              onShowFlight={flight && !inBucket ? showFlight : undefined}
+              onShowFlight={hasGlobe && !inBucket ? showFlight : undefined}
               city={near}
             />
           ) : (
@@ -400,7 +425,7 @@ export default function PlanScreen() {
           onModeChange={selection.setPlanMode}
           bucketCount={bucketCount}
           header={
-            onGlobe ? (
+            onGlobe && flight ? (
               <>
                 <FlightCard
                   flight={flight.flight}
@@ -430,7 +455,12 @@ export default function PlanScreen() {
               reordering={reordering}
               header={
                 trip.data && selectedDay ? (
-                  <ArrivalsCard data={trip.data} day={selectedDay} />
+                  <ArrivalsCard
+                    data={trip.data}
+                    day={selectedDay}
+                    onTraveler={pickTraveler}
+                    focused={focusedTraveler}
+                  />
                 ) : undefined
               }
             />

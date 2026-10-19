@@ -25,8 +25,9 @@ describe('demo trip flights', () => {
       travelerId: WILLEM,
       airline: 'JetBlue',
       flightNumber: 'B6 1123',
-      from: { code: 'JFK', city: 'New York', placeId: null },
-      to: { code: 'LAS', city: 'Las Vegas', placeId: 'place-las' },
+      // Where the airports are, for the flight globe (TR-63).
+      from: { code: 'JFK', city: 'New York', placeId: 'place-jfk', lat: 40.6413, lng: -73.7781 },
+      to: { code: 'LAS', city: 'Las Vegas', placeId: 'place-las', lat: 36.084, lng: -115.1537 },
       departs: { date: '2026-11-12', time: '11:40', timezone: 'America/New_York' },
       arrives: { date: '2026-11-12', time: '14:45', timezone: 'America/Los_Angeles' },
     });
