@@ -29,7 +29,7 @@ const DAYS = ['2026-11-12', '2026-11-13', '2026-11-14', '2026-11-15', '2026-11-1
 const fetchMock = jest.fn();
 
 async function openPlan(scenario: string) {
-  renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
+  await renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
   // Fixture weather arrives through the query: wait for it on the selected day.
   return screen.findByTestId('day-header-weather');
 }

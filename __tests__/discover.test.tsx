@@ -25,7 +25,7 @@ const routes = {
 };
 
 async function openDiscover() {
-  renderRouter(routes, { initialUrl: '/scenario/vegas-discover' });
+  await renderRouter(routes, { initialUrl: '/scenario/vegas-discover' });
   await screen.findByTestId('discover-events');
 }
 

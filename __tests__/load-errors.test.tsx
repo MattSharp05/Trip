@@ -48,7 +48,7 @@ beforeEach(() => {
 afterEach(() => act(() => exitScenario()));
 
 it('Plan: says the trip could not load, and loads it on Try again', async () => {
-  renderRouter({ '(tabs)/plan/index': PlanScreen }, { initialUrl: '/plan' });
+  await renderRouter({ '(tabs)/plan/index': PlanScreen }, { initialUrl: '/plan' });
   expect(await screen.findByTestId('plan-error', {}, { timeout: 5000 })).toBeTruthy();
   offline = false;
   fireEvent.press(screen.getByText('Try again'));
@@ -57,13 +57,13 @@ it('Plan: says the trip could not load, and loads it on Try again', async () => 
 
 it('Plan: with no trip, points to Trips instead of a bare title', async () => {
   act(() => useTripStore.getState().selectTrip(null));
-  renderRouter({ '(tabs)/plan/index': PlanScreen }, { initialUrl: '/plan' });
+  await renderRouter({ '(tabs)/plan/index': PlanScreen }, { initialUrl: '/plan' });
   expect(await screen.findByTestId('plan-no-trip')).toBeTruthy();
   expect(screen.getByText('Go to Trips')).toBeTruthy();
 });
 
 it('Organize: an unreachable wallet is an error with Try again, not an empty wallet', async () => {
-  renderRouter(
+  await renderRouter(
     { '(tabs)/organize/_layout': OrganizeLayout, '(tabs)/organize/index': OrganizeRoute },
     { initialUrl: '/organize' },
   );

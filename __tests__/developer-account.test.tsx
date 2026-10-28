@@ -48,7 +48,7 @@ describe('Developer → Your account (TR-35)', () => {
     resetFakeAuth(testSession);
     const account = emptyAccount();
     act(() => useActiveSource.getState().setSource(account));
-    renderRouter(routes, { initialUrl: '/dev' });
+    await renderRouter(routes, { initialUrl: '/dev' });
 
     fireEvent.press(await screen.findByTestId('dev-add-sample'));
     const vegas = sampleVegasTripId(testSession.user.id);
@@ -62,7 +62,7 @@ describe('Developer → Your account (TR-35)', () => {
     const account = emptyAccount();
     await addSampleData(account, testSession.user.id);
     act(() => useActiveSource.getState().setSource(account));
-    renderRouter(routes, { initialUrl: '/dev' });
+    await renderRouter(routes, { initialUrl: '/dev' });
 
     fireEvent.press(await screen.findByTestId('dev-remove-sample'));
     expect(await screen.findByText('Sample data removed.')).toBeTruthy();
@@ -71,7 +71,7 @@ describe('Developer → Your account (TR-35)', () => {
 
   it('is not offered signed out', async () => {
     resetFakeAuth(null);
-    renderRouter(routes, { initialUrl: '/dev' });
+    await renderRouter(routes, { initialUrl: '/dev' });
     await screen.findByText('Developer');
     expect(screen.queryByTestId('dev-add-sample')).toBeNull();
   });

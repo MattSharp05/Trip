@@ -75,7 +75,7 @@ afterEach(() => {
 describe('Plan: the map can take the full screen', () => {
   async function open() {
     sheetID = 'plan-sheet';
-    renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
+    await renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
     await screen.findByTestId('trip-map');
     measureBody('plan-map-area', 700);
   }
@@ -144,7 +144,7 @@ describe('Plan: the map can take the full screen', () => {
 
 describe('Plan: a day with nothing placed shows the trip city', () => {
   it('frames Tokyo on a free day of the Tokyo trip', async () => {
-    renderRouter(routes, { initialUrl: '/scenario/tokyo-free-day' });
+    await renderRouter(routes, { initialUrl: '/scenario/tokyo-free-day' });
     const map = await screen.findByTestId('trip-map');
     const region = map.props.initialRegion;
     expect(region).toBeDefined();
@@ -157,7 +157,7 @@ describe('Plan: a day with nothing placed shows the trip city', () => {
 describe('Trips: the globe can be seen whole', () => {
   async function open() {
     sheetID = 'trips-sheet';
-    renderRouter(routes, { initialUrl: '/scenario/vegas-trips' });
+    await renderRouter(routes, { initialUrl: '/scenario/vegas-trips' });
     await screen.findByTestId('trips-globe-map');
     measureBody('trips-globe', 720);
   }

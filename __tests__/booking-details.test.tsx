@@ -33,14 +33,14 @@ async function openCard(card: string, ready: string) {
   act(() => {
     loadScenario('vegas-wallet');
   });
-  const router = renderRouter(routes, { initialUrl: '/organize' });
+  const router = await renderRouter(routes, { initialUrl: '/organize' });
   fireEvent.press(await screen.findByTestId(`wallet-card-${card}`));
   await screen.findByTestId(ready);
   return router;
 }
 
 beforeEach(() => {
-  openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+  openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue();
   mockFindCoverPhoto.mockClear();
   queryClient.removeQueries({ queryKey: ['photos'] });
 });

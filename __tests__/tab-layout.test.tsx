@@ -18,7 +18,7 @@ beforeEach(() => resetFakeAuth(testSession));
 
 describe('tab layout', () => {
   it('opens on the Trips tab', async () => {
-    const router = renderRouter(
+    const router = await renderRouter(
       {
         _layout: RootLayout,
         index: Index,

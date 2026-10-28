@@ -81,7 +81,7 @@ const SPHERE = 'item-07';
 const DINNER = 'item-08';
 
 async function openFriday() {
-  renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
+  await renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
   await screen.findByTestId(`itinerary-row-${BRUNCH}`);
 }
 
@@ -345,7 +345,7 @@ describe('Editing the itinerary on vegas-plan-day-2', () => {
   });
 
   it("doesn't let a booking's time change here", async () => {
-    renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
+    await renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
     await screen.findByTestId(`itinerary-row-${BRUNCH}`);
     act(() => useSelectionStore.getState().selectDay('2026-11-15'));
     fireEvent.press(await screen.findByTestId('itinerary-time-item-12'));

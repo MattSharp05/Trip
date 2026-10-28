@@ -46,7 +46,7 @@ async function openFlight(scenario: string) {
   act(() => {
     loadScenario(scenario);
   });
-  const router = renderRouter(routes, { initialUrl: '/organize' });
+  const router = await renderRouter(routes, { initialUrl: '/organize' });
   fireEvent.press(await screen.findByTestId('wallet-card-booking-flight-out'));
   await screen.findByTestId('flight-facts');
   return router;

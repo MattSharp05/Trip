@@ -38,7 +38,7 @@ const TPA = { latitude: 27.9755, longitude: -82.5332 };
 const LAS = { latitude: 36.084, longitude: -115.1537 };
 
 async function openPlan(scenario: string) {
-  const router = renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
+  const router = await renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
   await screen.findByTestId('trip-map');
   return router;
 }
@@ -147,7 +147,7 @@ describe('converging flight paths (TR-63)', () => {
   };
 
   async function openGlobe() {
-    renderRouter(routes, { initialUrl: '/scenario/group-flight-globe' });
+    await renderRouter(routes, { initialUrl: '/scenario/group-flight-globe' });
     await screen.findByTestId('flight-globe');
     await screen.findByTestId(`globe-arc-${BLAKE}`);
   }
@@ -205,7 +205,7 @@ describe('converging flight paths (TR-63)', () => {
   });
 
   it('tapping a traveller on the city map opens the globe; another day clears the highlight', async () => {
-    renderRouter(routes, { initialUrl: '/scenario/group-plan-arrivals' });
+    await renderRouter(routes, { initialUrl: '/scenario/group-plan-arrivals' });
     await screen.findByTestId('trip-map');
     fireEvent.press(await screen.findByTestId(`arrivals-LAS-${WILLEM}`));
     expect(screen.getByTestId('flight-globe')).toBeTruthy();
@@ -220,7 +220,7 @@ describe('converging flight paths (TR-63)', () => {
   });
 
   it('on the last day the arcs go outward from LAS', async () => {
-    renderRouter(routes, { initialUrl: '/scenario/group-plan-arrivals' });
+    await renderRouter(routes, { initialUrl: '/scenario/group-plan-arrivals' });
     await screen.findByTestId('trip-map');
     fireEvent.press(screen.getByTestId('pill-2026-11-16'));
     fireEvent.press(screen.getByRole('button', { name: 'Show the flight' }));

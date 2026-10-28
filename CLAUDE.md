@@ -16,9 +16,9 @@ Follows the `dev-workflow` skill (ticket-driven: Notion → branch → PR → QA
 - Epics data source: collection://863c0317-6a10-4e3d-a94d-4391a87359fa
 - GitHub: MattSharp05/Trip
 - Preview URLs: batched QA mode, so no per-PR previews. QA happens in Expo Go on the latest `main`.
-- QA link (latest `main` in Expo Go): `exp://u.expo.dev/0458c1dd-61a0-47f7-ac52-c648b4458fea?runtime-version=exposdk:57.0.0&channel-name=main`
-  (QR: https://qr.expo.dev/eas-update?slug=exp&projectId=0458c1dd-61a0-47f7-ac52-c648b4458fea&runtimeVersion=exposdk:57.0.0&channel=main,
-  or expo.dev → project `matthew` → Updates → branch `main`). Change `exposdk:57.0.0` on an SDK upgrade.
+- QA link (latest `main` in Expo Go): `exp://u.expo.dev/0458c1dd-61a0-47f7-ac52-c648b4458fea?runtime-version=exposdk:58.0.0&channel-name=main`
+  (QR: https://qr.expo.dev/eas-update?slug=exp&projectId=0458c1dd-61a0-47f7-ac52-c648b4458fea&runtimeVersion=exposdk:58.0.0&channel=main,
+  or expo.dev → project `matthew` → Updates → branch `main`). Change `exposdk:58.0.0` on an SDK upgrade.
 - QA links on ticket pages: put a **scannable QR image** directly under each QA check that has a
   link (Matthew scans it with the iPhone camera), plus the link as text. Make it with
   `python3 scripts/qa-qr.py "<link>" qr.png --upload <upload_url> <authorization>` after the
@@ -35,7 +35,7 @@ Follows the `dev-workflow` skill (ticket-driven: Notion → branch → PR → QA
 - Supabase project ref: wghftsubdrkxfzysovou
 
 ## Stack
-See `docs/TDD.md` (approved) and `docs/decisions/`. In short: Expo SDK 57 + TypeScript strict,
+See `docs/TDD.md` (approved) and `docs/decisions/`. In short: Expo SDK 58 + TypeScript strict,
 Expo Router with native tabs, **Expo Go compatible only** (no custom native code until Phase B);
 Supabase free (Postgres + RLS, Auth, Storage, Edge Functions holding every third-party key);
 Gemini Flash free tier behind a `ParseProvider` switch; map per the TR map spike (ADR 0002);

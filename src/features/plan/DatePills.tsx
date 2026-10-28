@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 
 import { dayLabelLong, dayOfMonth, weekdayShort } from '@/core/dates';
 import {
@@ -33,7 +33,7 @@ export function pillOffset(index: number, viewport: number): number {
 
 /** The trip's days as a row of pills with each day's weather; the selected one is orange. */
 export function DatePills({ days, selectedDay, forecast, unit, onSelect }: DatePillsProps) {
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
   const [viewport, setViewport] = useState(0);
   const scrolledOnce = useRef(false);
   const index = selectedDay ? days.indexOf(selectedDay) : -1;

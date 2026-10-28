@@ -12,7 +12,7 @@ a Trip account and, during the demo phase, Expo Go. There is no website or assoc
   other trip data); `accept_invite(token)` → inserts a `member` row (idempotent) and returns the
   trip id. Revoked or unknown tokens return a "this invite link is no longer active" error.
 - Link format: during the demo, the Expo Go link
-  `exp://u.expo.dev/<project-id>/--/invite/<token>?runtime-version=exposdk:57.0.0&channel-name=main`
+  `exp://u.expo.dev/<project-id>/--/invite/<token>?runtime-version=exposdk:58.0.0&channel-name=main`
   (built in one helper next to `src/scenarios/link.ts`), and `trip://invite/<token>` once there is
   a standalone build. The app shares it with React Native's `Share` API (the iOS share sheet; no
   new dependency).

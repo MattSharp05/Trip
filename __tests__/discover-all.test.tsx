@@ -45,7 +45,7 @@ const sectionTitles = () =>
     .map((h) => h.props.children);
 
 async function open(scenario: string, ready: string) {
-  renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
+  await renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
   await screen.findByTestId(ready);
 }
 

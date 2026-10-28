@@ -96,7 +96,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-async function joinAndLand(router: ReturnType<typeof renderRouter>) {
+async function joinAndLand(router: Awaited<ReturnType<typeof renderRouter>>) {
   await act(async () => fireEvent.press(screen.getByTestId('invite-preview-join')));
   expect(await screen.findByTestId('plan-header')).toBeOnTheScreen();
   expect(router.getPathname()).toBe('/plan');
@@ -107,7 +107,7 @@ describe('Opening an invite link', () => {
   it('signed out: keeps the invite through sign-up, then shows it and Join opens Plan', async () => {
     resetFakeAuth(null);
     const source = useAccount(account());
-    const router = renderRouter(routes, { initialUrl: INVITE });
+    const router = await renderRouter(routes, { initialUrl: INVITE });
 
     expect(await screen.findByRole('button', { name: 'Continue with email' })).toBeOnTheScreen();
     expect(router.getPathname()).toBe('/auth');
@@ -129,7 +129,7 @@ describe('Opening an invite link', () => {
   it('signed in: shows the preview straight away', async () => {
     resetFakeAuth(testSession);
     useAccount(account());
-    const router = renderRouter(routes, { initialUrl: INVITE });
+    const router = await renderRouter(routes, { initialUrl: INVITE });
 
     const card = await screen.findByTestId('invite-preview-card');
     expect(within(card).getByText('Join Las Vegas')).toBeOnTheScreen();
@@ -146,7 +146,7 @@ describe('Opening an invite link', () => {
         ],
       }),
     );
-    const router = renderRouter(routes, { initialUrl: INVITE });
+    const router = await renderRouter(routes, { initialUrl: INVITE });
 
     expect(await screen.findByTestId('plan-header')).toBeOnTheScreen();
     expect(router.getPathname()).toBe('/plan');
@@ -158,7 +158,7 @@ describe('Opening an invite link', () => {
     useAccount(
       account({ invites: groupInviteSnapshot.invites!.map((i) => ({ ...i, revoked: true })) }),
     );
-    renderRouter(routes, { initialUrl: INVITE });
+    await renderRouter(routes, { initialUrl: INVITE });
     expect(
       await screen.findByText('This invite link is no longer active. Ask for a new one.'),
     ).toBeOnTheScreen();
@@ -168,7 +168,7 @@ describe('Opening an invite link', () => {
     resetFakeAuth(testSession);
     const source = useAccount(account());
     const preview = jest.spyOn(source, 'previewInvite');
-    renderRouter(routes, { initialUrl: '/invite/a.b' });
+    await renderRouter(routes, { initialUrl: '/invite/a.b' });
     expect(await screen.findByTestId('invite-preview-inactive')).toBeOnTheScreen();
     expect(preview).not.toHaveBeenCalled();
   });
@@ -180,7 +180,7 @@ describe('Opening an invite link', () => {
         profiles: [...groupInviteSnapshot.profiles, { id: ME, displayName: 'test' }],
       }),
     );
-    renderRouter(routes, { initialUrl: INVITE });
+    await renderRouter(routes, { initialUrl: INVITE });
     expect(await screen.findByText('What should friends call you?')).toBeOnTheScreen();
     expect(screen.getByText('Join Las Vegas')).toBeOnTheScreen();
   });
@@ -189,7 +189,7 @@ describe('Opening an invite link', () => {
 describe('group-invite scenario', () => {
   it('shows the preview, and Join adds you in memory and opens Plan', async () => {
     resetFakeAuth(null);
-    const router = renderRouter(routes, { initialUrl: '/scenario/group-invite' });
+    const router = await renderRouter(routes, { initialUrl: '/scenario/group-invite' });
 
     expect(await screen.findByText('Join Las Vegas')).toBeOnTheScreen();
     expect(screen.getByText('Nov 12 – 16 · with Matthew and 2 others')).toBeOnTheScreen();
@@ -203,13 +203,15 @@ describe('Invite friends', () => {
   it('the members sheet shares the link; Reset link makes a new one', async () => {
     // Native dialogs open behind the sheet on iOS (TR-56): Reset asks in the sheet.
     const alert = jest.spyOn(Alert, 'alert');
-    const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' });
+    const share = jest
+      .spyOn(Share, 'share')
+      .mockResolvedValue({ action: 'sharedAction', activityType: undefined });
     // The share sheet would open behind the members sheet too: it closes first, and the share
     // sheet opens once it's gone (the library's mock never reports that: report it here).
     const members = () => screen.UNSAFE_getByType(MembersSheet);
     const sheetGone = () => act(() => members().findByType(BottomSheetModal).props.onDismiss());
     resetFakeAuth(null);
-    renderRouter(routes, { initialUrl: '/scenario/group-vegas' });
+    await renderRouter(routes, { initialUrl: '/scenario/group-vegas' });
     await screen.findByTestId('day-header-weather');
 
     fireEvent.press(screen.getByTestId('plan-members'));
@@ -248,7 +250,7 @@ describe('Invite friends', () => {
 
   it('on a trip with only you, an invite icon opens the same sheet', async () => {
     resetFakeAuth(null);
-    renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
+    await renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
     await screen.findByTestId('day-header-weather');
     expect(screen.queryByTestId('plan-members')).toBeNull();
 

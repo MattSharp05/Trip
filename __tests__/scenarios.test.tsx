@@ -41,7 +41,7 @@ describe('scenario deep links', () => {
   afterEach(() => act(() => exitScenario()));
 
   it('vegas-plan-day-2 lands on Plan with Las Vegas, Nov 13 selected', async () => {
-    const router = renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
+    const router = await renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
     await act(async () => {});
     expect(router.getPathname()).toBe('/plan');
     expect(useTripStore.getState().selectedTripId).toBe('trip-vegas');
@@ -49,7 +49,7 @@ describe('scenario deep links', () => {
   });
 
   it('empty-account lands on Trips with no trips', async () => {
-    const router = renderRouter(routes, {
+    const router = await renderRouter(routes, {
       initialUrl: '/scenario/empty-account?channel-name=main',
     });
     await act(async () => {});
@@ -59,21 +59,21 @@ describe('scenario deep links', () => {
   });
 
   it('shows an unknown scenario instead of loading anything', async () => {
-    renderRouter(routes, { initialUrl: '/scenario/vegas-day-99' });
+    await renderRouter(routes, { initialUrl: '/scenario/vegas-day-99' });
     expect(await screen.findByText('Unknown scenario')).toBeOnTheScreen();
     expect(screen.getByText('vegas-day-99')).toBeOnTheScreen();
     expect(useScenarioStore.getState().active).toBeNull();
   });
 
   it('hooks read the demo session once a scenario is loaded', async () => {
-    renderRouter(routes, { initialUrl: '/scenario/vegas-wallet' });
+    await renderRouter(routes, { initialUrl: '/scenario/vegas-wallet' });
     await act(async () => {});
     const { result } = renderHook(() => useTrips());
     await waitFor(() => expect(result.current.data).toHaveLength(4));
   });
 
   it('group-vegas lands on Plan, Nov 12, with Matthew (you), Blake and Willem on the trip', async () => {
-    const router = renderRouter(routes, { initialUrl: '/scenario/group-vegas' });
+    const router = await renderRouter(routes, { initialUrl: '/scenario/group-vegas' });
     await act(async () => {});
     expect(router.getPathname()).toBe('/plan');
     expect(useScenarioStore.getState().view.day).toBe('2026-11-12');
@@ -87,7 +87,7 @@ describe('scenario deep links', () => {
   });
 
   it('vegas-plan-day-2 has one member: you, the owner', async () => {
-    renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
+    await renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
     await act(async () => {});
     const { result } = renderHook(() => useTripMembers('trip-vegas'));
     await waitFor(() => expect(result.current.data).toBeDefined());
@@ -99,7 +99,7 @@ describe('scenario deep links', () => {
   it.each(SCENARIOS.filter((s) => s.tripId).map((s) => [s.name, s.tripId!]))(
     '%s still loads its trip',
     async (name, tripId) => {
-      renderRouter(routes, { initialUrl: `/scenario/${name}` });
+      await renderRouter(routes, { initialUrl: `/scenario/${name}` });
       await act(async () => {});
       const { result } = renderHook(() => useTripData(tripId));
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -112,7 +112,7 @@ describe('/dev index', () => {
   afterEach(() => act(() => exitScenario()));
 
   it('lists every scenario and the developer screens', async () => {
-    renderRouter(routes, { initialUrl: '/dev' });
+    await renderRouter(routes, { initialUrl: '/dev' });
     for (const name of [
       'vegas-plan-day-2',
       'vegas-flight-day',
@@ -128,7 +128,7 @@ describe('/dev index', () => {
   });
 
   it('loads a scenario when tapped', async () => {
-    const router = renderRouter(routes, { initialUrl: '/dev' });
+    const router = await renderRouter(routes, { initialUrl: '/dev' });
     fireEvent.press(await screen.findByText('vegas-budget-eur'));
     await act(async () => {});
     expect(router.getPathname()).toBe('/organize');
@@ -136,9 +136,9 @@ describe('/dev index', () => {
   });
 
   it('shows the loaded demo session and exits it', async () => {
-    renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
+    await renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
     await act(async () => {});
-    renderRouter(routes, { initialUrl: '/dev' });
+    await renderRouter(routes, { initialUrl: '/dev' });
     expect(await screen.findByText('Today is Fri, Nov 13, 9:00 AM')).toBeOnTheScreen();
     expect(await screen.findByText('4 trips')).toBeOnTheScreen();
     expect(await screen.findByText('Las Vegas: 15 plans, 5 bookings')).toBeOnTheScreen();
@@ -149,7 +149,7 @@ describe('/dev index', () => {
   });
 
   it('opens the design gallery', async () => {
-    const router = renderRouter(routes, { initialUrl: '/dev' });
+    const router = await renderRouter(routes, { initialUrl: '/dev' });
     fireEvent.press(await screen.findByText('Design gallery'));
     await act(async () => {});
     expect(router.getPathname()).toBe('/dev/gallery');

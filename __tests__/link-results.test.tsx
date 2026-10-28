@@ -73,7 +73,7 @@ const placeRows = () =>
   });
 
 async function open(scenario: string) {
-  renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
+  await renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
   await screen.findByTestId('bucket-list');
 }
 

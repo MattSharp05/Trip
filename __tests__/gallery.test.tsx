@@ -31,14 +31,14 @@ const routes = {
 
 describe('design gallery', () => {
   it('opens from the developer index', async () => {
-    const router = renderRouter(routes, { initialUrl: '/dev' });
+    const router = await renderRouter(routes, { initialUrl: '/dev' });
     fireEvent.press(await screen.findByRole('button', { name: 'Design gallery' }));
     expect(router.getPathname()).toBe('/dev/gallery');
     await act(async () => {});
   });
 
   it('shows every component in its states', async () => {
-    renderRouter(routes, { initialUrl: '/dev/gallery' });
+    await renderRouter(routes, { initialUrl: '/dev/gallery' });
 
     expect(await screen.findByText('My Trips')).toBeOnTheScreen();
     await act(async () => {}); // let the Skeletons read the Reduce Motion setting
@@ -58,7 +58,7 @@ describe('design gallery', () => {
   });
 
   it('switches chips and segments, and undoes from the toast', async () => {
-    renderRouter(routes, { initialUrl: '/dev/gallery' });
+    await renderRouter(routes, { initialUrl: '/dev/gallery' });
 
     fireEvent.press(await screen.findByRole('button', { name: 'Hotels' }));
     await act(async () => {});
@@ -79,7 +79,7 @@ describe('design gallery', () => {
   it('is hidden when dev tools are off', async () => {
     process.env.EXPO_PUBLIC_SCENARIOS = 'off';
     try {
-      const router = renderRouter(routes, { initialUrl: '/dev/gallery' });
+      const router = await renderRouter(routes, { initialUrl: '/dev/gallery' });
       expect(await screen.findByRole('header', { name: 'My Trips' })).toBeOnTheScreen();
       expect(router.getPathname()).toBe('/trips');
       expect(screen.queryByRole('button', { name: 'Design gallery' })).toBeNull();

@@ -84,7 +84,7 @@ const cardNames = () =>
 
 describe('Trips tab', () => {
   it('shows My Trips with Upcoming, Past and All', async () => {
-    renderRouter(routes, { initialUrl: '/scenario/vegas-trips' });
+    await renderRouter(routes, { initialUrl: '/scenario/vegas-trips' });
     expect(await screen.findByRole('header', { name: 'My Trips' })).toBeOnTheScreen();
     await screen.findByTestId('trip-card-trip-vegas');
 
@@ -110,7 +110,7 @@ describe('Trips tab', () => {
   });
 
   it('tapping a card selects the trip and opens Plan', async () => {
-    const router = renderRouter(routes, { initialUrl: '/scenario/vegas-trips' });
+    const router = await renderRouter(routes, { initialUrl: '/scenario/vegas-trips' });
     act(() => useTripStore.getState().selectTrip(null));
     fireEvent.press(
       await screen.findByRole('button', { name: 'Cape Town, Dec 18, 2026 – Jan 6, 2027' }),
@@ -121,14 +121,14 @@ describe('Trips tab', () => {
   });
 
   it('shows the empty state for a new account', async () => {
-    renderRouter(routes, { initialUrl: '/scenario/empty-account' });
+    await renderRouter(routes, { initialUrl: '/scenario/empty-account' });
     expect(await screen.findByText('Plan your first trip')).toBeOnTheScreen();
     expect(screen.getByTestId('trips-empty-create')).toBeOnTheScreen();
     expect(screen.queryByRole('tab', { name: 'Upcoming' })).toBeNull();
   });
 
   it('creates a trip: search, pick, dates, save', async () => {
-    const router = renderRouter(routes, { initialUrl: '/scenario/vegas-trips' });
+    const router = await renderRouter(routes, { initialUrl: '/scenario/vegas-trips' });
     fireEvent.press(await screen.findByTestId('trips-create'));
     await act(async () => {});
     expect(router.getPathname()).toBe('/trips/new');

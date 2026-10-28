@@ -36,7 +36,7 @@ async function openWallet(scenario = 'vegas-wallet') {
   act(() => {
     loadScenario(scenario);
   });
-  const router = renderRouter(routes, { initialUrl: '/organize' });
+  const router = await renderRouter(routes, { initialUrl: '/organize' });
   await screen.findByTestId('wallet-card-booking-flight-out');
   return router;
 }
@@ -112,7 +112,7 @@ describe('Organize → Wallet', () => {
     act(() => {
       loadScenario('vegas-budget-eur');
     });
-    renderRouter(routes, { initialUrl: '/organize' });
+    await renderRouter(routes, { initialUrl: '/organize' });
     expect(await screen.findByTestId('budget-slot')).toBeOnTheScreen();
     expect(screen.queryByTestId('wallet-list')).toBeNull();
     fireEvent.press(screen.getByText('Wallet'));
@@ -130,7 +130,7 @@ describe('Organize → Wallet on a group trip: Mine / Shared (TR-61)', () => {
     act(() => {
       loadScenario(scenario);
     });
-    const router = renderRouter(routes, { initialUrl: '/organize' });
+    const router = await renderRouter(routes, { initialUrl: '/organize' });
     await screen.findByTestId(ready);
     return router;
   }

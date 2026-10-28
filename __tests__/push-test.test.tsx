@@ -55,7 +55,7 @@ beforeEach(() => {
 
 describe('push test (TR-52)', () => {
   it('opens from the developer index', async () => {
-    const router = renderRouter(routes, { initialUrl: '/dev' });
+    const router = await renderRouter(routes, { initialUrl: '/dev' });
     fireEvent.press(await screen.findByRole('button', { name: 'Push test' }));
     expect(router.getPathname()).toBe('/dev/push');
     await act(async () => {});
@@ -63,7 +63,7 @@ describe('push test (TR-52)', () => {
 
   it('asks permission, shows the token and sends the push as the phone locks', async () => {
     const moveTo = appStateListeners();
-    renderRouter(routes, { initialUrl: '/dev/push' });
+    await renderRouter(routes, { initialUrl: '/dev/push' });
     fireEvent.press(await screen.findByRole('button', { name: 'Allow notifications' }));
 
     expect(await screen.findByText('ExponentPushToken[test-token]')).toBeOnTheScreen();
@@ -93,7 +93,7 @@ describe('push test (TR-52)', () => {
 
   it('sends now with the app open, sees it arrive and sees it opened', async () => {
     notifications.getPermissionsAsync.mockResolvedValueOnce(permission('granted'));
-    renderRouter(routes, { initialUrl: '/dev/push' });
+    await renderRouter(routes, { initialUrl: '/dev/push' });
 
     fireEvent.press(await screen.findByRole('button', { name: 'Send now' }));
     expect(
@@ -124,7 +124,7 @@ describe('push test (TR-52)', () => {
     notifications.getExpoPushTokenAsync.mockRejectedValueOnce(
       new Error('No "projectId" found in Expo Go'),
     );
-    renderRouter(routes, { initialUrl: '/dev/push' });
+    await renderRouter(routes, { initialUrl: '/dev/push' });
 
     expect(await screen.findByText('No "projectId" found in Expo Go')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Try again' })).toBeOnTheScreen();
@@ -136,7 +136,7 @@ describe('push test (TR-52)', () => {
       .mocked(sendExpoPush)
       .mockRejectedValueOnce(new Error('Expo Push refused it: InvalidCredentials'));
     notifications.getPermissionsAsync.mockResolvedValueOnce(permission('granted'));
-    renderRouter(routes, { initialUrl: '/dev/push' });
+    await renderRouter(routes, { initialUrl: '/dev/push' });
 
     fireEvent.press(await screen.findByRole('button', { name: 'Send now' }));
     expect(await screen.findByText('Expo Push refused it: InvalidCredentials')).toBeOnTheScreen();
@@ -144,7 +144,7 @@ describe('push test (TR-52)', () => {
 
   it('says where to turn notifications back on after a denial', async () => {
     notifications.getPermissionsAsync.mockResolvedValueOnce(permission('denied'));
-    renderRouter(routes, { initialUrl: '/dev/push' });
+    await renderRouter(routes, { initialUrl: '/dev/push' });
 
     expect(await screen.findByTestId('push-denied')).toHaveTextContent(/Settings app → Expo Go/);
     expect(screen.queryByRole('button', { name: 'Allow notifications' })).toBeNull();

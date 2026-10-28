@@ -1,5 +1,11 @@
 import type { Ref } from 'react';
-import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import {
+  StyleSheet,
+  TextInput,
+  View,
+  type TextInputInstance,
+  type TextInputProps,
+} from 'react-native';
 
 import { colors, continuous, radii, spacing, typography } from '@/theme';
 import { Text } from '@/ui';
@@ -9,7 +15,7 @@ export interface TextFieldProps extends Omit<TextInputProps, 'style'> {
   /** Shown under the field in place of `hint`. */
   error?: string | null;
   hint?: string;
-  ref?: Ref<TextInput>;
+  ref?: Ref<TextInputInstance>;
 }
 
 /** A labelled single-line input on a raised surface, with an inline error underneath. */

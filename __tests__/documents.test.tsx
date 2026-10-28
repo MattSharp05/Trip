@@ -35,7 +35,7 @@ async function openWallet(scenario = 'vegas-wallet') {
   act(() => {
     loadScenario(scenario);
   });
-  const router = renderRouter(routes, { initialUrl: '/organize' });
+  const router = await renderRouter(routes, { initialUrl: '/organize' });
   await screen.findByTestId('wallet-card-document-passport');
   return router;
 }
@@ -181,7 +181,7 @@ describe('Sharing a passport with a group trip (TR-61)', () => {
         }),
       ),
     );
-    renderRouter(routes, { initialUrl: '/organize' });
+    await renderRouter(routes, { initialUrl: '/organize' });
     expect(await screen.findByTestId('tag-wallet-card-document-blake')).toHaveTextContent(
       'Added by Blake',
     );
