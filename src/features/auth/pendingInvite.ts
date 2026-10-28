@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { router } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { useEffect } from 'react';
 import { create } from 'zustand';
 
@@ -48,6 +48,10 @@ export function forgetInvite(): void {
  */
 export function useReturnToInvite(signedIn: boolean): void {
   const token = usePendingInvite((s) => s.token);
+  // Signing in moves the auth guard off Welcome, through the index redirect, to the tabs. Open the
+  // invite once that's done, or the redirect replaces it (expo-router 58 runs it after this effect).
+  const pathname = usePathname();
+  const redirecting = pathname === '/' || pathname.startsWith('/auth');
 
   useEffect(() => {
     void attempt(() => SecureStore.getItemAsync(KEY)).then((stored) => {
@@ -60,8 +64,8 @@ export function useReturnToInvite(signedIn: boolean): void {
   }, []);
 
   useEffect(() => {
-    if (signedIn && token) router.replace(`/invite/${token}`);
-  }, [signedIn, token]);
+    if (signedIn && token && !redirecting) router.replace(`/invite/${token}`);
+  }, [signedIn, token, redirecting]);
 }
 
 /** Tests: forget everything, as a fresh launch. */

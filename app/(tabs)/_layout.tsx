@@ -1,4 +1,4 @@
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { NativeTabs } from 'expo-router/native-tabs';
 
 import { TAB_TINT, TABS } from '@/core/tabs';
 import { useClipboardOffer } from '@/features/links';

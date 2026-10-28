@@ -15,13 +15,18 @@ jest.mock('expo-secure-store', () => ({
   setItemAsync: jest.fn(async (key: string, value: string) => void mockStore.set(key, value)),
   deleteItemAsync: jest.fn(async (key: string) => void mockStore.delete(key)),
 }));
-jest.mock('expo-router', () => ({ router: { replace: jest.fn() } }));
+let mockPathname = '/trips';
+jest.mock('expo-router', () => ({
+  router: { replace: jest.fn() },
+  usePathname: () => mockPathname,
+}));
 
 const TOKEN = 'Ab3_-xYz0123456789abcd';
 const KEY = 'trip.pendingInvite';
 
 beforeEach(() => {
   mockStore.clear();
+  mockPathname = '/trips';
   resetPendingInvite();
   jest.mocked(router.replace).mockClear();
 });
@@ -41,6 +46,13 @@ describe('the invite kept through sign-in', () => {
     expect(router.replace).not.toHaveBeenCalled();
     expect(mockStore.get(KEY)).toMatch(new RegExp(` ${TOKEN}$`));
 
+    // Signing in leaves Welcome through the index redirect: the invite waits until that's done.
+    mockPathname = '/auth/sign-up';
+    hook.rerender({ on: true });
+    mockPathname = '/';
+    hook.rerender({ on: true });
+    expect(router.replace).not.toHaveBeenCalled();
+    mockPathname = '/trips';
     hook.rerender({ on: true });
     expect(router.replace).toHaveBeenCalledWith(`/invite/${TOKEN}`);
 
