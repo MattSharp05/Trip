@@ -40,7 +40,7 @@ function reduceMotion(enabled: boolean) {
 }
 
 async function openTrips() {
-  const router = renderRouter(routes, { initialUrl: '/scenario/vegas-trips' });
+  const router = await renderRouter(routes, { initialUrl: '/scenario/vegas-trips' });
   const map = await screen.findByTestId('trips-globe-map');
   return { router, map };
 }
@@ -126,7 +126,7 @@ describe('Trips globe on vegas-trips', () => {
 });
 
 it('shows no globe for a new account', async () => {
-  renderRouter(routes, { initialUrl: '/scenario/empty-account' });
+  await renderRouter(routes, { initialUrl: '/scenario/empty-account' });
   expect(await screen.findByText('Plan your first trip')).toBeOnTheScreen();
   expect(screen.queryByTestId('trips-globe')).toBeNull();
 });

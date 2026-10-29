@@ -40,7 +40,7 @@ const FOUNTAINS = 'item-06';
 const SPHERE = 'item-07';
 
 async function open(scenario: string, firstRow: string) {
-  renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
+  await renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
   await screen.findByTestId(`itinerary-row-${firstRow}`);
 }
 

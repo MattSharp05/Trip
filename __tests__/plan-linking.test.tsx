@@ -34,7 +34,7 @@ const routes = {
 const SPHERE = { latitude: 36.1207, longitude: -115.1622 };
 
 async function openPlan(scenario: string) {
-  renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
+  await renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
   await screen.findByTestId('trip-map');
 }
 

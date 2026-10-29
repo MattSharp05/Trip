@@ -44,7 +44,7 @@ async function openWallet(scenario: string) {
   act(() => {
     loadScenario(scenario);
   });
-  renderRouter(organizeRoutes, { initialUrl: '/organize' });
+  await renderRouter(organizeRoutes, { initialUrl: '/organize' });
   return screen.findByTestId('wallet-card-booking-flight-out');
 }
 
@@ -67,7 +67,7 @@ afterEach(() => {
 
 describe('Live flight status', () => {
   it('shows "Delayed 25 min" on the Plan flight card', async () => {
-    renderRouter(planRoutes, { initialUrl: '/scenario/vegas-flight-delayed' });
+    await renderRouter(planRoutes, { initialUrl: '/scenario/vegas-flight-delayed' });
     await screen.findByTestId('trip-map');
     fireEvent.press(screen.getByTestId('itinerary-row-item-01'));
     const status = within(screen.getByTestId('flight-card-status'));

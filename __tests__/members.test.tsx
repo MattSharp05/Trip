@@ -47,7 +47,7 @@ afterEach(() => {
 });
 
 async function open(scenario: string) {
-  const router = renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
+  const router = await renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
   await screen.findByTestId('day-header-weather');
   return router;
 }

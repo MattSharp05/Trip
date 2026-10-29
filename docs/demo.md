@@ -8,7 +8,7 @@ runs on every push to `main` as the Maestro flow `maestro/demo-loop.yaml` (scree
 
 1. Open the latest `main` in Expo Go: scan the QR on expo.dev (project `matthew` → Updates →
    branch `main`) or open
-   `exp://u.expo.dev/0458c1dd-61a0-47f7-ac52-c648b4458fea?runtime-version=exposdk:57.0.0&channel-name=main`.
+   `exp://u.expo.dev/0458c1dd-61a0-47f7-ac52-c648b4458fea?runtime-version=exposdk:58.0.0&channel-name=main`.
 2. Sign in with your account.
 3. Trips → profile button → Settings → Developer → **Add the sample Las Vegas trip**. Plan opens on
    Las Vegas (Nov 12–16, 2026) with its bookings, itinerary, Bucket List and budget. Adding again
@@ -32,8 +32,8 @@ answers and save nothing.
 
 Scenario links (Expo Go):
 
-- `import-review-flight`: `exp://u.expo.dev/0458c1dd-61a0-47f7-ac52-c648b4458fea/--/scenario/import-review-flight?runtime-version=exposdk:57.0.0&channel-name=main`
-- `link-results`: `exp://u.expo.dev/0458c1dd-61a0-47f7-ac52-c648b4458fea/--/scenario/link-results?runtime-version=exposdk:57.0.0&channel-name=main`
+- `import-review-flight`: `exp://u.expo.dev/0458c1dd-61a0-47f7-ac52-c648b4458fea/--/scenario/import-review-flight?runtime-version=exposdk:58.0.0&channel-name=main`
+- `link-results`: `exp://u.expo.dev/0458c1dd-61a0-47f7-ac52-c648b4458fea/--/scenario/link-results?runtime-version=exposdk:58.0.0&channel-name=main`
 
 ## If something goes wrong
 

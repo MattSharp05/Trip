@@ -100,7 +100,7 @@ beforeEach(() => {
 describe('settings', () => {
   it('opens from the profile button on Trips and shows the account', async () => {
     resetFakeAuth(testSession);
-    const router = renderRouter(routes, { initialUrl: '/trips' });
+    const router = await renderRouter(routes, { initialUrl: '/trips' });
     fireEvent.press(await screen.findByRole('button', { name: 'Settings' }));
     expect(await screen.findByText('test@example.com')).toBeOnTheScreen();
     expect(router.getPathname()).toBe('/settings');
@@ -110,7 +110,7 @@ describe('settings', () => {
 
   it('switches temperatures shown elsewhere to °C and saves it to the account', async () => {
     resetFakeAuth(testSession);
-    renderRouter(routes, { initialUrl: '/settings' });
+    await renderRouter(routes, { initialUrl: '/settings' });
     expect(await screen.findByText('75°')).toBeOnTheScreen();
     expect(screen.getByText('55°')).toBeOnTheScreen();
 
@@ -133,7 +133,7 @@ describe('settings', () => {
         user_metadata: { preferences: { temperatureUnit: 'celsius', distanceUnit: 'km' } },
       },
     } as Session);
-    renderRouter(routes, { initialUrl: '/settings' });
+    await renderRouter(routes, { initialUrl: '/settings' });
     expect(await screen.findByText('24°')).toBeOnTheScreen();
     expect(screen.getByRole('tab', { name: 'Km' })).toBeSelected();
   });
@@ -141,7 +141,7 @@ describe('settings', () => {
   it('puts the unit back and says so when saving fails', async () => {
     resetFakeAuth(testSession);
     mockUpdateUser.mockResolvedValue({ data: {}, error: new Error('offline') });
-    renderRouter(routes, { initialUrl: '/settings' });
+    await renderRouter(routes, { initialUrl: '/settings' });
     await screen.findByText('75°');
 
     await act(async () => fireEvent.press(screen.getByRole('tab', { name: '°C' })));
@@ -154,7 +154,7 @@ describe('settings', () => {
 
   it('picks a home currency from the list', async () => {
     resetFakeAuth(testSession);
-    const router = renderRouter(routes, { initialUrl: '/settings' });
+    const router = await renderRouter(routes, { initialUrl: '/settings' });
     fireEvent.press(await screen.findByTestId('settings-currency'));
     expect(router.getPathname()).toBe('/settings/currency');
     expect(screen.getByRole('button', { name: 'US dollar, USD' })).toBeSelected();
@@ -174,7 +174,7 @@ describe('settings', () => {
       emitAuthChange('SIGNED_OUT', null);
       return { data: {}, error: null };
     });
-    const router = renderRouter(routes, { initialUrl: '/trips' });
+    const router = await renderRouter(routes, { initialUrl: '/trips' });
     await screen.findByRole('header', { name: 'My Trips' });
     act(() => useTripStore.getState().selectTrip('trip-1'));
     expect(queryClient.getQueryCache().getAll().length).toBeGreaterThan(0);
@@ -193,14 +193,14 @@ describe('settings', () => {
 
   it('keeps Settings behind sign-in', async () => {
     resetFakeAuth(null);
-    const router = renderRouter(routes, { initialUrl: '/settings' });
+    const router = await renderRouter(routes, { initialUrl: '/settings' });
     expect(await screen.findByRole('button', { name: 'Continue with email' })).toBeOnTheScreen();
     expect(router.getPathname()).toBe('/auth');
   });
 
   it('shows Demo data in a scenario session and keeps changes off the server', async () => {
     resetFakeAuth(null);
-    const router = renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
+    const router = await renderRouter(routes, { initialUrl: '/scenario/vegas-plan-day-2' });
     await waitFor(() => expect(router.getPathname()).toBe('/plan'));
     act(() => nav.push('/settings'));
 
@@ -220,7 +220,7 @@ describe('settings', () => {
 
   it('shows Terms and Privacy as readable pages', async () => {
     resetFakeAuth(testSession);
-    const router = renderRouter(routes, { initialUrl: '/settings' });
+    const router = await renderRouter(routes, { initialUrl: '/settings' });
     fireEvent.press(await screen.findByRole('button', { name: 'Terms of Use' }));
     expect(router.getPathname()).toBe('/settings/terms');
     expect(await screen.findByRole('header', { name: 'A demo, as is' })).toBeOnTheScreen();

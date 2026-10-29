@@ -43,11 +43,11 @@ const routes = {
   '(tabs)/organize/import': ImportRoute,
 };
 
-function open(scenario: string) {
+async function open(scenario: string) {
   act(() => {
     loadScenario(scenario);
   });
-  return renderRouter(routes, { initialUrl: '/organize' });
+  return await renderRouter(routes, { initialUrl: '/organize' });
 }
 
 const source = () => useActiveSource.getState().source;
@@ -60,7 +60,7 @@ describe('booking import', () => {
   });
 
   it('opens the add sheet from the orange + with PDF, screenshot and passport options', async () => {
-    open('vegas-wallet');
+    await open('vegas-wallet');
     fireEvent.press(await screen.findByTestId('organize-add'));
     expect(await screen.findByText('Choose a PDF')).toBeOnTheScreen();
     expect(screen.getByText('Choose a screenshot')).toBeOnTheScreen();
@@ -79,7 +79,7 @@ describe('booking import', () => {
         },
       ],
     });
-    open('vegas-wallet');
+    await open('vegas-wallet');
     fireEvent.press(await screen.findByTestId('organize-add'));
     fireEvent.press(await screen.findByTestId('add-booking-pdf'));
 
@@ -124,7 +124,7 @@ describe('booking import', () => {
         },
       ],
     });
-    open('vegas-wallet');
+    await open('vegas-wallet');
     // Blake is on the Cape Town trip too.
     act(() =>
       useActiveSource.getState().setSource(
@@ -157,13 +157,13 @@ describe('booking import', () => {
   });
 
   it('shows no visibility row on a trip you are alone on', async () => {
-    open('import-review-flight');
+    await open('import-review-flight');
     expect(await screen.findByText('Review booking', {}, { timeout: 3000 })).toBeOnTheScreen();
     expect(screen.queryByTestId('import-visibility')).toBeNull();
   });
 
   it('offers to create a trip when none matches, and saves the booking in it', async () => {
-    open('import-review-new-trip');
+    await open('import-review-new-trip');
     expect(await screen.findByText('Review booking', {}, { timeout: 3000 })).toBeOnTheScreen();
     expect(await screen.findByText('Create Lisbon trip, Feb 12 – Feb 16, 2027?')).toBeOnTheScreen();
     expect(screen.getByText('Create trip and save')).toBeOnTheScreen();
@@ -191,7 +191,7 @@ describe('booking import', () => {
   });
 
   it('shows the review of a round-trip flight with every leg and the doubtful seat flagged', async () => {
-    open('import-review-flight');
+    await open('import-review-flight');
     expect(await screen.findByText('Review booking', {}, { timeout: 3000 })).toBeOnTheScreen();
     expect(screen.getByText('Flight 1')).toBeOnTheScreen();
     expect(screen.getByText('Flight 2')).toBeOnTheScreen();
@@ -203,7 +203,7 @@ describe('booking import', () => {
   });
 
   it('flags a field left empty and lets the type change', async () => {
-    open('import-review-restaurant');
+    await open('import-review-restaurant');
     expect(await screen.findByText('Review booking', {}, { timeout: 3000 })).toBeOnTheScreen();
     expect(screen.getByTestId('review-venue-name').props.value).toBe('La Colombe');
 
@@ -219,7 +219,7 @@ describe('booking import', () => {
   });
 
   it('saves a reservation as a ticket card with a dinner on the plan', async () => {
-    open('import-review-restaurant');
+    await open('import-review-restaurant');
     expect(await screen.findByText('Review booking', {}, { timeout: 3000 })).toBeOnTheScreen();
     fireEvent.press(screen.getByTestId('import-save'));
     await waitFor(() => expect(useImportStore.getState().savedMessage).not.toBeNull());
@@ -235,7 +235,7 @@ describe('booking import', () => {
   });
 
   it('says plainly when booking import is not set up yet', async () => {
-    open('import-not-configured');
+    await open('import-not-configured');
     expect(
       await screen.findByText(
         "Booking import isn't set up yet. Add the booking by hand for now.",

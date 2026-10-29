@@ -154,7 +154,7 @@ export function BucketList({
         offset: headerHeight + BUCKET_ROW_HEIGHT * i,
         index: i,
       })}
-      ListHeaderComponent={header}
+      ListHeaderComponent={header ?? undefined}
       ListFooterComponent={add}
       contentContainerStyle={{ paddingBottom: bottomInset }}
       testID="bucket-list"

@@ -2,7 +2,7 @@ import { appLink } from './appLink';
 import { inviteLink, inviteMessage, isInviteToken, parseInviteLink } from './inviteLink';
 
 const TOKEN = 'Ab3_-xYz0123456789abcd';
-const EXPO_GO = `exp://u.expo.dev/0458c1dd-61a0-47f7-ac52-c648b4458fea/--/invite/${TOKEN}?runtime-version=exposdk:57.0.0&channel-name=main`;
+const EXPO_GO = `exp://u.expo.dev/0458c1dd-61a0-47f7-ac52-c648b4458fea/--/invite/${TOKEN}?runtime-version=exposdk:58.0.0&channel-name=main`;
 
 describe('inviteLink', () => {
   it('builds the Expo Go link by default', () => {

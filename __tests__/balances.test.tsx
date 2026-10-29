@@ -39,7 +39,7 @@ async function openBalances() {
   act(() => {
     loadScenario('group-balances');
   });
-  renderRouter(routes, { initialUrl: '/organize' });
+  await renderRouter(routes, { initialUrl: '/organize' });
   await screen.findByTestId('balances');
 }
 
@@ -111,7 +111,7 @@ describe('Organize → Expenses → Balances (group-balances)', () => {
     act(() => {
       loadScenario('vegas-budget-eur');
     });
-    renderRouter(routes, { initialUrl: '/organize' });
+    await renderRouter(routes, { initialUrl: '/organize' });
     await screen.findByTestId('budget-summary');
     expect(screen.queryByText('Balances')).toBeNull();
   });

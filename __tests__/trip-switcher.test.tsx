@@ -53,7 +53,7 @@ beforeEach(() => {
 afterEach(() => act(() => exitScenario()));
 
 async function openPlan(scenario: string) {
-  renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
+  await renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
   return screen.findByTestId('day-header-weather');
 }
 
@@ -133,7 +133,7 @@ describe('Trip switcher on Plan', () => {
 
 describe('Trip switcher on Organize', () => {
   it('shows the trip under the title and switches from there', async () => {
-    renderRouter(routes, { initialUrl: '/scenario/vegas-wallet' });
+    await renderRouter(routes, { initialUrl: '/scenario/vegas-wallet' });
     const title = await screen.findByTestId('organize-trip-title');
     expect(within(title).getByText('Las Vegas · Nov 12 – Nov 16, 2026')).toBeOnTheScreen();
     await switchTo('organize-trip-title', 'trip-cape-town');
@@ -143,7 +143,7 @@ describe('Trip switcher on Organize', () => {
 
   // TR-48: the trip line was small grey footnote text and easy to miss.
   it('shows the trip in headline type and primary text, the dates in secondary', async () => {
-    renderRouter(routes, { initialUrl: '/scenario/vegas-wallet' });
+    await renderRouter(routes, { initialUrl: '/scenario/vegas-wallet' });
     const title = await screen.findByTestId('organize-trip-title');
     const line = within(title).getByText('Las Vegas · Nov 12 – Nov 16, 2026');
     expect(StyleSheet.flatten(line.props.style)).toMatchObject({
@@ -168,7 +168,7 @@ describe('On a real account', () => {
 
   it('the chosen trip survives a restart', async () => {
     act(() => useTripStore.getState().selectTrip('trip-vegas'));
-    const first = renderRouter(
+    const first = await renderRouter(
       { '(tabs)/plan/index': PlanScreen, '(tabs)/trips/index': TripsScreen },
       { initialUrl: '/plan' },
     );
@@ -180,7 +180,7 @@ describe('On a real account', () => {
     // A relaunch: nothing selected in memory; the app opens on Trips, which restores the choice.
     act(() => useTripStore.getState().selectTrip(null));
     queryClient.clear();
-    renderRouter(
+    await renderRouter(
       { '(tabs)/plan/index': PlanScreen, '(tabs)/trips/index': TripsScreen },
       { initialUrl: '/trips' },
     );

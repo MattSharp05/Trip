@@ -26,7 +26,7 @@ const routes = {
 };
 
 async function openPlan(scenario: string) {
-  renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
+  await renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
   await screen.findByTestId('itinerary-list');
 }
 

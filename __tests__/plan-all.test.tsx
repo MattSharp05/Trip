@@ -25,7 +25,7 @@ const routes = {
 };
 
 async function openBucket() {
-  renderRouter(routes, { initialUrl: '/scenario/vegas-bucket' });
+  await renderRouter(routes, { initialUrl: '/scenario/vegas-bucket' });
   await screen.findByTestId('bucket-list');
 }
 

@@ -4,7 +4,7 @@
 Activities), but the demo phase must cost $0: no paid Apple developer account and no Mac. Claude
 builds in Linux cloud sessions.
 
-**Decision.** Expo (React Native + TypeScript, SDK 57). Until Phase B, use only libraries included in
+**Decision.** Expo (React Native + TypeScript, SDK 58; was 57 until Expo Go moved to 58). Until Phase B, use only libraries included in
 Expo Go and no custom native code. Delivery is EAS Update to the `main` channel, opened in Expo Go.
 
 **Consequences.**

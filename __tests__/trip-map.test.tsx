@@ -36,7 +36,7 @@ const routes = {
 const FRIDAY = ['place-mon-ami-gabi', 'place-bellagio', 'place-sphere', 'place-carbone'];
 
 async function openPlan(scenario: string) {
-  renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
+  await renderRouter(routes, { initialUrl: `/scenario/${scenario}` });
   return screen.findByTestId('trip-map');
 }
 

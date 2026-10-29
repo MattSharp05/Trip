@@ -45,7 +45,7 @@ async function openBudget() {
   act(() => {
     loadScenario('vegas-budget-eur');
   });
-  renderRouter(routes, { initialUrl: '/organize' });
+  await renderRouter(routes, { initialUrl: '/organize' });
   await screen.findByTestId('budget-summary');
 }
 
@@ -191,7 +191,7 @@ describe('Organize → Expenses on a group trip', () => {
     act(() => {
       loadScenario('group-expenses');
     });
-    renderRouter(routes, { initialUrl: '/organize' });
+    await renderRouter(routes, { initialUrl: '/organize' });
     await screen.findByTestId('budget-summary');
     fireEvent.press(screen.getByText('All'));
   }

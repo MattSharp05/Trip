@@ -47,14 +47,14 @@ async function fill(email: string, password?: string) {
 describe('auth gate', () => {
   it('opens straight to Trips when a session is stored', async () => {
     resetFakeAuth(testSession);
-    const router = renderRouter(routes, { initialUrl: '/' });
+    const router = await renderRouter(routes, { initialUrl: '/' });
     expect(await screen.findByRole('header', { name: 'My Trips' })).toBeOnTheScreen();
     expect(router.getPathname()).toBe('/trips');
   });
 
   it('shows Welcome when signed out, even for a link into the tabs', async () => {
     resetFakeAuth(null);
-    const router = renderRouter(routes, { initialUrl: '/trips' });
+    const router = await renderRouter(routes, { initialUrl: '/trips' });
     expect(await screen.findByRole('header', { name: 'Trip' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Continue with email' })).toBeOnTheScreen();
     expect(router.getPathname()).toBe('/auth');
@@ -62,7 +62,7 @@ describe('auth gate', () => {
 
   it('keeps developer screens reachable when signed out', async () => {
     resetFakeAuth(null);
-    const router = renderRouter(routes, { initialUrl: '/dev/gallery' });
+    const router = await renderRouter(routes, { initialUrl: '/dev/gallery' });
     expect(await screen.findByText('My Trips')).toBeOnTheScreen();
     expect(router.getPathname()).toBe('/dev/gallery');
     await act(async () => {});
@@ -70,7 +70,7 @@ describe('auth gate', () => {
 
   it('lets a scenario link into the tabs while signed out, and back to Welcome on exit', async () => {
     resetFakeAuth(null);
-    const router = renderRouter(routes, { initialUrl: '/scenario/empty-account' });
+    const router = await renderRouter(routes, { initialUrl: '/scenario/empty-account' });
     expect(await screen.findByRole('header', { name: 'My Trips' })).toBeOnTheScreen();
     expect(router.getPathname()).toBe('/trips');
 
@@ -81,7 +81,7 @@ describe('auth gate', () => {
 
   it('signs up and lands on Trips', async () => {
     resetFakeAuth(null);
-    const router = renderRouter(routes, { initialUrl: '/' });
+    const router = await renderRouter(routes, { initialUrl: '/' });
 
     fireEvent.press(await screen.findByRole('button', { name: 'Continue with email' }));
     expect(await screen.findByRole('header', { name: 'Create your account' })).toBeOnTheScreen();
@@ -116,7 +116,7 @@ describe('auth gate', () => {
       data: {},
       error: new AuthApiError('User already registered', 422, 'user_already_exists'),
     } as never);
-    renderRouter(routes, { initialUrl: '/auth/sign-up' });
+    await renderRouter(routes, { initialUrl: '/auth/sign-up' });
 
     await fill('taken@example.com', 'long enough');
     fireEvent.changeText(screen.getByTestId('auth-name'), 'Matthew');
@@ -132,7 +132,7 @@ describe('auth gate', () => {
       data: {},
       error: new AuthApiError('Invalid login credentials', 400, 'invalid_credentials'),
     } as never);
-    const router = renderRouter(routes, { initialUrl: '/auth/sign-in' });
+    const router = await renderRouter(routes, { initialUrl: '/auth/sign-in' });
 
     await fill('me@example.com', 'wrong password');
     await act(async () => fireEvent.press(await screen.findByTestId('auth-submit')));
@@ -163,7 +163,7 @@ describe('auth gate', () => {
             resolve({ data: { session: testSession, user: testSession.user }, error: null });
         }),
     );
-    renderRouter(routes, { initialUrl: '/auth/sign-in' });
+    await renderRouter(routes, { initialUrl: '/auth/sign-in' });
 
     await fill('me@example.com', 'secret');
     fireEvent.press(await screen.findByTestId('auth-submit'));
@@ -175,7 +175,7 @@ describe('auth gate', () => {
 
   it('sends a reset email from Forgot password', async () => {
     resetFakeAuth(null);
-    renderRouter(routes, { initialUrl: '/auth/sign-in' });
+    await renderRouter(routes, { initialUrl: '/auth/sign-in' });
 
     fireEvent.press(await screen.findByRole('button', { name: 'Forgot password?' }));
     expect(await screen.findByRole('header', { name: 'Reset password' })).toBeOnTheScreen();
@@ -192,7 +192,7 @@ describe('auth gate', () => {
 
   it('switches between sign-up and sign-in', async () => {
     resetFakeAuth(null);
-    const router = renderRouter(routes, { initialUrl: '/auth/sign-up' });
+    const router = await renderRouter(routes, { initialUrl: '/auth/sign-up' });
     fireEvent.press(await screen.findByRole('button', { name: 'Sign in' }));
     expect(router.getPathname()).toBe('/auth/sign-in');
     fireEvent.press(await screen.findByRole('button', { name: 'Create an account' }));
@@ -201,7 +201,7 @@ describe('auth gate', () => {
 
   it('returns to Welcome on sign-out', async () => {
     resetFakeAuth(testSession);
-    const router = renderRouter(routes, { initialUrl: '/' });
+    const router = await renderRouter(routes, { initialUrl: '/' });
     expect(await screen.findByRole('header', { name: 'My Trips' })).toBeOnTheScreen();
 
     act(() => emitAuthChange('SIGNED_OUT', null));

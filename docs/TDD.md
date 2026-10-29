@@ -7,7 +7,7 @@ Hard constraints from the PRD: iPhone only, **$0 running cost**, and everything 
 ## Stack
 | Area | Choice | Why |
 |---|---|---|
-| App | **Expo SDK 57** (React Native, TypeScript strict) | Latest SDK that Expo Go on the App Store runs; one codebase; cloud builds later (ADR 0001) |
+| App | **Expo SDK 58** (React Native, TypeScript strict) | Latest SDK that Expo Go on the App Store runs; one codebase; cloud builds later (ADR 0001) |
 | Navigation | **Expo Router** with `unstable-native-tabs` | File-based routes; the native iOS tab bar (Liquid Glass on iOS 26), included in Expo Go |
 | Icons / images | `expo-symbols` (SF Symbols), `expo-image` | Native icons per `design.md`; cached images |
 | Sheets, gestures, motion | `@gorhom/bottom-sheet`, `react-native-gesture-handler`, `react-native-reanimated` | Itinerary sheet over the map, drag to reorder; all in Expo Go |
@@ -168,8 +168,8 @@ Client: TanStack Query caches per trip; Zustand holds selection and UI state. On
    ~1.6 km); a routing API is a later upgrade. Good enough for Smart Add ordering in the demo.
 6. **Free-tier terms:** Open-Meteo's free API is for non-commercial use (fine for the demo, revisit
    in Phase B); Photon and OpenFreeMap are fair-use public services.
-7. **Expo Go tracks the latest SDK only:** when Expo ships SDK 58 to the App Store, the project must
-   upgrade (a planned ticket when it happens).
+7. **Expo Go tracks the latest SDK only:** when Expo ships a new SDK to the App Store, the project
+   must upgrade (SDK 57 → 58 happened in Oct 2026: QR codes and links carry `exposdk:58.0.0`).
 
 ## v2: Group trips
 PRD: project page → "v2: Group trips". Same constraints: $0, Expo Go only, no Phase B features.

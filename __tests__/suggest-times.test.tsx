@@ -35,7 +35,7 @@ afterEach(() => act(() => exitScenario()));
 
 describe('Suggest times for liked items (TR-64)', () => {
   it('group-bucket-suggest opens on the liked items, most liked first', async () => {
-    renderRouter(routes, { initialUrl: '/scenario/group-bucket-suggest' });
+    await renderRouter(routes, { initialUrl: '/scenario/group-bucket-suggest' });
     await waitFor(() => expect(screen.getByTestId('suggest-row-bucket-golden-tiki')).toBeTruthy());
     expect(rows()).toEqual(['bucket-golden-tiki', 'bucket-lotus-of-siam']);
     expect(screen.getByText('Sun 15, 4:00 PM · 2 likes')).toBeTruthy();
@@ -44,7 +44,7 @@ describe('Suggest times for liked items (TR-64)', () => {
   });
 
   it('Accept on one row places it and keeps the sheet on the rest', async () => {
-    renderRouter(routes, { initialUrl: '/scenario/group-bucket-suggest' });
+    await renderRouter(routes, { initialUrl: '/scenario/group-bucket-suggest' });
     const accept = await screen.findByTestId('suggest-accept-bucket-lotus-of-siam');
     await act(async () => fireEvent.press(accept));
     await waitFor(() => expect(rows()).toEqual(['bucket-golden-tiki']));
@@ -55,7 +55,7 @@ describe('Suggest times for liked items (TR-64)', () => {
   });
 
   it("accepting Blake's Golden Tiki plans it on Sun 15 as added by Blake, with Undo", async () => {
-    renderRouter(routes, { initialUrl: '/scenario/group-bucket-suggest' });
+    await renderRouter(routes, { initialUrl: '/scenario/group-bucket-suggest' });
     // Skip leaves Lotus of Siam out, so Golden Tiki is the last one and the sheet closes on it.
     const skip = await screen.findByTestId('suggest-skip-bucket-lotus-of-siam');
     await act(async () => fireEvent.press(skip));
@@ -76,7 +76,7 @@ describe('Suggest times for liked items (TR-64)', () => {
   });
 
   it('shows the button on the group Bucket List; Accept all places every suggestion', async () => {
-    renderRouter(routes, { initialUrl: '/scenario/group-bucket-popular' });
+    await renderRouter(routes, { initialUrl: '/scenario/group-bucket-popular' });
     expect(await screen.findByTestId('bucket-suggest')).toBeTruthy();
     expect(screen.getByText('Suggest times for liked items')).toBeTruthy();
     await act(async () => fireEvent.press(screen.getByTestId('bucket-suggest')));
@@ -87,7 +87,7 @@ describe('Suggest times for liked items (TR-64)', () => {
   });
 
   it('has no button on a trip of one', async () => {
-    renderRouter(routes, { initialUrl: '/scenario/vegas-bucket' });
+    await renderRouter(routes, { initialUrl: '/scenario/vegas-bucket' });
     await screen.findByTestId('bucket-list');
     expect(screen.queryByTestId('bucket-suggest')).toBeNull();
   });

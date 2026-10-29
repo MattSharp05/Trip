@@ -5,8 +5,8 @@
  */
 
 const PROJECT_ID = '0458c1dd-61a0-47f7-ac52-c648b4458fea';
-/** Expo Go's runtime for SDK 57; change on an SDK upgrade (same as the QA link in CLAUDE.md). */
-const RUNTIME_VERSION = 'exposdk:57.0.0';
+/** Expo Go's runtime for SDK 58; change on an SDK upgrade (same as the QA link in CLAUDE.md). */
+const RUNTIME_VERSION = 'exposdk:58.0.0';
 
 export type LinkScheme = 'expo-go' | 'trip';
 

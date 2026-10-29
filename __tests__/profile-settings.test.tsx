@@ -108,7 +108,7 @@ function useAccount(snapshot: DataSnapshot) {
 describe('your name at sign-up', () => {
   it('asks for a name first and saves it to the profile', async () => {
     resetFakeAuth(null);
-    renderRouter(routes, { initialUrl: '/auth/sign-up' });
+    await renderRouter(routes, { initialUrl: '/auth/sign-up' });
 
     fireEvent.changeText(await screen.findByTestId('auth-email'), 'new@example.com');
     fireEvent.changeText(screen.getByTestId('auth-password'), 'long enough');
@@ -138,7 +138,7 @@ describe('the one-time name sheet', () => {
   it('asks a placeholder name once; after saving, never again', async () => {
     resetFakeAuth(testSession);
     useAccount(placeholderAccount);
-    const first = renderRouter(routes, { initialUrl: '/trips' });
+    const first = await renderRouter(routes, { initialUrl: '/trips' });
 
     expect(await screen.findByText('What should friends call you?')).toBeOnTheScreen();
     fireEvent.press(screen.getByTestId('name-prompt-save'));
@@ -155,7 +155,7 @@ describe('the one-time name sheet', () => {
     queryClient.clear();
     useAccount(placeholderAccount);
     resetFakeAuth(withMetadata({ name_prompt: 'saved' }));
-    renderRouter(routes, { initialUrl: '/trips' });
+    await renderRouter(routes, { initialUrl: '/trips' });
     expect(await screen.findByRole('header', { name: 'My Trips' })).toBeOnTheScreen();
     act(() => askForName());
     await act(async () => {});
@@ -165,14 +165,14 @@ describe('the one-time name sheet', () => {
   it('after a dismissal, asks again only from a group feature', async () => {
     resetFakeAuth(testSession);
     useAccount(placeholderAccount);
-    const first = renderRouter(routes, { initialUrl: '/trips' });
+    const first = await renderRouter(routes, { initialUrl: '/trips' });
     fireEvent.press(await screen.findByTestId('name-prompt-skip'));
     expect(mockUpdateUser).toHaveBeenCalledWith({ data: { name_prompt: 'dismissed' } });
     first.unmount();
 
     queryClient.clear();
     resetFakeAuth(withMetadata({ name_prompt: 'dismissed' }));
-    renderRouter(routes, { initialUrl: '/trips' });
+    await renderRouter(routes, { initialUrl: '/trips' });
     expect(await screen.findByRole('header', { name: 'My Trips' })).toBeOnTheScreen();
     await act(async () => {});
     expect(screen.queryByText('What should friends call you?')).toBeNull();
@@ -184,7 +184,7 @@ describe('the one-time name sheet', () => {
   it('never asks an account that already has a name', async () => {
     resetFakeAuth(testSession);
     useAccount({ ...placeholderAccount, profiles: [{ id: 'test-user', displayName: 'Matthew' }] });
-    renderRouter(routes, { initialUrl: '/trips' });
+    await renderRouter(routes, { initialUrl: '/trips' });
     expect(await screen.findByRole('header', { name: 'My Trips' })).toBeOnTheScreen();
     await act(async () => {});
     expect(screen.queryByText('What should friends call you?')).toBeNull();
@@ -195,7 +195,7 @@ describe('Settings → Profile', () => {
   it('changes your name', async () => {
     resetFakeAuth(testSession);
     useAccount({ ...placeholderAccount, profiles: [{ id: 'test-user', displayName: 'Matthew' }] });
-    const router = renderRouter(routes, { initialUrl: '/settings' });
+    const router = await renderRouter(routes, { initialUrl: '/settings' });
 
     fireEvent.press(await screen.findByTestId('settings-name'));
     const input = await screen.findByTestId('profile-name-input');
@@ -209,7 +209,7 @@ describe('Settings → Profile', () => {
 
   it('validates and saves payment info in a demo session; empty fields save as not set', async () => {
     resetFakeAuth(null);
-    const router = renderRouter(routes, { initialUrl: '/scenario/group-vegas' });
+    const router = await renderRouter(routes, { initialUrl: '/scenario/group-vegas' });
     await waitFor(() => expect(router.getPathname()).toBe('/plan'));
     act(() => nav.push('/settings'));
 
